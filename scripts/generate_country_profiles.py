@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Reproducible PAHO EOC country fact sheets (one Letter page per country).
+"""Reproducible PAHO EOC country fact sheets (one Letter page per survey record).
 
 Source: first worksheet in data/Encuesta_OPS_2026_COEs.xlsx.
 No external APIs, credentials or machine translation; controlled survey answers are
@@ -8,6 +8,9 @@ are never printed. Non-standard free text is not published verbatim.
 """
 from __future__ import annotations
 import argparse, collections, datetime as dt, hashlib, html, re, unicodedata, zipfile
+from io import BytesIO
+from functools import lru_cache
+from PIL import Image, ImageDraw, ImageFont
 from pathlib import Path
 from xml.etree import ElementTree as ET
 from reportlab.pdfgen import canvas
@@ -40,6 +43,45 @@ COUNTRIES = {
     'Honduras':'Honduras','Colombia':'Colombia','El Salvador':'El Salvador',
     'Santa Lucía':'Saint Lucia','Dominica':'Dominica','Argentina':'Argentina','Brasil':'Brazil',
 }
+
+# ISO alpha-2 codes for reproducible national flag illustrations. The Noto Color
+# Emoji glyph is rasterized and embedded in the PDF; no remote service needed.
+ISO = {'Argentina':'AR','Bahamas':'BS','Belize':'BZ','Bolivia':'BO','Brazil':'BR',
+       'Colombia':'CO','Dominica':'DM','Ecuador':'EC','El Salvador':'SV',
+       'Guatemala':'GT','Honduras':'HN','Panama':'PA','Paraguay':'PY',
+       'Peru':'PE','Saint Lucia':'LC'}
+
+@lru_cache(maxsize=25)
+def flag(country):
+    code = ISO.get(country)
+    if not code:
+        raise ValueError(f'No flag ISO mapping for {country!r}; add it to ISO')
+    candidates = ['/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf',
+                  '/usr/share/fonts/noto/NotoColorEmoji.ttf']
+    font_path = next((v for v in candidates if Path(v).is_file()), None)
+    if not font_path:
+        raise RuntimeError('Noto Color Emoji font is required for country flags; '
+                           'install fonts-noto-color-emoji on the build machine.')
+    emoji = ''.join(chr(0x1F1E6 + ord(ch) - ord('A')) for ch in code)
+    font = ImageFont.truetype(font_path, 109)
+    image = Image.new('RGBA',(165,155),(255,255,255,0))
+    ImageDraw.Draw(image).text((8,0), emoji, font=font, embedded_color=True)
+    box = image.getbbox()
+    if not box: raise RuntimeError(f'Flag did not render for {country}')
+    image = image.crop(box)
+    # Composite on white so internal transparency cannot leave a dark backing.
+    image.thumbnail((145,105),Image.Resampling.LANCZOS)
+    dst = Image.new('RGBA',image.size,(255,255,255,0))
+    dst.alpha_composite(image)
+    return ImageReader(dst)
+
+def institution_slug(row):
+    s=normalize(val(row,8))
+    if 'instituto nacional' in s:return 'national_institute_of_health'
+    if 'ministerio' in s:return 'ministry_of_health'
+    if 'secretaria' in s:return 'secretariat_of_health'
+    if 'otro' in s:return 'other_institution'
+    return 'reporting_institution'
 
 # Manually edited English paraphrases of current survey narrative, for readability;
 # all new/modified records use safe data-derived statements instead of untranslated text.
@@ -195,7 +237,7 @@ def organization(row):
     if 'mesa tecnica sectorial' in n:return 'Sectoral Technical Board for Health & Nutrition'
     if 'coes salud' in n:return 'COES - Health Sector Emergency Operations Centre'
     if 'operacoes de emergencias em saude publica' in n:return 'Public Health Emergency Operations Centre (COE)'
-    if 'grupo de gestion del riesgo' in n:return 'Public Health EOC - National Institute of Health (INS)'
+    if 'grupo de gestion del riesgo' in n or ('centro operaciones de emergencia' in n and 'respuesta inmediata' in n):return 'Public Health EOC - National Institute of Health (INS)'
     if n=='coe salud':return 'Health EOC - Ministry of Health and Social Protection'
     if 'emergencias de salud publica' in n or 'emergencias en salud publica' in n:return 'Public Health Emergency Operations Centre'
     if n in ('heoc','health emergency operations center'):return 'Health Emergency Operations Centre (HEOC)'
@@ -203,6 +245,7 @@ def organization(row):
     if not name and 'instituto nacional de salud' in normalize(fallback):return 'National Institute of Health'
     if not name and 'ministerio' in normalize(fallback):return 'Ministry of Health - reporting institution'
     if not name and 'secretaria' in normalize(fallback):return 'Secretariat of Health - reporting institution'
+    if not name and normalize(fallback).startswith('5. otro'):return 'Other institution (as reported)'
 
     if name and normalize(name) not in ('ninguno','no aplica'):
         # Only fixed, non-personal labels are translated; proper names preserved.
@@ -390,13 +433,18 @@ def logo_header(c):
     text(c,'COUNTRY FACT SHEETS · 2026',188,43,6.5,ORANGE,True)
     rule(c,40,PAGE_W-40,78,BLUE,1.0)
 
-def header(c,country,rows,page_idx,total):
+def header(c,country,row,page_idx,total,response_number,responses_in_country):
     logo_header(c)
-    rect(c,40,95,36,39,PALE,r=7)
-    text(c,'EOC',46,107,11,BLUE,True)
-    text(c,country,88,93,22,BLUE,True)
-    text(c,('ONE REPORTING INSTITUTION' if len(rows)==1 else f'{len(rows)} SURVEY RESPONSES  /  INSTITUTIONAL RESULTS'),89,120,7.1,MUTED,True)
-    if country=='Brazil':text(c,'PILOT RESPONSE · MAR 2026',88,133,6.1,ORANGE,True)
+    rect(c,40,95,51,39,PALE2,r=6,stroke=LINE)
+    # Display the national flag next to each independently reported EOC profile.
+    c.drawImage(flag(country),42,PAGE_H-101-29,width=47,height=29,mask='auto')
+    text(c,country,103,93,20.5,BLUE,True)
+    if responses_in_country > 1:
+        sub = f'INSTITUTIONAL RESPONSE {response_number} OF {responses_in_country}  ·  INDEPENDENT RECORD'
+    else:
+        sub = 'INSTITUTIONAL SURVEY RECORD'
+    text(c,sub,104,120,6.65,MUTED,True)
+    if country=='Brazil':text(c,'PILOT RESPONSE · MAR 2026',104,133,6.1,ORANGE,True)
     right(c,f'{page_idx:02d} / {total:02d}',572,101,8,BLUE,True)
     right(c,'REGIONAL SURVEY 2026',572,117,7,MUTED)
     rect(c,40,143,532,2,ORANGE)
@@ -480,13 +528,13 @@ def draw_bullets(c,arr,x,top,width,color,max_h=76):
         y+=max(15,h+5)
         if y>top+max_h:break
 
-def footer(c,country,count,notices=None):
-    notices=notices or []
+def footer(c,country,source_row):
     rule(c,40,572,742,LINE)
     text(c,'SOURCE  PAHO/WHO Regional Survey on Health Emergency Operations Centres (2026)',40,752,6.1,BLUE,True)
-    text(c,f'{count} submitted record(s) for {country}  ·  Self-reported information  ·  Not independently verified',40,763,5.5,MUTED)
-    text(c,'Indicative scores summarize selected closed-question responses; not an official PAHO assessment or country ranking.',40,774,5.0,MUTED)
+    text(c,f'{country} · Source Excel row {source_row} · Self-reported information · Not independently verified',40,763,5.5,MUTED)
+    text(c,'Indicative scores summarize selected survey answers; not an official PAHO assessment or country ranking.',40,774,5.0,MUTED)
     right(c,'paho.org',572,753,7,BRIGHT,True)
+
 
 def core_single(c,country,row):
     inst=organization(row)
@@ -496,10 +544,10 @@ def core_single(c,country,row):
          (english_mandate(row),'Mandate'),
          (str(number(row,67)) if number(row,67) is not None else '—','24/7 duty staff')]
     xs=[40,148,256,364,472]
-    for (k,v),x in zip(metrics,xs):metric(c,x,184,100,k,v)
-    cap_bars(c,row,40,245,323)
+    for (k,v),x in zip(metrics,xs):metric(c,x,188,100,k,v)
+    cap_bars(c,row,40,250,323)
     attribute_table(c,row,40,405,323)
-    side(c,row,383,245,189)
+    side(c,row,383,250,189)
     rect(c,40,626,260,102,PALE2,r=7)
     rect(c,312,626,260,102,'#FFF5F0',r=7)
     text(c,'REPORTED STRENGTHS',52,637,7,BLUE,True)
@@ -509,55 +557,38 @@ def core_single(c,country,row):
     draw_bullets(c,b,324,655,236,ORANGE,65)
 
 
-def compact_card(c,row,x,top,width,index,total,country):
-    height=264
-    rect(c,x,top,width,height,PALE2 if index%2==0 else WHITE,r=9,stroke=LINE)
-    text(c,f'RESPONSE {index+1} OF {total}  ·  '+('EOC REPORTED' if status(row) else 'NO EOC REPORTED' if status(row) is False else 'UNDER IMPLEMENTATION'),x+13,top+10,7.0,BRIGHT if status(row) else ORANGE,True)
-    right(c,date_str(row),x+width-12,top+11,6.5,MUTED)
-    paragraph(c,organization(row),x+13,top+28,width-26,size=9.4,color=BLUE,bold=True,maxheight=35)
-    rect(c,x+13,top+69,width-26,1,LINE)
-    fields=[('Established',val(row,17) if val(row,17)!='1900' else 'N/A'),
-      ('Operating mode',english_mode(row)),('Activation',english_activation(row)),
-      ('Staff 24/7',str(number(row,67)) if number(row,67) is not None else 'N/A')]
-    for i,(k,v) in enumerate(fields):
-        xx=x+13+(i%2)*(width/2-5); yy=top+79+(i//2)*34
-        text(c,k.upper(),xx,yy,5.3,MUTED,True)
-        paragraph(c,v,xx,yy+10,width/2-23,size=7.1,color=INK,bold=True,maxheight=17)
-    yy=top+154
-    text(c,'CAPABILITY DOMAINS',x+13,yy,6.4,BLUE,True)
-    yy+=18
-    for lab,value,n,totaln in scores(row):
-        text(c,lab,x+13,yy,5.8,MUTED)
-        bx=x+143;bw=width-184
-        rect(c,bx,yy,bw,7,'#E5EEF4',r=3)
-        if value is not None:
-            rect(c,bx,yy,max(2,bw*value/100),7,BLUE if value>=65 else BRIGHT if value>=40 else ORANGE,r=3)
-            right(c,str(value),x+width-12,yy-1,6.3,BLUE,True)
-        else:right(c,'N/A',x+width-12,yy-1,6.0,MUTED)
-        yy+=14
-
-def multi_page(c,country,rows):
-    text(c,'MULTIPLE SURVEY RECORDS  •  INSTITUTIONAL RESULTS SHOWN SEPARATELY',40,151,8,BLUE,True)
-    paragraph(c,'These submissions are not combined into a single national score. Different institutions may report different capacities.',40,169,529,7.3,MUTED,maxheight=32)
-    # Two records stacked vertically; 15 countries from 18 responses.
-    for i,row in enumerate(rows[:2]):
-        compact_card(c,row,40,207+i*270,532,i,len(rows),country)
-    if len(rows)>2:paragraph(c,f'An additional {len(rows)-2} response(s) are retained in the source workbook.',42,733,521,size=6.1,color=MUTED,maxheight=8)
-    if all(status(r) is False for r in rows):
-        rect(c,40,185,532,18,'#FFF5F0',r=4)
-        text(c,'NO HEALTH EOC REPORTED BY THESE RESPONDENTS',50,189,7,ORANGE,True)
+def core_no_eoc(c,country,row):
+    rect(c,40,157,532,84,'#FFF5F0',r=7,stroke='#F5C8B4')
+    text(c,'NO HEALTH EOC REPORTED BY THIS RESPONDENT',53,172,10,ORANGE,True)
+    paragraph(c,'The response indicates that the reporting institution does not have a health emergency '
+              'operations centre (or equivalent mechanism). It is retained as an independent survey '
+              'record, not combined with other responses from this country.',53,193,504,size=8.2,maxheight=43)
+    heading(c,'Reporting context',40,271,532)
+    institution=organization(row)
+    paragraph(c,'Responding organization: '+institution,43,295,526,size=9.0,bold=True,maxheight=38)
+    paragraph(c,'Institution type: '+ ('Other (as reported)' if 'otro' in normalize(val(row,8)) else val(row,8)),43,344,520,size=8.1,color=MUTED,maxheight=32)
+    paragraph(c,'Survey submitted: '+date_str(row),43,384,518,size=8.1,color=MUTED,maxheight=25)
+    rect(c,40,448,532,121,PALE2,r=8)
+    text(c,'INTERPRETATION NOTE',53,463,7.5,BLUE,True)
+    paragraph(c,'Because this respondent answered "No" to the existence of a health EOC, '
+              'the EOC-specific capability charts, operational resources and maturity indicators '
+              'are intentionally not calculated on this page. This does not contradict or replace '
+              'information supplied by another organization from the same country.',
+              53,485,503,size=8.4,maxheight=74)
+    rect(c,40,608,532,94,PALE,r=8)
+    text(c,'SURVEY SOURCE',53,625,7.5,BLUE,True)
+    paragraph(c,'PAHO/WHO Regional Survey on Health Emergency Operations Centres, 2026. '
+              'Consult the source workbook for all responses and any institutional follow-up.',
+              53,645,502,size=8.0,maxheight=48)
 
 
-def do_page(c,country,rows,i,total):
-    header(c,country,rows,i,total)
-    if len(rows)==1 and status(rows[0]) is not False:
-        core_single(c,country,rows[0])
-    elif len(rows)==1:  # uncommon; no centre reported
-        r=rows[0]
-        text(c,'No health emergency operations centre reported',40,170,12,ORANGE,True)
-        paragraph(c,'The responding institution reported that it does not have a health EOC or equivalent mechanism. No capacity index is calculated.',40,202,532,9,MUTED)
-    else:multi_page(c,country,rows)
-    footer(c,country,len(rows))
+def do_page(c,country,row,page_idx,total,response_number,responses_in_country,source_row):
+    header(c,country,row,page_idx,total,response_number,responses_in_country)
+    if status(row) is False:
+        core_no_eoc(c,country,row)
+    else:
+        core_single(c,country,row)
+    footer(c,country,source_row)
     c.showPage()
 
 
@@ -570,29 +601,50 @@ def main():
     rows=read_first_sheet(args.input)
     assert len(rows[0])>=150, f'Expected >=150 columns, got {len(rows[0])}'
     reports=collections.defaultdict(list)
-    for r in rows[1:]:
-        k=val(r,7)
-        if not k:continue
-        reports[COUNTRIES.get(k,k)].append(r)
-    for k in reports:reports[k].sort(key=submit_key,reverse=True)
+    for source_row,r in enumerate(rows[1:],start=2):
+        country=COUNTRIES.get(val(r,7),val(r,7))
+        if not country:continue
+        reports[country].append((source_row,r))
+    # Keep response order stable, and assign unique, non-overwriting names.
+    for country in reports:
+        reports[country].sort(key=lambda item: (-submit_key(item[1]), item[0]))
+    pages=[]
+    for country in sorted(reports):
+        submissions=reports[country]
+        n=len(submissions)
+        for i,(source_row,row) in enumerate(submissions,1):
+            slug=re.sub(r'[^a-z0-9]+','_',normalize(country)).strip('_')
+            if n>1:
+                group_slug=institution_slug(row)
+                group_count=sum(institution_slug(x[1])==group_slug for x in submissions)
+                index=sum(institution_slug(x[1])==group_slug for x in submissions[:i])
+                slug += '_'+group_slug
+                if group_count>1:slug+=f'_{index:02d}'
+            pages.append((country,row,i,n,source_row,slug))
+    if not pages:raise ValueError('No country responses in first Excel worksheet')
     args.output.mkdir(parents=True,exist_ok=True)
-    (args.output/'countries').mkdir(parents=True,exist_ok=True)
-    names=sorted(reports)
+    out_country=args.output/'countries'
+    out_country.mkdir(parents=True,exist_ok=True)
+    expected_filenames={record[-1]+'.pdf' for record in pages}
+    if len(expected_filenames)!=len(pages):raise AssertionError('Generated filenames must be unique per record')
+    # Important: remove old country-level files when changing from 15 to 18.
+    for existing in out_country.glob('*.pdf'):
+        if existing.name not in expected_filenames:existing.unlink()
     combined=args.output/'PAHO_EOC_Country_Fact_Sheets_2026.pdf'
     c=canvas.Canvas(str(combined),pagesize=letter,pageCompression=1)
-    c.setTitle('PAHO | EOC Country Fact Sheets 2026')
+    c.setTitle('PAHO | EOC Survey Fact Sheets 2026 | One per response')
     c.setAuthor('PAHO/WHO - Regional EOC survey (automatically generated; indicative)')
-    for i, name in enumerate(names,1):do_page(c,name,reports[name],i,len(names))
+    for page_idx,(country,row,response_number,n,source_row,slug) in enumerate(pages,1):
+        do_page(c,country,row,page_idx,len(pages),response_number,n,source_row)
     c.save()
-    # Export independent one-page files as well; very useful for country distribution.
-    for i,name in enumerate(names,1):
-        slug=re.sub(r'[^a-z0-9]+','_',normalize(name)).strip('_')
-        dest=args.output/'countries'/f'{slug}.pdf'
+    for page_idx,(country,row,response_number,n,source_row,slug) in enumerate(pages,1):
+        dest=out_country/f'{slug}.pdf'
         single=canvas.Canvas(str(dest),pagesize=letter,pageCompression=1)
-        single.setTitle(f'{name} | PAHO EOC Fact Sheet 2026')
-        do_page(single,name,reports[name],i,len(names))
+        single.setTitle(f'{country} · Response {response_number}/{n} | PAHO EOC 2026')
+        do_page(single,country,row,page_idx,len(pages),response_number,n,source_row)
         single.save()
-    print(f'Generated {len(names)} country pages from {sum(len(v) for v in reports.values())} survey responses: {combined}')
-    print('Countries:',', '.join(names))
+    print(f'Generated {len(pages)} pages from {len(pages)} survey responses, '
+          f'{len(reports)} distinct countries: {combined}')
+    print('Individual pages:', ', '.join(p.name for p in sorted(out_country.glob('*.pdf'))))
 
 if __name__=='__main__':main()
