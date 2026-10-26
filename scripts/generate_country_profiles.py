@@ -422,32 +422,44 @@ def heading(c,s,x,top,width):
     rule(c,x,x+width,top+15)
 
 def logo_header(c):
+    """Strong editorial hierarchy on the left; both institutional logos on the right."""
     # Refers to tracked original repo paths at runtime (no external requests).
-    rect(c,0,0,PAGE_W,7,BLUE)
-    rect(c,455,0,PAGE_W-455,7,ORANGE)
-    p1=HERE/'logos'/'logo_EOC.png'; p2=HERE/'logos'/'PAHO_eng.png'
-    if not (p1.exists() and p2.exists()):raise FileNotFoundError('Both tracked logos must exist in logos/')
-    c.drawImage(ImageReader(str(p1)),40,PAGE_H-65,width=143,height=48,mask='auto',preserveAspectRatio=True,anchor='sw')
-    c.drawImage(ImageReader(str(p2)),330,PAGE_H-66,width=238,height=47,mask='auto',preserveAspectRatio=True,anchor='sw')
-    text(c,'EOC-NET  /  THE AMERICAS',188,29,7.0,BLUE,True)
-    text(c,'COUNTRY FACT SHEETS · 2026',188,43,6.5,ORANGE,True)
-    rule(c,40,PAGE_W-40,78,BLUE,1.0)
+    rect(c, 0, 0, PAGE_W, 7, BLUE)
+    rect(c, 455, 0, PAGE_W-455, 7, ORANGE)
+    p1 = HERE/'logos'/'logo_EOC.png'
+    p2 = HERE/'logos'/'PAHO_eng.png'
+    if not (p1.exists() and p2.exists()):
+        raise FileNotFoundError('Both tracked logos must exist in logos/')
 
-def header(c,country,row,page_idx,total,response_number,responses_in_country):
+    # Two large, readable headings, left-aligned on the same baseline grid.
+    text(c, 'EOC-NET  /  THE AMERICAS', 40, 24, 17.3, BLUE, True)
+    text(c, 'COUNTRY FACT SHEETS  ·  2026', 40, 51, 10.6, ORANGE, True)
+
+    # Both original logos form a distinct right-aligned vertical lock-up. Their
+    # image aspect ratios are maintained (no horizontal stretching or cropping).
+    c.drawImage(ImageReader(str(p1)), 408, PAGE_H-12-53,
+                width=160, height=53, mask='auto', preserveAspectRatio=True)
+    c.drawImage(ImageReader(str(p2)), 398, PAGE_H-61-24,
+                width=171, height=24, mask='auto', preserveAspectRatio=True)
+    rule(c, 40, PAGE_W-40, 90, BLUE, 1.05)
+
+
+def header(c, country, row, page_idx, total, response_number, responses_in_country):
     logo_header(c)
-    rect(c,40,95,51,39,PALE2,r=6,stroke=LINE)
-    # Display the national flag next to each independently reported EOC profile.
-    c.drawImage(flag(country),42,PAGE_H-101-29,width=47,height=29,mask='auto')
-    text(c,country,103,93,20.5,BLUE,True)
+    # Country identity is the next strongest element: larger name and flag.
+    rect(c, 40, 98, 56, 41, PALE2, r=6, stroke=LINE)
+    c.drawImage(flag(country), 42, PAGE_H-104-31, width=52, height=31, mask='auto')
+    text(c, country, 108, 95, 25.0, BLUE, True)
     if responses_in_country > 1:
         sub = f'INSTITUTIONAL RESPONSE {response_number} OF {responses_in_country}  ·  INDEPENDENT RECORD'
     else:
         sub = 'INSTITUTIONAL SURVEY RECORD'
-    text(c,sub,104,120,6.65,MUTED,True)
-    if country=='Brazil':text(c,'PILOT RESPONSE · MAR 2026',104,133,6.1,ORANGE,True)
-    right(c,f'{page_idx:02d} / {total:02d}',572,101,8,BLUE,True)
-    right(c,'REGIONAL SURVEY 2026',572,117,7,MUTED)
-    rect(c,40,143,532,2,ORANGE)
+    text(c, sub, 109, 124, 7.1, MUTED, True)
+    if country == 'Brazil':
+        text(c, 'PILOT RESPONSE · MAR 2026', 109, 135, 5.8, ORANGE, True)
+    right(c, f'{page_idx:02d} / {total:02d}', 572, 100, 8.5, BLUE, True)
+    right(c, 'REGIONAL SURVEY 2026', 572, 119, 6.8, MUTED)
+    rect(c, 40, 145, 532, 2, ORANGE)
 
 def metric(c,x,top,w,primary,label):
     rect(c,x,top,w,45,PALE2,r=5)
