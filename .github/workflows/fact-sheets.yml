@@ -1,0 +1,71 @@
+name: Build EOC country fact sheets
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'data/**'
+      - 'logos/**'
+      - 'scripts/**'
+      - 'requirements.txt'
+      - '.github/workflows/fact-sheets.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: eoc-country-fact-sheets-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  generate-pdf:
+    name: Generate and publish PDFs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Generate consolidated and country PDFs
+        run: python scripts/generate_country_profiles.py
+      - name: Validate page counts and structure
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from pypdf import PdfReader
+          from scripts.generate_country_profiles import read_first_sheet, COUNTRIES, HERE, val
+          rows = read_first_sheet(HERE / 'data' / 'Encuesta_OPS_2026_COEs.xlsx')
+          expected = len({COUNTRIES.get(val(r,7), val(r,7)) for r in rows[1:] if val(r,7)})
+          combined = Path('output/PAHO_EOC_Country_Fact_Sheets_2026.pdf')
+          singles = sorted(Path('output/countries').glob('*.pdf'))
+          assert len(PdfReader(str(combined)).pages) == expected
+          assert len(singles) == expected
+          assert all(len(PdfReader(str(path)).pages) == 1 for path in singles)
+          print(f'OK: {expected} country sheets ({len(rows)-1} survey responses)')
+          PY
+      - name: Publish PDFs as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PAHO-EOC-Country-Fact-Sheets-2026
+          path: output/**/*.pdf
+          retention-days: 90
+          if-no-files-found: error
+      - name: Commit generated PDFs to the repository
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add output/
+          if git diff --cached --quiet; then
+            echo 'No PDF changes to publish.'
+          else
+            git commit -m 'docs: refresh EOC country fact sheets [skip ci]'
+            git push
+          fi
