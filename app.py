@@ -526,57 +526,70 @@ def capacity_response_distribution(active, indicator):
 
 
 def capacity_chart(indicator, counts, chart_kind):
-    """Compact PAHO-style charts; full questionnaire responses on hover."""
+    """PAHO chart layout aligned with Cluster Salud v2: readable heights and spacing."""
     import plotly.graph_objects as go
-    colors=['#005A8B','#009BDA','#75B8D6','#F36B32','#8DA9B9','#D9E4EC']
+    import textwrap
+    colors=['#005A8B','#009BDA','#F36B32','#75B8D6','#53A567','#8DA9B9','#8C6BB1']
     total=int(counts.sum())
     labels=list(counts.index)
     values=[int(v) for v in counts.values]
     pct=[100*v/total for v in values]
-    def short_label(label,limit=27):
-        label=str(label).strip()
-        return label if len(label)<=limit else label[:limit-1].rstrip()+'…'
-    shorter=[short_label(x) for x in labels]
+    def short_label(label,limit=36):
+        return textwrap.shorten(' '.join(str(label).split()),width=limit,placeholder='…')
+    shorter=[short_label(x,32) for x in labels]
     fig=go.Figure()
     if chart_kind=='donut':
         fig.add_trace(go.Pie(
-            labels=shorter,values=values,customdata=labels,hole=.68,sort=False,
-            marker=dict(colors=colors),
+            labels=shorter,values=values,customdata=labels,hole=.58,sort=False,
+            marker=dict(colors=[colors[i%len(colors)] for i in range(len(values))],
+                        line=dict(color='white',width=2)),
             textinfo='percent',textposition='inside',
-            textfont=dict(size=11,color='white'),
+            textfont=dict(size=12,color='white'),
             hovertemplate='<b>%{customdata}</b><br>%{percent} (%{value}/'+str(total)+')<extra></extra>'))
-        fig.add_annotation(x=.5,y=.5,text='<b>'+str(total)+'</b>',
-                           font=dict(size=23,color='#005A8B'),showarrow=False)
+        fig.add_annotation(x=.5,y=.5,
+            text='<b>'+str(total)+'</b><br><span style="font-size:11px">'+
+                 ('respuestas' if chosen_language()=='es' else 'responses')+'</span>',
+            font=dict(size=17,color='#005A8B'),showarrow=False)
         fig.update_layout(showlegend=True,legend=dict(
-            orientation='h',x=0,y=-.11,font=dict(size=10),itemsizing='constant'))
+            orientation='h',yanchor='top',y=-.09,x=0,
+            font=dict(size=10),itemsizing='constant'),
+            height=405,margin=dict(l=12,r=12,t=24,b=102))
     elif chart_kind=='treemap':
         fig.add_trace(go.Treemap(
             labels=shorter,parents=['']*len(values),values=values,
             customdata=labels,
-            marker=dict(colors=colors,line=dict(color='white',width=2)),
-            texttemplate='%{label}<br>%{percentRoot:.0%}',
-            textfont=dict(size=11),
+            marker=dict(colors=[colors[i%len(colors)] for i in range(len(values))],
+                        line=dict(color='white',width=2)),
+            texttemplate='<b>%{label}</b><br>%{percentRoot:.0%}',
+            textposition='top left',textfont=dict(size=12),
             hovertemplate='<b>%{customdata}</b><br>%{percentRoot:.0%} (%{value}/'+str(total)+')<extra></extra>',
-            tiling=dict(pad=3),
-            branchvalues='total'))
-        fig.update_layout(showlegend=False)
+            pathbar=dict(visible=False),tiling=dict(pad=4)))
+        fig.update_layout(showlegend=False,height=410,
+            margin=dict(l=10,r=10,t=14,b=14),
+            uniformtext=dict(minsize=9,mode='hide'))
     else:
         order=list(reversed(range(len(values))))
         fig.add_trace(go.Bar(
-            y=[short_label(labels[i],24) for i in order],
+            y=[short_label(labels[i],34) for i in order],
             x=[pct[i] for i in order],orientation='h',
             marker_color=[colors[i%len(colors)] for i in order],
+            marker_line_width=0,
             customdata=[[labels[i],values[i]] for i in order],
             text=[f'{pct[i]:.0f}%' for i in order],textposition='outside',
+            cliponaxis=False,
             hovertemplate='<b>%{customdata[0]}</b><br>%{x:.0f}% (%{customdata[1]}/'+str(total)+')<extra></extra>'))
-        fig.update_xaxes(range=[0,110],tickvals=[0,25,50,75,100],ticksuffix='%',showticklabels=True,showgrid=True,gridcolor='#EAF0F4',zeroline=False,fixedrange=True,tickfont_size=10)
-        fig.update_yaxes(automargin=True,fixedrange=True,tickfont_size=10)
-        fig.update_layout(showlegend=False)
+        fig.update_xaxes(range=[0,112],tickvals=[0,25,50,75,100],ticksuffix='%',
+            showticklabels=True,showgrid=True,gridcolor='#E7EDF3',zeroline=False,
+            fixedrange=True,tickfont=dict(size=10,color='#607B8A'))
+        fig.update_yaxes(automargin=True,fixedrange=True,
+            tickfont=dict(size=10,color='#607B8A'))
+        fig.update_layout(showlegend=False,height=max(370,115+46*len(values)),
+            margin=dict(l=12,r=40,t=24,b=52),bargap=.28)
     fig.update_layout(
-        height=250,margin=dict(l=8,r=12,t=14,b=50 if chart_kind=='donut' else 33),
-        paper_bgcolor='white',plot_bgcolor='white',
-        font=dict(family='Arial, sans-serif',color='#17324D',size=11),
-        hoverlabel=dict(bgcolor='white',font_size=11),
+        paper_bgcolor='#FFFFFF',plot_bgcolor='#FFFFFF',
+        font=dict(family='"Avenir Next", Avenir, "Segoe UI", Arial, sans-serif',
+                  color='#17324D',size=11),
+        hoverlabel=dict(bgcolor='white',font_color='#17324D',font_size=11),
         dragmode=False)
     return fig
 
@@ -588,7 +601,7 @@ def capacity_visual_dashboard(frame, active):
     if not valid.empty:
         valid['percentage']=100*valid.in_place/valid.denominator
         labels=[T(x) for x in valid.capacity]
-        concise=[x if len(x)<=33 else x[:32].rstrip()+'…' for x in labels]
+        concise=[x if len(x)<=42 else x[:41].rsplit(' ',1)[0]+'…' for x in labels]
         fig=go.Figure(go.Bar(
             y=concise[::-1],x=valid.percentage.to_list()[::-1],orientation='h',
             customdata=[[labels[i],int(valid.in_place.iloc[i]),int(valid.denominator.iloc[i])]
@@ -598,10 +611,10 @@ def capacity_visual_dashboard(frame, active):
             textposition='outside',cliponaxis=False,
             hovertemplate='<b>%{customdata[0]}</b><br>%{x:.0f}% (%{customdata[1]}/%{customdata[2]})<extra></extra>'))
         fig.update_layout(
-            height=max(275,len(valid)*35+50),
-            margin=dict(l=10,r=44,t=14,b=36),paper_bgcolor='white',
-            plot_bgcolor='white',font=dict(family='Arial, sans-serif',size=11,color='#17324D'),
-            hoverlabel=dict(bgcolor='white',font_size=11))
+            height=max(380,len(valid)*48+85),
+            margin=dict(l=18,r=48,t=30,b=54),paper_bgcolor='white',
+            plot_bgcolor='white',font=dict(family='"Avenir Next", Avenir, "Segoe UI", Arial, sans-serif',size=11,color='#17324D'),
+            hoverlabel=dict(bgcolor='white',font_size=11),bargap=.25)
         fig.update_xaxes(range=[0,105],tickvals=[0,25,50,75,100],ticksuffix='%',showticklabels=True,showgrid=True,gridcolor='#EAF0F4',zeroline=False,fixedrange=True,tickfont_size=10)
         fig.update_yaxes(automargin=True,fixedrange=True,tickfont_size=10)
         st.markdown('<div class="eoc-capacity-section-title">'+T('Capacity availability')+'</div>',unsafe_allow_html=True)
