@@ -141,6 +141,9 @@ def ui_style():
     }
     .kpi-icon svg{width:19px;height:19px;flex-shrink:0;}
     .kpi.accent .kpi-icon{background:#FFF1E9;color:#D95A28;}
+    /* Overview: orange line icons, but the icon background and all five
+       card borders/values remain in the shared PAHO blue treatment. */
+    .kpi-grid:not(.four) .kpi-icon{color:#F36B32;}
     .country-identity{display:flex;gap:17px;align-items:center;padding:12px 0 14px;min-width:0;}
     .country-flag{font-size:3rem;line-height:1;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
     .country-identity .institution{font-size:.85rem;color:#647D8D;margin-top:5px;line-height:1.4;overflow-wrap:anywhere;}
