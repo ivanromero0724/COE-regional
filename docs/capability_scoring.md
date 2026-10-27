@@ -1,78 +1,101 @@
-# Capability Snapshot: indicative scoring methodology
+# Capability Snapshot — 24-item indicative maturity rubric (2026)
 
-**Purpose.** The five bars are transparent, descriptive summaries of selected closed-answer items in the 2026 PAHO/WHO regional health EOC survey. They are **not** percentages of questions answered, not observed emergency performance, not an approved PAHO capacity assessment, and not a country ranking. The rubric is a technical, **unvalidated analytical choice** in this repository.
+This specification documents the scoring system used for the EOC-NET Americas fact sheets. It was reconstructed from the **original 2026 reference PDF** and the explanation supplied by the survey team. Its mappings reproduce the five reported pillar scores in **all 15 original reference profiles (75 of 75 pillar values)** when applied to the original survey workbook. Current reports use the subsequent cleaned dataset, so country coverage and reference lines update automatically.
 
-## Formula
+**Not an official PAHO assessment or country ranking.** Survey data are self-reported and no external validation of operational performance has been undertaken. Category assignments—especially "do not know"/"not applicable" responses—should be formally endorsed by the survey team before official release.
 
-For response record `r` and domain `d`, recode each eligible categorical answer using the mappings below to an illustrative value on a 0–100 scale. Then take the simple arithmetic average of **scorable** responses, rounded to the nearest whole number:
+## Exact formula
 
-`score(r,d) = round(sum(item_score(r,i) for i in valid_items) / len(valid_items))`
+Each of the **24 selected questions** is converted to an integer between **1 (lowest/least developed)** and **5 (highest/most developed)**. All answered items in a pillar carry equal weight. For institution `r` and pillar `d`:
 
-No weights other than the equal weight of each answered item are applied. Missing or unsupported categories are excluded from the denominator (not scored zero). If all domain items are missing, the corresponding indicator is left blank. Values are calculated **per survey response/institution**, never pooled across institutions from the same country.
+```
+mean_1_to_5(r, d) = sum(rating(r, q) for scored questions q in d) / number_of_scored_questions
+pillar_score(r, d) = round((mean_1_to_5(r, d) - 1) / 4 * 100)
+```
 
-## Domains and questions
+Thus one point on the five-level scale corresponds to 25 points on the 0–100 scale. Only blank/unrecognized answers are excluded from the denominator. **Explicit** selections such as `No sabe`, `No aplica`, and `No está definido` receive a rating of **1** in the reconstructed reference rubric; this reproduces the supplied reference scores, but it is not equivalent to evidence that capacity is absent. Consider a missingness sensitivity analysis before interpreting or comparing entities.
 
-| Domain on PDF | Original survey questions | Items |
-| --- | --- | ---: |
-| Governance & legal | Q10 legal framework; Q13 national response plan; Q15 formal manual/SOP; Q14 operating finance | 4 |
-| Operations & decisions | Q23 incident-management role; Q20 incident action plan; Q24 risk assessment; Q22 strategic committee; Q25 operational/logistical readiness | 5 |
-| Human resources | Q28 designated leader; Q30 documented roles; Q32 surge staffing procedure; Q33 trained personnel roster; Q34 rapid response deployment | 5 |
-| Information management | Q39 technical tools; Q42 SITREP procedures; Q41 integrated situation room | 3 |
-| Coordination | Q18 intersectoral coordination; Q19 national disaster-risk integration; Q21 international cooperation | 3 |
+### The five pillars and their original survey items
 
-The exact implementation is in `scripts/generate_country_profiles.py`, within `DOMAINS`, `score_by_index()` and `scores()`.
+| Pillar (English label on PDF) | Original question numbers | Count |
+|---|---|---:|
+| Governance & legal | Q10 legal framework; Q12 legal support to decisions; Q13 inclusion in a national plan; Q14 financing; Q15 formal SOP | 5 |
+| Operations & decisions | Q16 activation time; Q20 incident action plan; Q22 strategic committee; Q23 Incident Management System; Q24 risk assessment; Q25 operational/logistical readiness | 6 |
+| Human resources | Q28 designated leader; Q30 documented roles; Q32 surge procedure; Q33 trained staff roster; Q34 response-team deployment | 5 |
+| Information management | Q38 internal information exchange; Q39 technological tools; Q40 frequency/severity of data gaps; Q41 situation room; Q42 SITREP procedure | 5 |
+| Coordination | Q18 intersectoral coordination; Q19 integration with national DRM; Q21 international cooperation | 3 |
+| **TOTAL** | | **24** |
 
-## Illustrative scoring schemes in the current implementation
+The program reads the first Excel sheet by zero-based column index. This table lists **actual answer-choice letters**, not a generic alphabetical ordinal scale. The order and direction differ by question.
 
-- Five-level progress categories (e.g. legal/finance/logistics): `a,b,c,d,e` → **0,25,50,75,100**.
-- Yes/no: positive answer **100**, negative **0**.
-- Documented formal SOP: Yes **100**, No **0**, Developing **45**.
-- Incident action plan: Systematic **100**, Sometimes **50**, No **0**.
-- Risk assessment: None **0**, Informal **25**, Occasional **50**, Graded **75**, Systematic **100**.
-- Strategic committee: Formal **100**, Developing **50**, No **0** (unrecognized/unknown omitted).
-- Coordinator and roles: Formal **100**, Informal/partial **50**, No **0**.
-- Trained roster: Updated **100**, Outdated **40**, In progress **35**, No **0** (unknown omitted).
-- Deployment role: Leads **100**, Supports **50**, No **0**.
-- Intersectoral coordination: Health only **0**, Occasional **50**, Formal and regular **100**.
-- Disaster-risk integration: None **0**, Limited **35**, Moderate **65**, High **100**.
-- International cooperation: Direct **100**, Via mechanism **85**, Inter-agency **75**, Limited **30**, None **0**.
-- Information tools: None/Basic/Institutional/Integrated/Interoperable → **0/25/50/75/100**.
-- SITREP: No/Informal/Irregular/Formal regular → **0/30/60/100**.
-- Situation room: Integrated **100**, Not integrated **0**.
+### Explicit rating dictionaries
 
-**Worked example — Argentina, Governance & legal** (current source workbook): framework **25**, national plan **100**, formal SOP **0**, finance **25**. Arithmetic mean: `(25 + 100 + 0 + 25)/4 = 37.5`, rounded to **38/100** on the PDF. This does **not** mean Argentina meets 38% of an internationally validated capacity standard.
+| Survey item | Excel column (zero-based) | Code → 1–5 rating |
+|---|---:|---|
+| Q10 Legal framework | 29 | a=1, b=2, c=3, d=4, e=5 |
+| Q12 Legal support to decisions | 32 | a=1, b=2, c=3, d=4, e=5 |
+| Q13 Included in national plan | 33 | a=5, b=1 |
+| Q14 Financing | 36 | a=1, b=2, c=3, d=4, e=5 |
+| Q15 Formal SOP | 37 | a=5, b=1, c=3 |
+| Q16 Activation time | 39 | a=5 (<2h), b=4 (2–6h), c=2 (>6h), d=1 (not defined), e=1 |
+| Q20 Incident action plan | 43 | a=5, b=3, c=1, d=1 |
+| Q22 Strategic committee | 46 | a=5, b=3, c=1, d=1 |
+| Q23 Incident Management System | 47 | a=5, b=1 |
+| Q24 Risk assessment | 49 | a=1, b=2, c=3, d=4, e=5 |
+| Q25 Operational/logistical readiness | 50 | a=1, b=2, c=3, d=4, e=5 |
+| Q28 Coordinator | 66 | a=5, b=3, c=1 |
+| Q30 Documented roles | 68 | a=5, b=3, c=1 |
+| Q32 Surge staffing | 77 | a=1, b=2, c=3, d=4, e=5 |
+| Q33 Staff roster | 78 | a=5, b=3, c=2, d=1, e=1 |
+| Q34 Rapid-team deployment | 80 | a=5, b=3, c=1, d=1 |
+| Q38 Information exchange | 105 | a=1, b=2, c=4, d=5 |
+| Q39 Technology | 107 | a=1, b=2, c=3, d=4, e=5 |
+| Q40 Information gaps (severity reversed) | 108 | a=1, b=2, c=3, d=5 |
+| Q41 Situation room | 109 | a=5, b=1, c=1 |
+| Q42 SITREPs | 110 | a=1, b=2, c=3, d=5, e=1 |
+| Q18 Intersectoral coordination | 41 | a=1, b=3, c=5, d=1 |
+| Q19 National DRM integration | 42 | a=1, b=2, c=4, d=5 |
+| Q21 International cooperation | 44 | a=5, b=4, c=4, d=1, e=1 |
 
-## Responding-country benchmark (orange reference line)
+If the Excel questionnaire changes its choices or column order, both the dictionaries and the matching regression tests must be updated. The generator does not silently guess unknown values.
 
-Each fact sheet now compares the **institutional response score** (blue bar) with the **mean among countries represented by scored survey responses** (orange vertical marker). This is **not the mean for all countries in the Americas**, nor a representative regional estimate.
+### Worked example: Argentina, Governance & legal
 
-For each domain, the automated algorithm:
+| Item | Selected response | Rating |
+|---|---|---:|
+| Q10 | Initial legal framework | 2 |
+| Q12 | Legal framework does not support timely decisions | 1 |
+| Q13 | Included in a national plan | 5 |
+| Q14 | Initial/ad hoc financing | 2 |
+| Q15 | No formal SOP | 1 |
 
-1. Computes each institution's domain score as defined above, excluding missing item values.
-2. Excludes records that explicitly report no health EOC from EOC-specific benchmark calculations.
-3. When a country has several EOC responses, averages those institutional domain scores to obtain a **single country value** for that domain.
-4. Takes an **unweighted arithmetic mean across countries** with valid domain values. Each country is counted once, irrespective of the number of institutions or survey rows. No-response countries are excluded.
+Mean = `(2+1+5+2+1)/5 = 2.2`. Converted = `(2.2−1)/4×100 = 30/100`. This matches the Argentina reference infographic. Its other four scores are: **Operations 83, Human resources 55, Information management 65, Coordination 58**.
 
-`benchmark(d) = mean_over_responding_countries( mean_over_scorable_institutions_in_country(score(institution,d)) )`
+## Maturity levels
 
-**Current source workbook (2026, 18 survey records, 15 responding countries):**
+| English name on PDF | Score |
+|---|---|
+| Initial | `<40` |
+| Developing | 40–59 |
+| Functional | 60–79 |
+| Advanced | ≥80 |
 
-| Domain | Mean of responding-country domain scores | Countries with valid scores |
-| --- | ---: | ---: |
-| Governance & legal | 62.9 | 15 |
-| Operations & decisions | 81.1 | 15 |
-| Human resources | 56.4 | 15 |
-| Information management | 63.3 | 15 |
-| Coordination | 77.6 | 15 |
+Bars in the PDF are color-coded by these levels; scores are always on a common 0–100 scale.
 
-These descriptive values **are recalculated automatically** whenever the survey data change. Rounding is performed for displayed institution domain scores first, consistent with the bars in the current generator. Coverage may differ by domain as further data are collected.
+## Responding-country average (orange marker)
 
-**Interpretation:** an orange line left of a response's blue-bar endpoint indicates the response's descriptive score exceeds the mean of participating countries for that domain. Neither the country-weighted benchmark nor the institutional score is an official or validated PAHO performance measure.
+The orange vertical marker is **not an average for all countries of the Americas**. For each pillar, the generator:
+1. Computes the score for each applicable institutional response.
+2. Excludes respondents that explicitly report no EOC.
+3. Averages valid institutional scores within each country where multiple institutions respond.
+4. Averages those country values without weighting by number of institutions.
 
-## Methodological caveats
+The reference is recomputed from the latest Excel upon every build. The responding country count is the number with a scorable value for a pillar, and may differ by pillar.
 
-1. Domain definitions, thresholds, category weights, and color ranges are analyst choices; they were not externally validated. They can change substantially if the survey owner approves a different rubric.
-2. Responses have varying missingness. Denominators should be checked before comparing two institutions; **missing is not a demonstrated lack of capacity**.
-3. A high descriptive score can coexist with serious operational gaps, and no score measures actual emergency performance.
-4. Brazil's pilot questionnaire required mapping some questions from an earlier format; its compatibility requires special caution.
-5. Any public use of these scores should be preceded by technical validation and clear approval of scoring rules.
+### Cautions
+
+- An explicit uncertainty selection can produce a low reference score even though capacity is unknown. This is **a property of the reference scoring rubric**, not necessarily a statement about actual capacity.
+- Genuine blank/unrecognized data are omitted, not imputed as 1. Denominators can therefore differ by institution.
+- Each item has equal weight *inside its pillar*; the system displays five pillar scores. An overall composite is not required or calculated by the fact-sheet generator.
+- Pilot-format answers mapped into the final survey (particularly Brazil) should be considered provisional until checked against the original source.
+- Prior to external release, the survey owner should verify question selection, category mapping, treatment of unknowns and missing values, and the use of the word "maturity".
