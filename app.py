@@ -177,12 +177,12 @@ def ui_style():
         box-sizing:border-box;border-radius:7px;color:white;overflow:hidden;
     }
     .eoc-overview-treemap-label{
-        color:white;font-size:.80rem;font-weight:760;line-height:1.25;
+        color:inherit;font-size:.80rem;font-weight:760;line-height:1.25;
         overflow:hidden;overflow-wrap:anywhere;
         display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;
     }
     .eoc-overview-treemap-metric{
-        color:white;font-size:1.35rem;line-height:1.05;font-weight:800;white-space:nowrap;
+        color:inherit;font-size:1.35rem;line-height:1.05;font-weight:800;white-space:nowrap;
     }
     .eoc-overview-treemap-metric small{font-size:.73rem;line-height:1.2;font-weight:650;}
     @media(max-width:950px){
