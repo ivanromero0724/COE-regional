@@ -256,7 +256,7 @@ def countries_map(countries, selection=None, lang='en'):
     stats=countries.set_index('iso3')
     statuses=['Established','In implementation','Not established',
               'Outside filter','No survey response']
-    palette=['#005A8B','#009BDA','#D75E52','#D5E0E9','#EFF2F4']
+    palette=[NAVY,ORANGE,'#D75E52','#D5E0E9','#EFF2F4']
     colors=dict(zip(statuses,palette))
     fig=go.Figure()
     shown=set()
