@@ -74,11 +74,15 @@ def ui_style():
         background:#FFFFFF!important;
     }
     /* One CSS frame around the map, identical to the other dashboard cards. */
+    /* The map and operations card share one fixed OUTER height; the
+       undistorted 600px map has a 1px border on each side. */
     .st-key-eoc_coverage_map_panel{
         background:#FFFFFF!important;
         border:1px solid #DFE9F1!important;
         border-radius:12px!important;
         padding:0!important;
+        height:602px;
+        min-height:602px;
         box-sizing:border-box;
         overflow:hidden;
     }
@@ -218,10 +222,10 @@ def ui_style():
         .eoc-overview-treemap-metric{font-size:1.04rem;}
         .eoc-overview-treemap-metric small{font-size:.60rem;}
     }
-    /* One card, same outside height as the 450px map plus its frame padding.
-       Keep rows at a consistent rhythm; never stretch the inner content. */
+    /* The map and operating-mode card must finish on the same baseline.
+       Make the map taller, not the operating-mode content shorter. */
     .card-panel.eoc-pair-overview.eoc-operations-card{
-        height:calc(480px + 12px + 2px);
+        height:602px;
         min-height:0;
         margin:0;
         padding:16px 18px;
