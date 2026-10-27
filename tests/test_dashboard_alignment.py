@@ -86,7 +86,7 @@ def test_overview_has_two_aligned_regional_treemaps():
     assert "overview_treemap_html(pd.DataFrame(gap_rows),'gap',lang=chosen_language())" in after_map
     assert "capacity_rows_html(" not in after_map
     assert "eoc-country-capacity-item" not in after_map
-    assert ".eoc-overview-treemap-plot{position:relative;width:100%;height:354px;}" in APP
+    assert ".eoc-overview-treemap-plot{position:relative;width:100%;height:450px;}" in APP
     assert ".eoc-overview-treemap-card{" in APP
     assert ".card-panel.eoc-pair-capacities.eoc-priority-card" not in APP
     assert "PRELIMINARY · Self-reported capacities" not in APP
