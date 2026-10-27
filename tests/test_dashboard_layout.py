@@ -153,3 +153,11 @@ def test_capacity_disclosures_preserve_counts_and_country_statuses():
         assert expected in html
     assert 'class="status-chip status-yes"' in html
     assert 'class="status-chip status-no"' in html
+
+
+def test_expandable_capacity_bars_keep_visible_blue_fill():
+    """Inline spans ignore percentage width; the fill must be display:block."""
+    app = (ROOT / 'app.py').read_text(encoding='utf-8')
+    assert '.measure-fill{display:block;height:100%;background:#009BDA;' in app
+    assert '<span class="measure-bar"><span class="measure-fill" style="width:' in app
+    assert "f'{pct:.1f}%\"</span>" not in app
