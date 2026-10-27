@@ -545,6 +545,7 @@ def capacity_chart(indicator, counts, chart_kind):
     labels=list(counts.index)
     values=[float(v) for v in counts.values]
     pct=[100*v/total for v in values]
+    unit=('equivalentes de país' if chosen_language()=='es' else 'country equivalents')
     def short_label(label,limit=36):
         return textwrap.shorten(' '.join(str(label).split()),width=limit,placeholder='…')
     shorter=labels_for_question(int(indicator['col']),labels,chosen_language())
@@ -556,7 +557,7 @@ def capacity_chart(indicator, counts, chart_kind):
                         line=dict(color='white',width=2)),
             textinfo='percent',textposition='inside',
             textfont=dict(size=12,color='white'),
-            hovertemplate='<b>%{customdata}</b><br>%{percent} (%{value:.1f}/'+str(total)+' country equivalents)<extra></extra>'))
+            hovertemplate='<b>%{customdata}</b><br>%{percent} (%{value:.1f}/'+str(total)+' '+unit+')<extra></extra>'))
         fig.add_annotation(x=.5,y=.5,
             text='<b>'+str(total)+'</b><br><span style="font-size:11px">'+
                  ('respuestas' if chosen_language()=='es' else 'responses')+'</span>',
@@ -573,7 +574,7 @@ def capacity_chart(indicator, counts, chart_kind):
                         line=dict(color='white',width=2)),
             texttemplate='<b>%{label}</b><br>%{percentRoot:.0%}',
             textposition='top left',textfont=dict(size=12),
-            hovertemplate='<b>%{customdata}</b><br>%{percentRoot:.0%} (%{value:.1f}/'+str(total)+' country equivalents)<extra></extra>',
+            hovertemplate='<b>%{customdata}</b><br>%{percentRoot:.0%} (%{value:.1f}/'+str(total)+' '+unit+')<extra></extra>',
             pathbar=dict(visible=False),tiling=dict(pad=4)))
         fig.update_layout(showlegend=False,height=430,
             margin=dict(l=10,r=10,t=14,b=14),
@@ -588,7 +589,7 @@ def capacity_chart(indicator, counts, chart_kind):
             customdata=[[labels[i],values[i]] for i in order],
             text=[f'{pct[i]:.0f}%' for i in order],textposition='outside',
             cliponaxis=False,
-            hovertemplate='<b>%{customdata[0]}</b><br>%{x:.0f}% (%{customdata[1]:.1f}/'+str(total)+' country equivalents)<extra></extra>'))
+            hovertemplate='<b>%{customdata[0]}</b><br>%{x:.0f}% (%{customdata[1]:.1f}/'+str(total)+' '+unit+')<extra></extra>'))
         fig.update_xaxes(range=[0,110],tickmode='array',
             tickvals=[0,25,50,75,100],
             ticktext=['0%','25%','50%','75%','100%'],
