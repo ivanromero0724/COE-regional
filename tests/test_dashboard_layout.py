@@ -62,11 +62,11 @@ def test_map_heading_and_chart_borders_consistent():
     assert "border:1px solid #DFE9F1;" in app
     assert 'border-radius:12px!important;' in app
     # Every standalone Plotly chart has the same outline as the HTML cards.
-    plotly_css = app.split('[data-testid="stPlotlyChart"]{', 1)[1].split('}', 1)[0]
+    plotly_css = app.split('\n    [data-testid="stPlotlyChart"]{', 1)[1].split('}', 1)[0]
     assert "border:1px solid #DFE9F1;" in plotly_css
     assert "border-radius:12px;" in plotly_css
     # The map's own native frame provides its outline: no nested second border.
-    map_css = app.split('.st-key-eoc_coverage_map_panel [data-testid="stPlotlyChart"]{', 1)[1].split('}', 1)[0]
+    map_css = app.rsplit('.st-key-eoc_coverage_map_panel [data-testid="stPlotlyChart"]{', 1)[1].split('}', 1)[0]
     assert "border:0!important;" in map_css
     assert "border-radius:0!important;" in map_css
     assert "border:1px solid #DFE9F1;border-top:3px solid #005A8B;" in app
