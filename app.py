@@ -465,7 +465,7 @@ def regional_indicator_rows(active,item):
         return [(r.country,r[field] if pd.notna(r[field]) else None)
                 for _,r in active.sort_values('country').iterrows()]
     col=item.get('col')
-    if col is not None and pd.notna(col) and int(col)>=0:
+    if col is not None and pd.notna(col) and (int(col)>=0 or int(col)==-2):
         col=int(col)
         valid=item.get('positive')
         if valid is None or not isinstance(valid,tuple):
