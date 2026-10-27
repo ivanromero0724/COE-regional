@@ -23,7 +23,8 @@ def test_comparisons_do_not_stretch_bar_cards():
 def test_headings_are_compact_and_translate_flexibly():
     assert ".eoc-pair-heading{min-height:0;margin:0 0 2px" in APP
     assert ".section-desc{font-size:.81rem;line-height:1.46;color:#657A8A;margin-bottom:8px;" in APP
-    assert "@media(max-width:900px){.eoc-pair-heading{margin-bottom:0;}}" in APP
+    assert "@media(max-width:900px){.eoc-pair-heading{margin-bottom:0;}" in APP
+    assert ".st-key-eoc_operations_panel .card-panel.eoc-pair-overview{min-height:0;}" in APP
 
 
 def test_map_height_is_proportionate_to_operations_card():
