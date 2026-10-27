@@ -57,7 +57,7 @@ jobs:
           section.set_value('Capacities & gaps').run(timeout=90)
           assert not app.exception, [e.message for e in app.exception]
           html = next(
-              (x.value for x in app.markdown if 'eoc-capacity-disclosure' in x.value), ''
+              (x.value for x in app.markdown if '<details class="eoc-capacity-disclosure">' in x.value), ''
           )
           assert '<details class="eoc-capacity-disclosure">' in html, (
               'The interactive capacity rows were not rendered'
