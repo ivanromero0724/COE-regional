@@ -102,3 +102,48 @@ def overview_treemap_html(frame,mode='available',lang='en'):
     return ('<div class="eoc-overview-treemap-card">'
             '<div class="eoc-overview-treemap-plot" role="group" aria-label="'
             +escape(kind,quote=True)+'">'+''.join(elements)+'</div></div>')
+
+
+def cooperation_treemap_html(frame,lang='en',kind='expertise'):
+    """Treemap ranking regional cooperation offers by the number of countries.
+
+    Rectangle AREA encodes countries reporting availability (numerator), not
+    the number of submitted institutional forms or the share of all offers.
+    Visible percentages use a question-specific valid-response denominator.
+    """
+    if kind not in ('expertise','modalities'):
+        raise ValueError('Unknown cooperation treemap type')
+    rows=[]
+    for _,r in frame.iterrows():
+        numerator=int(r['in_place'])
+        denominator=int(r['denominator'])
+        if numerator<0 or denominator<0 or numerator>denominator:
+            raise ValueError('Invalid cooperation numerator or denominator')
+        rows.append(dict(label=str(r['capacity']),numerator=numerator,
+                         denominator=denominator,
+                         weight=max(numerator,0.35)))
+    rows.sort(key=lambda x:(-x['numerator'],x['label']))
+    # Preserve the exact 100% proportional tiling, but area is proportional
+    # to positive country counts to foreground the most widely offered areas.
+    tiles=_split_tiles(rows)
+    elements=[]
+    for index,(tile,(x,y,w,h)) in enumerate(tiles):
+        label=tr(tile['label'],lang)
+        n=tile['numerator'];d=tile['denominator']
+        pct=100*n/d if d else 0
+        color=BLUE_SHADES[index%len(BLUE_SHADES)]
+        foreground=TEXT if color in (CYAN,LIGHT_BLUE,SLATE) else '#FFFFFF'
+        title=escape(f"{label} · {pct:.0f}% ({n}/{d})",quote=True)
+        # The full text remains on hover and in the accessible name.
+        elements.append(
+            '<div class="eoc-overview-treemap-tile eoc-cooperation-tile" style="'
+            f'left:{x:.5f}%;top:{y:.5f}%;width:{w:.5f}%;height:{h:.5f}%">'
+            '<div class="eoc-overview-treemap-face eoc-cooperation-tile-face" style="background:'
+            +color+';color:'+foreground+'" title="'+title+'" role="img" aria-label="'+title+'">'
+            '<span class="eoc-overview-treemap-label">'+escape(label)+'</span>'
+            '<span class="eoc-overview-treemap-metric">'+f'{pct:.0f}%'
+            +' <small>('+str(n)+'/'+str(d)+')</small></span></div></div>'
+        )
+    return ('<div class="eoc-overview-treemap-card eoc-cooperation-treemap-card">'
+            '<div class="eoc-overview-treemap-plot eoc-cooperation-treemap-plot">'
+            +''.join(elements)+'</div></div>')
