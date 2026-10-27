@@ -309,40 +309,90 @@ def row_items(row):
       ('Logistics readiness',tiny_choice(row,50,{'a':'None','b':'Initial','c':'Developing','d':'Functional','e':'Consolidated'})),
     ]
 
-def score_by_index(row,idx):
-    # 0-100 descriptive survey item completion/maturity rubric; missing excluded.
-    scales={
-       29: {'a':0,'b':25,'c':50,'d':75,'e':100},
-       33: {'a':100,'b':0}, 37:{'a':100,'b':0,'c':45},
-       36:{'a':0,'b':25,'c':50,'d':75,'e':100},
-       47:{'a':100,'b':0},43:{'a':100,'b':50,'c':0},
-       49:{'a':0,'b':25,'c':50,'d':75,'e':100},
-       46:{'a':100,'b':50,'c':0},
-       66:{'a':100,'b':50,'c':0},68:{'a':100,'b':50,'c':0},
-       77:{'a':0,'b':25,'c':50,'d':75,'e':100},
-       78:{'a':100,'b':40,'c':35,'d':0},80:{'a':100,'b':50,'c':0},
-       41:{'a':0,'b':50,'c':100},42:{'a':0,'b':35,'c':65,'d':100},
-       44:{'a':100,'b':85,'c':75,'d':30,'e':0},
-       107:{'a':0,'b':25,'c':50,'d':75,'e':100},
-       110:{'a':0,'b':30,'c':60,'d':100},109:{'a':100,'b':0},
-       50:{'a':0,'b':25,'c':50,'d':75,'e':100},
-    }
-    code=choice(row,idx)
-    return scales.get(idx,{}).get(code)
+# The approved reference fact-sheet calculation recodes 24 questionnaire items
+# to five ordered maturity points (1=weakest, 5=strongest). Indices are zero-based
+# columns in the first worksheet; see docs/capability_scoring.md for provenance.
+# IMPORTANT: Code values are not always in strength order (e.g. Q21).
+ITEM_RATINGS = {
+    # Governance & legal (Q10, Q12, Q13, Q14, Q15)
+    29: {'a':1,'b':2,'c':3,'d':4,'e':5},  # legal framework
+    32: {'a':1,'b':2,'c':3,'d':4,'e':5},  # legal support to decisions
+    33: {'a':5,'b':1},                  # inclusion in national plan
+    36: {'a':1,'b':2,'c':3,'d':4,'e':5},  # sustainable finance
+    37: {'a':5,'b':1,'c':3},            # formal SOP
+    # Operations & decisions (Q16, Q20, Q22, Q23, Q24, Q25)
+    39: {'a':5,'b':4,'c':2,'d':1,'e':1},  # activation time: <2h / 2-6h / >6h / undefined
+    43: {'a':5,'b':3,'c':1,'d':1},       # incident action plan
+    46: {'a':5,'b':3,'c':1,'d':1},       # strategic committee
+    47: {'a':5,'b':1},                  # incident management system
+    49: {'a':1,'b':2,'c':3,'d':4,'e':5},  # risk assessment and grading
+    50: {'a':1,'b':2,'c':3,'d':4,'e':5},  # operational/logistic capacity
+    # Human resources & surge (Q28, Q30, Q32, Q33, Q34)
+    66: {'a':5,'b':3,'c':1},             # coordinator
+    68: {'a':5,'b':3,'c':1},             # defined roles
+    77: {'a':1,'b':2,'c':3,'d':4,'e':5},   # surge procedures
+    78: {'a':5,'b':3,'c':2,'d':1,'e':1},   # response roster
+    80: {'a':5,'b':3,'c':1,'d':1},        # rapid-team deployment
+    # Information management (Q38, Q39, Q40, Q41, Q42)
+    105: {'a':1,'b':2,'c':4,'d':5},      # intra-institutional information exchange
+    107: {'a':1,'b':2,'c':3,'d':4,'e':5}, # information systems
+    108: {'a':1,'b':2,'c':3,'d':5},      # frequent information gaps (reverse severity)
+    109: {'a':5,'b':1,'c':1},            # integrated situation room
+    110: {'a':1,'b':2,'c':3,'d':5,'e':1}, # SITREP procedures
+    # Coordination & integration (Q18, Q19, Q21)
+    41: {'a':1,'b':3,'c':5,'d':1},       # intersectoral collaboration
+    42: {'a':1,'b':2,'c':4,'d':5},       # disaster-risk integration
+    44: {'a':5,'b':4,'c':4,'d':1,'e':1}, # international cooperation
+}
 
-DOMAINS=[('Governance & legal',[29,33,37,36]),
-         ('Operations & decisions',[47,43,49,46,50]),
-         ('Human resources',[66,68,77,78,80]),
-         ('Information management',[107,110,109]),
-         ('Coordination',[41,42,44])]
+DOMAINS = [
+    ('Governance & legal', [29,32,33,36,37]),
+    ('Operations & decisions', [39,43,46,47,49,50]),
+    ('Human resources', [66,68,77,78,80]),
+    ('Information management', [105,107,108,109,110]),
+    ('Coordination', [41,42,44]),
+]
+
+# Catch accidental omission, duplication or edits to the 24-item specification.
+_DOMAIN_INDICES = [index for _, indices in DOMAINS for index in indices]
+assert len(DOMAINS) == 5 and len(_DOMAIN_INDICES) == 24
+assert len(set(_DOMAIN_INDICES)) == 24 and set(_DOMAIN_INDICES) == set(ITEM_RATINGS)
+assert all(1 <= score <= 5 for ratings in ITEM_RATINGS.values() for score in ratings.values())
+
+
+def score_by_index(row, idx):
+    """Return the 1–5 ordinal item rating, or None for a genuinely blank cell.
+
+    Explicit 'don't know', 'not defined' and 'not applicable' survey choices
+    receive 1 where specified by the *reference 2026 infographic rubric*.
+    This reproduces the provided baseline, but measures both uncertainty and
+    declared immaturity; the methodological caveat is documented separately.
+    """
+    code = choice(row, idx)
+    return ITEM_RATINGS.get(idx, {}).get(code)
+
+
+def maturity_level(score):
+    if score is None: return 'Not scored'
+    if score < 40: return 'Initial'
+    if score < 60: return 'Developing'
+    if score < 80: return 'Functional'
+    return 'Advanced'
+
 
 def scores(row):
-    out=[]
-    for label,cols in DOMAINS:
-        values=[score_by_index(row,j) for j in cols]
-        vals=[v for v in values if v is not None]
-        out.append((label,round(sum(vals)/len(vals)) if vals else None,len(vals),len(cols)))
-    return out
+    """Five 0–100 pillar scores from equally weighted 1–5 question ratings.
+
+    This is (mean(ratings) - 1) * 25, rounded only for display. Empty cells
+    are excluded; 'don't know' options explicitly listed above are scored 1.
+    """
+    result = []
+    for label, cols in DOMAINS:
+        vals = [score_by_index(row, j) for j in cols]
+        scored = [v for v in vals if v is not None]
+        value = round((sum(scored)/len(scored) - 1)*25) if scored else None
+        result.append((label, value, len(scored), len(cols)))
+    return result
 
 def hazards(row):
     labels={'a':'None','b':'1-2 events','c':'3-5 events','d':'> 5 events'}
@@ -525,9 +575,18 @@ def responding_country_means(reports):
     return means
 
 
+def maturity_color(score):
+    # The four maturity bands from the 24-item reference rubric.
+    if score is None: return MUTED
+    if score < 40: return '#EA8B62'   # Initial
+    if score < 60: return '#85BFDE'   # Developing
+    if score < 80: return '#397FA9'   # Functional
+    return BLUE                       # Advanced
+
+
 def cap_bars(c, row, x, top, width, region_means):
     section_panel(c, x, top, width, 141, 'Capability snapshot')
-    # Five rows use the same 0–100 domain scale. The orange marker is the
+    # Five rows use the 24-item ordinal-derived 0–100 pillar scale. The orange marker is the
     # unweighted mean of responding countries, not an Americas-wide baseline.
     track_x = x + 173
     track_w = width - 207
@@ -536,7 +595,7 @@ def cap_bars(c, row, x, top, width, region_means):
         text(c, lab, x+10, yy+1, 6.20, MUTED)
         rect(c, track_x, yy+1, track_w, 8, '#E8F0F5', r=4)
         if value is not None:
-            rect(c, track_x, yy+1, max(2, track_w*value/100), 8, BLUE, r=4)
+            rect(c, track_x, yy+1, max(2, track_w*value/100), 8, maturity_color(value), r=4)
             right(c, str(value), x+width-10, yy, 7.65, BLUE, True)
         else:
             right(c, '—', x+width-10, yy, 7.65, MUTED)
@@ -725,7 +784,7 @@ def footer(c,country,source_row):
     rule(c,40,572,742,LINE)
     text(c,'SOURCE  PAHO/WHO Regional Survey on Health Emergency Operations Centres (2026)',40,752,6.1,BLUE,True)
     text(c,f'{country} · Source Excel row {source_row} · Self-reported information · Not independently verified',40,763,5.5,MUTED)
-    text(c,'Exploratory 0–100 scores. Benchmark = mean across responding countries, equal country weight; not a PAHO assessment.',40,774,5.0,MUTED)
+    text(c,'Indicative 24-item, 1–5 maturity scores (rescaled 0–100). Orange = responding-country mean; not a PAHO assessment.',40,774,5.0,MUTED)
     right(c,'paho.org',572,753,7,BRIGHT,True)
 
 
