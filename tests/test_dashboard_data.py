@@ -54,3 +54,26 @@ def test_question_15_formal_document_has_valid_responses():
     valid=countries.formal_document.dropna()
     assert len(valid)>0, 'Question 15 must contain country-level yes/no responses'
     assert set(valid.unique()).issubset({True,False})
+
+
+def test_capacity_abbreviations_across_all_components_and_languages():
+    """Every displayed questionnaire category stays distinct in ES and EN."""
+    from app import capacity_answer_labels, capacity_response_distribution
+    records,_=load_data()
+    countries=country_aggregate(records)
+    frame=capacity_table(countries)
+    for component in CAPACITIES:
+        selected=frame.loc[frame.component==component]
+        assert len(selected)==len(CAPACITIES[component])
+        for _,indicator in selected.iterrows():
+            counts=capacity_response_distribution(countries,indicator)
+            for language in ('es','en'):
+                labels=capacity_answer_labels(counts.index,language)
+                assert len(labels)==len(set(labels)), (component,indicator.capacity,language,labels)
+                assert all(0<len(x)<=36 for x in labels)
+    from app import capacity_answer_label
+    for lang in ('en','es'):
+        assert capacity_answer_label('a. Sí',lang)==('Yes' if lang=='en' else 'Sí')
+        assert capacity_answer_label('b. No',lang)=='No'
+        assert capacity_answer_label('c. Parcialmente / en desarrollo',lang)==(
+            'Partial / developing' if lang=='en' else 'Parcial / desarrollo')
