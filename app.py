@@ -14,7 +14,7 @@ import numpy as np
 import streamlit as st
 from dashboard.data import (
   ROOT, XLSX, DOMAINS, DOMAIN_SHORT, RESOURCE_LABELS, TRAINING_LABELS,
-  HAZARD_LABELS, NETWORK_NAMES, CAPACITIES, load_data, country_aggregate,
+  HAZARD_LABELS, NETWORK_NAMES, COOPERATION_SKILLS, COOPERATION_MODES, CAPACITIES, load_data, country_aggregate,
   capacity_table, domain_benchmark, country_capacity, safe_csv
 )
 from dashboard import charts as viz
@@ -243,6 +243,26 @@ def cooperation_section(active):
     section('Country network status','Only those with a reported network status are displayed.')
     cols=['country']+list(NETWORK_NAMES.values())
     st.dataframe(active[cols].rename(columns={'country':'Country'}),use_container_width=True,hide_index=True,height=min(530,42*len(active)+42))
+    st.divider()
+    a,b=st.columns(2,gap='large')
+    with a:
+        section('Expertise countries can share',
+                'Country-reported technical expertise available for cooperation.',eyebrow='02 / CAPACITIES OFFERED')
+        vals=[]
+        for name in COOPERATION_SKILLS.values():
+            series=active['Skill: '+name].dropna()
+            vals.append({'capacity':name,'in_place':sum(bool(x) for x in series),'denominator':len(series)})
+        shown=pd.DataFrame(vals).sort_values('in_place',ascending=False).head(9)
+        st.plotly_chart(viz.horizontal_bars(shown,height=445),use_container_width=True,config={'displayModeBar':False})
+    with b:
+        section('How countries can cooperate',
+                'Reported modalities of technical collaboration.',eyebrow='03 / MODALITIES')
+        vals=[]
+        for name in COOPERATION_MODES.values():
+            series=active['Mode: '+name].dropna()
+            vals.append({'capacity':name,'in_place':sum(bool(x) for x in series),'denominator':len(series)})
+        shown=pd.DataFrame(vals).sort_values('in_place',ascending=False)
+        st.plotly_chart(viz.horizontal_bars(shown,height=420),use_container_width=True,config={'displayModeBar':False})
     st.markdown('<div class="eoc-note">The later questions about mobilizable expertise, cooperation modalities and regional networks were answered by fewer countries. Never use the full 15-country denominator when a question was not asked or answered.</div>',unsafe_allow_html=True)
 
 
@@ -287,7 +307,6 @@ def country_profile(records,countries):
     with a:st.plotly_chart(viz.maturity_radar(r,benchmark),use_container_width=True,config={'displayModeBar':False})
     with b:
         st.plotly_chart(viz.maturity_country_bars(r,benchmark),use_container_width=True,config={'displayModeBar':False})
-        domain_values=[float(r[c]) for c in DOMAINS if pd.notna(r[c])]
         st.caption('Indicative 0–100 maturity scale: Initial <40 · Developing 40–59 · Functional 60–79 · Advanced ≥80. Not a ranking.')
     st.divider()
     col1,col2=st.columns([1,1],gap='large')
@@ -325,6 +344,12 @@ def country_profile(records,countries):
     if r['Recent activations (original language)']:
         with st.expander('Recent events / activations · original response'):
             st.write(r['Recent activations (original language)'])
+    skills=[name for name in COOPERATION_SKILLS.values() if pd.notna(r['Skill: '+name]) and bool(r['Skill: '+name])]
+    modes=[name for name in COOPERATION_MODES.values() if pd.notna(r['Mode: '+name]) and bool(r['Mode: '+name])]
+    if skills or modes:
+        with st.expander('Technical capabilities and contributions this institution can offer'):
+            st.markdown('**Expertise:** '+(', '.join(skills) if skills else 'Not reported'))
+            st.markdown('**Modalities:** '+(', '.join(modes) if modes else 'Not reported'))
     pdf=local_pdf_for(r)
     if pdf is not None:
         st.download_button('Download this institution’s PDF fact sheet',data=pdf.read_bytes(),file_name=pdf.name,mime='application/pdf',type='primary')
