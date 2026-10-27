@@ -47,3 +47,10 @@ def test_map_input_matches_country_codes():
     records,_=load_data()
     missing=set(records.iso3)-set(geo.ISO_CC)
     assert not missing, f'Survey ISO3 not found in GeoPackage: {missing}'
+
+def test_question_15_formal_document_has_valid_responses():
+    records,_=load_data()
+    countries=country_aggregate(records)
+    valid=countries.formal_document.dropna()
+    assert len(valid)>0, 'Question 15 must contain country-level yes/no responses'
+    assert set(valid.unique()).issubset({True,False})
