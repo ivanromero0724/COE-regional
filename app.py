@@ -185,7 +185,7 @@ def ui_style():
     .measure-row:last-child{border-bottom:0;}
     .measure-label{font-size:.80rem;font-weight:600;color:#29485F;line-height:1.35;overflow-wrap:anywhere;}
     .measure-bar{width:100%;height:9px;border-radius:999px;background:#E7F0F6;overflow:hidden;}
-    .measure-fill{height:100%;background:#009BDA;border-radius:999px;}
+    .measure-fill{display:block;height:100%;background:#009BDA;border-radius:999px;}
     .measure-value{font-size:.77rem;font-weight:800;color:#005A8B;text-align:right;white-space:nowrap;}
     /* The entire capacity bar is a keyboard-accessible native disclosure.
        Details open directly under the clicked row, without a sidebar or dropdown. */
