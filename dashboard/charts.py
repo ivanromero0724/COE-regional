@@ -211,11 +211,12 @@ def responding_country_map_center(geo, country_codes):
 
 
 def responding_country_map_bounds(geo, country_codes):
-    """Tight, stable geographic extent across regional filters.
+    """Extent covering survey respondents AND complete surrounding Mexico.
 
-    Include all responding country polygons (not only currently selected
-    countries) so the map never jumps as filters change. Preserve geographic
-    proportions and leave just a small breathing room around the region.
+    A respondents-only extent truncates Mexico west of Guatemala, because
+    Mexico has no survey response. Include its geographic outline in the
+    framing (but not in respondent counts or status colors). The extent is
+    stable across filters and retains geographic proportions.
     """
     points=[]
     def visit(coords):
@@ -228,8 +229,11 @@ def responding_country_map_bounds(geo, country_codes):
         else:
             for part in coords:
                 visit(part)
+    # Nonresponding countries still matter to the composition of the map.
+    # Mexico is fully visible instead of getting cut at the respondent edge.
+    included_codes=set(country_codes)|{'MEX'}
     for feature in geo['features']:
-        if feature.get('properties',{}).get('ISO_CC') in country_codes:
+        if feature.get('properties',{}).get('ISO_CC') in included_codes:
             visit(feature.get('geometry',{}).get('coordinates',[]))
     if not points:
         return (-94,-31),(-57,28)
@@ -270,8 +274,8 @@ def countries_map(countries, selection=None, lang='en'):
             return coords
         return []
 
-    # Fit the respondent countries, not a generous continent-wide rectangle.
-    # The viewport is independent of the active filter.
+    # Include the whole Mexican outline as well as all surveyed countries:
+    # a respondent-only viewport would crop Mexico's northwest.
     (xmin,xmax),(ymin,ymax)=responding_country_map_bounds(
         geo,set(stats.index)
     )
