@@ -7,7 +7,7 @@ translated via deterministic rules. Respondent names, phone numbers and emails
 are never printed. Non-standard free text is not published verbatim.
 """
 from __future__ import annotations
-import argparse, collections, datetime as dt, hashlib, html, re, unicodedata, zipfile
+import argparse, collections, datetime as dt, hashlib, html, re, statistics, unicodedata, zipfile
 from io import BytesIO
 from functools import lru_cache
 from PIL import Image, ImageDraw, ImageFont
@@ -499,117 +499,237 @@ def badge(c, s, x, top, width, active):
               color=BLUE if active else '#8496A4',maxheight=10)
 
 
-def cap_bars(c, row, x, top, width):
+def responding_country_means(reports):
+    """Country-weighted benchmark, NOT a full-Americas regional estimate.
+
+    Each country has a single vote in the benchmark: if multiple institutions
+    submitted a valid EOC response, average their reported domain scores first.
+    Respondents reporting no EOC are excluded from EOC-specific capability scores.
+    Any missing domain is omitted from that domain's benchmark denominator.
+    """
+    means = []
+    for i, (label, columns) in enumerate(DOMAINS):
+        by_country = []
+        for country, submissions in reports.items():
+            institution_scores = []
+            for source_row, row in submissions:
+                if status(row) is False:
+                    continue
+                value = scores(row)[i][1]
+                if value is not None:
+                    institution_scores.append(value)
+            if institution_scores:
+                by_country.append(statistics.mean(institution_scores))
+        means.append((label, statistics.mean(by_country) if by_country else None,
+                      len(by_country)))
+    return means
+
+
+def cap_bars(c, row, x, top, width, region_means):
     section_panel(c, x, top, width, 141, 'Capability snapshot')
-    yy=top+31
-    for lab,v,n,total in scores(row):
-        text(c,lab,x+10,yy+1,6.45,MUTED)
-        track_x=x+176
-        track_w=width-207
-        rect(c,track_x,yy,track_w,9,'#E5EEF4',r=4.5)
-        if v is not None:
-            rect(c,track_x,yy,max(2,track_w*v/100),9,
-                 BLUE if v>=70 else BRIGHT if v>=45 else ORANGE,r=4.5)
-            right(c,str(v),x+width-10,yy,7.8,BLUE,True)
+    # Five rows use the same 0–100 domain scale. The orange marker is the
+    # unweighted mean of responding countries, not an Americas-wide baseline.
+    track_x = x + 173
+    track_w = width - 207
+    for i, (lab, value, scored, total) in enumerate(scores(row)):
+        yy = top + 31 + 20*i
+        text(c, lab, x+10, yy+1, 6.20, MUTED)
+        rect(c, track_x, yy+1, track_w, 8, '#E8F0F5', r=4)
+        if value is not None:
+            rect(c, track_x, yy+1, max(2, track_w*value/100), 8, BLUE, r=4)
+            right(c, str(value), x+width-10, yy, 7.65, BLUE, True)
         else:
-            right(c,'—',x+width-10,yy,7.8,MUTED)
-        yy+=20
-    text(c,'Mean of available scored responses · 0–100 · indicative',
-         x+10,top+128,5.15,MUTED)
+            right(c, '—', x+width-10, yy, 7.65, MUTED)
+        benchmark = region_means[i][1]
+        if benchmark is not None:
+            px = track_x + track_w*benchmark/100
+            c.setStrokeColor(col(ORANGE)); c.setLineWidth(1.7)
+            c.line(px, PAGE_H-(yy-2), px, PAGE_H-(yy+12))
+    # Legend contains a transparent limitation; benchmarks update from the data.
+    rect(c, x+10, top+127.3, 8, 4.3, BLUE, r=2)
+    text(c, 'Response', x+22, top+125.9, 4.9, MUTED)
+    rect(c, x+83, top+125.7, 2.2, 9, ORANGE, r=0.9)
+    n = min((r[2] for r in region_means if r[2]), default=0)
+    text(c, f'Responding-country mean (n={n}; countries equally weighted)',
+         x+90, top+125.9, 4.55, MUTED)
     return top+141
 
 
+def fit_text_size(s, max_width, preferred=5.8, minimum=4.6, bold=False):
+    font = BOLD if bold else FONT
+    k = preferred
+    while k > minimum and pdfmetrics.stringWidth(str(s), font, k) > max_width:
+        k -= .15
+    return max(minimum, k)
+
+
 def attribute_table(c, row, x, top, width):
+    """Clean 20-item capability matrix; no redundant two-line response rows."""
     section_panel(c, x, top, width, 213, 'Institutional & operational attributes')
-    pairs=row_items(row)
-    gap=12
-    inner=width-20
-    w=(inner-gap)/2
-    y0=top+32
-    # Dense 20-item grid: the attribute and its response occupy DIFFERENT
-    # text lines so neither can collide, even for long response categories.
+    pairs = row_items(row)
+    abbreviations = {
+        'Disaster-risk integration':'DRM integration',
+        'International cooperation':'Intl. cooperation',
+        'Incident management':'Incident management',
+        'Incident action plan':'Incident action plan',
+        'Information tools':'Information tools',
+        'Logistics readiness':'Logistics readiness',
+    }
+    gap = 12
+    inner = width-20
+    w = (inner-gap)/2
+    y0 = top+31
     for i,(label,value) in enumerate(pairs):
-        column=i//10; line=i%10
-        xx=x+10+column*(w+gap)
-        yy=y0+line*17
-        text(c,label,xx,yy,5.45,MUTED)
+        column, line = divmod(i, 10)
+        xx = x+10 + column*(w+gap)
+        yy = y0 + line*17.45
+        if line % 2 == 0:
+            rect(c, xx, yy, w, 15.1, '#EEF5FA', r=3)
+        label = abbreviations.get(label, label)
         if value in ('No','None','Not used','Health sector only'):
-            color=ORANGE
-        elif value in ('Yes','Formal','Systematic','Used','Integrated',
-                       'Updated','Consolidated','Functional',
-                       'Formal & regular','High','Interoperable'):
-            color=BLUE
+            fg, bg = ORANGE, '#FFF0EA'
+        elif value in ('Yes','Formal','Systematic','Used','Integrated','Updated',
+                       'Consolidated','Functional','Formal & regular','High',
+                       'Interoperable','Leads'):
+            fg, bg = BLUE, '#DDEDF7'
         else:
-            color=MUTED
-        text(c,value[:30],xx,yy+7,5.65,color,True)
-        rule(c,xx,xx+w,yy+16,LINE,.45)
+            fg, bg = MUTED, '#E8EEF1'
+        p_width = min(w*.48, pdfmetrics.stringWidth(value, BOLD, 5.4)+12)
+        p_width = max(29, p_width)
+        px = xx+w-3-p_width
+        rect(c, px, yy+2, p_width, 11, bg, r=5.5)
+        labelsize = fit_text_size(label, px-(xx+4)-3, 5.9, 4.5)
+        text(c, label, xx+4, yy+3.6, labelsize, INK)
+        valuesize = fit_text_size(value,p_width-6, 5.2, 4.3, True)
+        c.setFont(BOLD,valuesize);c.setFillColor(col(fg))
+        c.drawCentredString(px+p_width/2,PAGE_H-(yy+3.45)-valuesize,value)
     return top+213
 
 
 def side(c, row, x, top, width):
-    # Three deliberately separate blocks on the right. The last card ends
-    # exactly level with the two-column institutional attributes on the left.
-    section_panel(c,x,top,width,106,'Hazards coordinated')
-    yy=top+32
-    for label,ans in hazards(row):
-        text(c,label,x+10,yy,5.95,MUTED)
-        right(c,ans,x+width-10,yy,5.75,
-              BLUE if ans not in ('None','Not reported') else MUTED,True)
-        yy+=16
-
-    resource_top=top+116
-    section_panel(c,x,resource_top,width,112,'Operational resources')
-    resource_labels={
-        'Virtual coordination':'Virtual platform',
-        'Communications':'Comms equipment',
-        'Redundant internet':'Backup internet',
-        'Team workstations':'Workstations',
+    """Three compact visual summaries with fewer competing text styles."""
+    section_panel(c, x, top, width, 106, 'Hazards coordinated')
+    # Event counts are ordinal survey categories: the three lit mini-bars
+    # represent ordered *ranges*, not proportional numbers of emergencies.
+    hazard_labels = {
+        'Geological / weather':'Geological / weather',
+        'Biological / epidemics':'Biological / epidemic',
+        'Social / human-caused':'Social / human-caused',
+        'Technological':'Technological',
     }
-    avail_width=width-20
-    chip_gap=7
-    chip_width=(avail_width-chip_gap)/2
-    for j,(label,idx) in enumerate(RESOURCES):
-        c0=j%2
-        r0=j//2
-        xx=x+10+c0*(chip_width+chip_gap)
-        yy=resource_top+34+r0*19
-        badge(c,resource_labels.get(label,label),xx,yy,chip_width,
-              selected(row,idx) is True)
+    for i,(label,answer) in enumerate(hazards(row)):
+        yy=top+30+i*17
+        text(c,hazard_labels.get(label,label),x+10,yy+2,5.65,INK)
+        level={'None':0,'1-2 events':1,'3-5 events':2,'> 5 events':3}.get(answer)
+        for k in range(3):
+            fill=(BLUE if level is not None and k<level else '#DFE8ED')
+            rect(c,x+112+11*k, yy+4, 8, 8, fill, r=2)
+        label_short={'None':'None','1-2 events':'1–2','3-5 events':'3–5',
+                     '> 5 events':'>5'}.get(answer,'N/R')
+        right(c,label_short,x+width-9,yy+1,5.9,
+              BLUE if level is not None and level>0 else MUTED,True)
+    text(c,'Frequency bands: none · 1–2 · 3–5 · >5',
+         x+10,top+96,4.7,MUTED)
 
-    training_top=top+238
+    resource_top = top+116
+    section_panel(c,x,resource_top,width,112,'Operational resources')
+    names={
+        'Dedicated room':'Dedicated room','Shared room':'Shared room',
+        'Virtual coordination':'Virtual platform','Communications':'Communications',
+        'Situation displays':'Situation displays','Backup power':'Backup power',
+        'Redundant internet':'Backup internet','Team workstations':'Workstations',
+    }
+    # 2 columns of four rows, with the dot conveying yes / no / unreported.
+    cell_w=(width-27)/2
+    for i,(label,idx) in enumerate(RESOURCES):
+        xx=x+10+(i%2)*(cell_w+7)
+        yy=resource_top+33+(i//2)*18
+        selected_value=selected(row,idx)
+        if selected_value is True:
+            rect(c,xx,yy+3,6.7,6.7,BLUE,r=3.3)
+        elif selected_value is False:
+            c.setStrokeColor(col('#A9BDC8'));c.setLineWidth(.8)
+            c.circle(xx+3.3,PAGE_H-(yy+6.4),3.3,fill=0,stroke=1)
+        else:
+            text(c,'–',xx+1,yy,6.5,MUTED)
+        name=names.get(label,label)
+        text(c,name,xx+10,yy+1,fit_text_size(name,cell_w-10,5.9,4.8),
+             INK if selected_value else MUTED)
+    text(c,'● Reported     ○ Not selected     – Missing',
+         x+10,resource_top+101,4.55,MUTED)
+
+    training_top = top+238
     section_panel(c,x,training_top,width,124,'Training')
-    text(c,'● completed    ★ priority for strengthening',
-         x+10,training_top+28,5.4,MUTED)
-    for j,(label,a,b) in enumerate(TRAININGS):
-        yy=training_top+43+j*9.8
-        done=selected(row,a)
-        priority=selected(row,b)
-        text(c,'●' if done else '○',x+11,yy,6.0,
-             BLUE if done else '#9AADB9')
-        if priority:
-            text(c,'★',x+24,yy,5.9,ORANGE)
-        text(c,label,x+38,yy,5.95,
-             INK if done or priority else MUTED)
+    text(c,'✓ Completed     ★ Priority to strengthen',
+         x+10,training_top+26,5.15,MUTED)
+    alias={
+        'EOC activation':'EOC activation',
+        'Incident management':'Incident mgmt',
+        'Information management':'Information mgmt',
+        'Coordination':'Coordination',
+        'Damage / needs assessment':'Damage / needs',
+        'Rapid situation analysis':'Situation analysis',
+        'Rapid response teams':'Response teams',
+        'After-action reviews':'After-action review',
+    }
+    cw=(width-27)/2
+    for i,(label,done_idx,priority_idx) in enumerate(TRAININGS):
+        xx=x+10 + (i%2)*(cw+7)
+        yy=training_top+38+(i//2)*20.5
+        done=selected(row,done_idx)
+        priority=selected(row,priority_idx)
+        active = done is True or priority is True
+        rect(c,xx,yy,cw,17.4,PALE if active else '#F2F6F8',r=5)
+        short=alias.get(label,label)
+        text(c,short,xx+5,yy+5,fit_text_size(short,cw-24,5.6,4.65),
+             INK if active else MUTED)
+        if done is True:
+            right(c,'✓',xx+cw-13,yy+3.5,7.0,BLUE,True)
+        if priority is True:
+            right(c,'★',xx+cw-3,yy+4.2,6.0,ORANGE,True)
     return training_top+124
 
 
-def draw_bullets(c,arr,x,top,width,color,max_h=76):
-    y=top
-    for a in arr[:3]:
-        rect(c,x,y+4,4,4,color,r=2)
-        h=paragraph(c,a,x+11,y,width-14,size=6.8,maxheight=35)
-        y+=max(15,h+5)
-        if y>top+max_h:break
+def bullet_metrics(items, width, font_size):
+    style=ParagraphStyle('noteMeasure',fontName=FONT,fontSize=font_size,
+                         leading=font_size*1.37,spaceAfter=0)
+    heights=[]
+    for item in items[:3]:
+        para=Paragraph(html.escape(str(item)),style)
+        _,h=para.wrap(width-23,1000)
+        heights.append(max(12.1,h)+3.6)
+    return heights
+
+
+def narrative_panel(c, items, x, top, width, title, fill, accent):
+    """Independently auto-sized note box, aligned at the top but not bottom."""
+    usable=width-20
+    fs=6.65
+    heights=bullet_metrics(items,usable,fs)
+    while fs>5.65 and 30+sum(heights)+5>106:
+        fs-=.25
+        heights=bullet_metrics(items,usable,fs)
+    card_h=max(46,min(106,30+sum(heights)+5))
+    rect(c,x,top,width,card_h,fill,r=7)
+    text(c,title,x+11,top+10,7.0,accent,True)
+    yy=top+29
+    for text_item,line_h in zip(items[:3],heights):
+        rect(c,x+12,yy+4,4,4,accent,r=2)
+        paragraph(c,text_item,x+22,yy,usable-23,size=fs,
+                  leading=fs*1.37,maxheight=line_h-2)
+        yy+=line_h
+    return card_h
+
 
 def footer(c,country,source_row):
     rule(c,40,572,742,LINE)
     text(c,'SOURCE  PAHO/WHO Regional Survey on Health Emergency Operations Centres (2026)',40,752,6.1,BLUE,True)
     text(c,f'{country} · Source Excel row {source_row} · Self-reported information · Not independently verified',40,763,5.5,MUTED)
-    text(c,'Indicative scores: arithmetic means of item-specific 0–100 rubrics; not an official PAHO assessment or ranking.',40,774,5.0,MUTED)
+    text(c,'Exploratory 0–100 scores. Benchmark = mean across responding countries, equal country weight; not a PAHO assessment.',40,774,5.0,MUTED)
     right(c,'paho.org',572,753,7,BRIGHT,True)
 
 
-def core_single(c,country,row):
+def core_single(c,country,row,region_means):
     inst=organization(row)
     paragraph(c,inst,42,151,528,size=9.0,color=INK,bold=True,maxheight=27)
     metrics=[(val(row,17) if val(row,17) and val(row,17)!='1900' else '—','Established'),
@@ -618,16 +738,12 @@ def core_single(c,country,row):
          (str(number(row,67)) if number(row,67) is not None else '—','24/7 duty staff')]
     xs=[40,148,256,364,472]
     for (k,v),x in zip(metrics,xs):metric(c,x,188,100,k,v)
-    cap_bars(c,row,40,250,323)
+    cap_bars(c,row,40,250,323,region_means)
     attribute_table(c,row,40,399,323)
     side(c,row,375,250,197)
-    rect(c,40,626,260,102,PALE2,r=7)
-    rect(c,312,626,260,102,'#FFF5F0',r=7)
-    text(c,'REPORTED STRENGTHS',52,637,7,BLUE,True)
-    text(c,'IMPROVEMENT PRIORITIES',324,637,7,ORANGE,True)
     a,b=narrative_for(country,row)
-    draw_bullets(c,a,52,655,239,BLUE,65)
-    draw_bullets(c,b,324,655,236,ORANGE,65)
+    narrative_panel(c,a,40,626,260,'REPORTED STRENGTHS',PALE2,BLUE)
+    narrative_panel(c,b,312,626,260,'IMPROVEMENT PRIORITIES','#FFF5F0',ORANGE)
 
 
 def core_no_eoc(c,country,row):
@@ -655,12 +771,12 @@ def core_no_eoc(c,country,row):
               53,645,502,size=8.0,maxheight=48)
 
 
-def do_page(c,country,row,page_idx,total,response_number,responses_in_country,source_row):
+def do_page(c,country,row,page_idx,total,response_number,responses_in_country,source_row,region_means):
     header(c,country,row,page_idx,total,response_number,responses_in_country)
     if status(row) is False:
         core_no_eoc(c,country,row)
     else:
-        core_single(c,country,row)
+        core_single(c,country,row,region_means)
     footer(c,country,source_row)
     c.showPage()
 
@@ -681,6 +797,7 @@ def main():
     # Keep response order stable, and assign unique, non-overwriting names.
     for country in reports:
         reports[country].sort(key=lambda item: (-submit_key(item[1]), item[0]))
+    region_means=responding_country_means(reports)
     pages=[]
     for country in sorted(reports):
         submissions=reports[country]
@@ -708,16 +825,17 @@ def main():
     c.setTitle('PAHO | EOC Survey Fact Sheets 2026 | One per response')
     c.setAuthor('PAHO/WHO - Regional EOC survey (automatically generated; indicative)')
     for page_idx,(country,row,response_number,n,source_row,slug) in enumerate(pages,1):
-        do_page(c,country,row,page_idx,len(pages),response_number,n,source_row)
+        do_page(c,country,row,page_idx,len(pages),response_number,n,source_row,region_means)
     c.save()
     for page_idx,(country,row,response_number,n,source_row,slug) in enumerate(pages,1):
         dest=out_country/f'{slug}.pdf'
         single=canvas.Canvas(str(dest),pagesize=letter,pageCompression=1)
         single.setTitle(f'{country} · Response {response_number}/{n} | PAHO EOC 2026')
-        do_page(single,country,row,page_idx,len(pages),response_number,n,source_row)
+        do_page(single,country,row,page_idx,len(pages),response_number,n,source_row,region_means)
         single.save()
     print(f'Generated {len(pages)} pages from {len(pages)} survey responses, '
           f'{len(reports)} distinct countries: {combined}')
+    print('Benchmark (equal country weight):', [(name, round(mean, 1) if mean is not None else None, n) for name,mean,n in region_means])
     print('Individual pages:', ', '.join(p.name for p in sorted(out_country.glob('*.pdf'))))
 
 if __name__=='__main__':main()
