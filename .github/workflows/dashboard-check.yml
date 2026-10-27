@@ -35,7 +35,7 @@ jobs:
       - name: Check syntax, survey and cartographic layer
         run: |
           python -m py_compile app.py dashboard/data.py dashboard/charts.py dashboard/i18n.py
-          python -m pytest -q tests/test_dashboard_data.py tests/test_dashboard_layout.py tests/test_dashboard_i18n.py tests/test_dashboard_map.py tests/test_dashboard_alignment.py
+          python -m pytest -q tests/test_dashboard_data.py tests/test_dashboard_layout.py tests/test_dashboard_i18n.py tests/test_dashboard_map.py tests/test_dashboard_alignment.py tests/test_dashboard_drilldowns.py
       - name: Smoke-test bilingual pages and regional charts
         run: |
           python - <<'PYTEST'
@@ -54,6 +54,12 @@ jobs:
           section = next(x for x in app.segmented_control if x.key == 'regional_section')
           assert section.value == 'Overview', 'Regional overview must be initially selected'
           assert not any(x.key == 'regional_section' for x in app.sidebar.radio)
+          assert any('eoc-country-category-item' in x.value for x in app.markdown), (
+              'Operating and activation bars should open matching countries'
+          )
+          assert any('eoc-country-capacity-item' in x.value for x in app.markdown), (
+              'Overview capacity comparisons should open country statuses'
+          )
           section.set_value('Capacities & gaps').run(timeout=90)
           assert not app.exception, [e.message for e in app.exception]
           html = next(
@@ -74,8 +80,21 @@ jobs:
           section = next(x for x in app.segmented_control if x.key == 'regional_section')
           section.set_value('Operations & hazards').run(timeout=90)
           assert not app.exception, [e.message for e in app.exception]
+          assert any('eoc-training-bars' in x.value and 'eoc-capacity-disclosure' in x.value
+                     for x in app.markdown), 'Training completion and priority should open country statuses'
+          assert any('eoc-country-capacity-item' in x.value for x in app.markdown), (
+              'Regional infrastructure bars should open country responses'
+          )
           section = next(x for x in app.segmented_control if x.key == 'regional_section')
           assert section.value == 'Operations & hazards'
+          section.set_value('Networks & cooperation').run(timeout=90)
+          assert not app.exception, [e.message for e in app.exception]
+          assert any('<details class="network-card">' in x.value for x in app.markdown), (
+              'Network status bars should open exact participating/interested countries'
+          )
+          assert any('eoc-country-capacity-item' in x.value for x in app.markdown), (
+              'Cooperation skill and modality bars should open country statuses'
+          )
           nav = next(x for x in app.radio if x.key == 'main_view')
           nav.set_value('Country profiles').run(timeout=90)
           assert not app.exception, [e.message for e in app.exception]
