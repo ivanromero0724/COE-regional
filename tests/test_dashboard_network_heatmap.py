@@ -112,3 +112,57 @@ def test_streamlit_network_matrix_renders_all_countries_and_statuses_without_plo
                 assert cell['data-status']==expected
                 assert tr(expected,lang) in cell['title']
                 assert tr(country.country,lang) in cell['aria-label']
+
+
+def test_network_heatmap_icon_legend_matches_cells_and_no_heavy_status_fills():
+    """Legend and matrix use identical glyphs, status colors and neutral backgrounds."""
+    import re
+    from html.parser import HTMLParser
+
+    class Symbols(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.legend=[]
+            self.cells=[]
+            self.active=None
+        def handle_starttag(self,tag,attrs):
+            if tag!='span':
+                return
+            d=dict(attrs)
+            cl=d.get('class','')
+            if cl=='eoc-network-legend-symbol':
+                self.active=('legend',d.get('data-status'))
+            elif cl=='eoc-network-heat-symbol':
+                self.active=('cell',d.get('data-status'))
+        def handle_data(self,data):
+            if self.active and data.strip():
+                label,status=self.active
+                (self.legend if label=='legend' else self.cells).append((status,data.strip()))
+                self.active=None
+
+    countries=survey_countries()
+    app=(ROOT/'app.py').read_text(encoding='utf-8')
+    assert 'background:#005A8B;' not in app.split('.eoc-network-heat-cell{',1)[1].split('}',1)[0]
+    assert 'background:#009BDA;' not in app.split('.eoc-network-heat-cell{',1)[1].split('}',1)[0]
+    assert '.eoc-network-legend-symbol[data-status="Participating"]' in app
+    assert '.eoc-network-heat-symbol[data-status="Participating"]' in app
+    assert '.eoc-network-legend-symbol[data-status="Interested"]' in app
+    assert '.eoc-network-heat-symbol[data-status="Interested"]' in app
+    assert 'eoc-network-swatch' not in app
+    # Same symbol dictionary powers all legend keys and 15x3 country cells.
+    symbols=ui.NETWORK_STATUS_SYMBOLS
+    assert symbols=={
+        'Participating':'✓','Interested':'◐',
+        'Not participating':'×','Not reported':'—'
+    }
+    html=ui.network_heatmap_html(countries)
+    parsed=Symbols()
+    parsed.feed(html)
+    assert len(parsed.cells)==len(countries)*len(NETWORK_NAMES)
+    for index,(_,country) in enumerate(countries.iterrows()):
+        for j,name in enumerate(NETWORK_NAMES.values()):
+            status=country[name]
+            if status not in symbols:
+                status='Not reported'
+            assert parsed.cells[index*len(NETWORK_NAMES)+j]==(status,symbols[status])
+    assert all('background:' not in piece for piece in re.findall(r'<span class="eoc-network-heat-cell"[^>]*>',html))

@@ -109,6 +109,11 @@ jobs:
           assert heatmaps[0].count('class="eoc-network-heat-cell"')==45, (
               'Heatmap must have three network cells per country'
           )
+          assert heatmaps[0].count('class="eoc-network-heat-symbol"')==45, (
+              'Matrix should display one colored icon per country/network, not filled labels'
+          )
+          assert any(x.value.count('class="eoc-network-legend-symbol"')==4
+                     for x in app.markdown), 'Legend must display the same four status icons'
           assert any('eoc-country-capacity-item' in x.value for x in app.markdown), (
               'Cooperation skill and modality bars should open country statuses'
           )

@@ -247,50 +247,53 @@ def ui_style():
     .network-grid{align-items:start;}
     /* Network summary cards stay static. The country-level breakdown is the
        separate categorical matrix below, not three accordion panels. */
-    .eoc-network-legend{display:flex;gap:10px 21px;flex-wrap:wrap;
-        align-items:center;margin:12px 0 9px;font-size:.77rem;color:#45667A;}
-    .eoc-network-legend-item{display:inline-flex;gap:7px;align-items:center;}
-    .eoc-network-swatch{display:inline-block;width:13px;height:13px;
-        border-radius:3px;flex-shrink:0;border:1px solid rgba(35,70,95,.07);}
-    /* Network matrix is a semantic HTML heatmap, avoiding Plotly/Streamlit
-       serialization failures observed on Community Cloud. */
+    /* One matching legend and matrix vocabulary: colored symbols, no solid fills. */
+    .eoc-network-legend{display:flex;gap:10px 23px;flex-wrap:wrap;
+        align-items:center;margin:10px 0 11px;font-size:.80rem;color:#45667A;}
+    .eoc-network-legend-item{display:inline-flex;gap:8px;align-items:center;}
+    .eoc-network-legend-symbol,.eoc-network-heat-symbol{
+        display:inline-block;font-family:Arial,sans-serif;font-weight:800;
+        line-height:1;text-align:center;
+    }
+    .eoc-network-legend-symbol{font-size:1.08rem;min-width:19px;}
+    .eoc-network-heat-symbol{font-size:1.38rem;}
+    .eoc-network-legend-symbol[data-status="Participating"],
+    .eoc-network-heat-symbol[data-status="Participating"]{color:#005A8B;}
+    .eoc-network-legend-symbol[data-status="Interested"],
+    .eoc-network-heat-symbol[data-status="Interested"]{color:#009BDA;}
+    .eoc-network-legend-symbol[data-status="Not participating"],
+    .eoc-network-heat-symbol[data-status="Not participating"]{color:#F36B32;}
+    .eoc-network-legend-symbol[data-status="Not reported"],
+    .eoc-network-heat-symbol[data-status="Not reported"]{color:#7B8D9B;}
+    /* A quiet, border-matched HTML matrix rather than saturated badge tiles. */
     .eoc-network-matrix-wrap{
         border:1px solid #DFE9F1;border-radius:12px;background:#FFFFFF;
-        padding:14px 16px;overflow-x:auto;box-sizing:border-box;
+        padding:12px 18px;overflow-x:auto;box-sizing:border-box;
     }
-    .eoc-network-matrix{width:100%;border-collapse:separate;
-        border-spacing:4px;min-width:580px;table-layout:fixed;}
+    .eoc-network-matrix{width:100%;border-collapse:collapse;
+        min-width:510px;table-layout:fixed;}
     .eoc-network-matrix th{
-        padding:10px 8px;color:#005A8B;font-size:.81rem;
-        text-align:center;font-weight:800;background:#F1F7FA;
-        border-radius:5px;
+        padding:11px 10px;color:#005A8B;font-size:.80rem;
+        text-align:center;font-weight:800;background:#F5F9FC;
+        border-bottom:1px solid #DFE9F1;
     }
-    .eoc-network-matrix th:first-child{text-align:left;width:27%;}
-    .eoc-network-matrix td{padding:0;vertical-align:middle;}
+    .eoc-network-matrix th:first-child{text-align:left;width:28%;}
+    .eoc-network-matrix td{padding:0;vertical-align:middle;
+        border-bottom:1px solid #EBF0F4;}
+    .eoc-network-matrix tbody tr:last-child td,
+    .eoc-network-matrix tbody tr:last-child th{border-bottom:0;}
     .eoc-network-matrix .eoc-network-country{
-        font-size:.82rem;font-weight:700;color:#29485F;
-        padding:8px 11px;background:#F7FAFC;border-radius:5px;
+        font-size:.81rem;font-weight:700;color:#29485F;
+        padding:8px 10px;background:#FFFFFF;text-align:left;
+        border-bottom:1px solid #EBF0F4;
     }
     .eoc-network-heat-cell{
-        display:flex;align-items:center;justify-content:center;gap:8px;
-        min-height:32px;min-width:0;padding:6px 7px;
-        border-radius:5px;font-size:.77rem;font-weight:700;
-        white-space:nowrap;
+        display:flex;align-items:center;justify-content:center;
+        min-height:31px;padding:4px 8px;background:transparent;
     }
-    .eoc-network-heat-cell[data-status="Participating"]{
-        color:white;background:#005A8B;
+    .eoc-network-heat-cell:focus-visible{
+        outline:2px solid #009BDA;outline-offset:-2px;border-radius:5px;
     }
-    .eoc-network-heat-cell[data-status="Interested"]{
-        color:white;background:#009BDA;
-    }
-    .eoc-network-heat-cell[data-status="Not participating"]{
-        color:white;background:#F36B32;
-    }
-    .eoc-network-heat-cell[data-status="Not reported"]{
-        color:#5C7384;background:#E7EDF2;
-    }
-    .eoc-network-heat-cell:focus-visible{outline:2px solid #005A8B;outline-offset:2px;}
-    .eoc-network-heat-symbol{font-size:1.05rem;line-height:1;}
     .mini-title{font-size:.85rem;font-weight:800;color:#005A8B;margin:14px 0 6px;}
     .dist-row{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(70px,1fr) 115px;gap:10px;align-items:center;padding:6px 0;}
     .dist-label{font-size:.77rem;color:#29485F;overflow-wrap:anywhere;}
@@ -641,14 +644,19 @@ def operations_section(active):
 
 
 
-def network_heatmap_html(active):
-    """Stable categorical network matrix for all responding countries.
+NETWORK_STATUS_SYMBOLS={
+    'Participating':'✓','Interested':'◐',
+    'Not participating':'×','Not reported':'—',
+}
 
-    Native HTML avoids Plotly chart-marshalling errors in Streamlit Cloud and
-    keeps each self-reported response, including missing answers, explicit.
+
+def network_heatmap_html(active):
+    """Compact, accessible network matrix with icon-only categorical cells.
+
+    Each icon matches the legend and preserves the self-reported country response
+    in its tooltip and screen-reader label.
     """
-    allowed={'Participating':'✓','Interested':'◐',
-             'Not participating':'×','Not reported':'—'}
+    allowed=NETWORK_STATUS_SYMBOLS
     names=list(NETWORK_NAMES.values())
     head='<thead><tr><th scope="col">'+esc(T('Country'))+'</th>'+''.join(
         '<th scope="col">'+esc(T(name))+'</th>' for name in names
@@ -664,8 +672,9 @@ def network_heatmap_html(active):
             cells.append(
                 '<td><span class="eoc-network-heat-cell" data-status="'
                 +esc(status)+'" title="'+tooltip+'" tabindex="0" aria-label="'
-                +tooltip+'"><span class="eoc-network-heat-symbol">'
-                +allowed[status]+'</span>'+esc(T(status))+'</span></td>'
+                +tooltip+'"><span class="eoc-network-heat-symbol" data-status="'
+                +esc(status)+'" aria-hidden="true">'
+                +allowed[status]+'</span></span></td>'
             )
         rows.append('<tr><th scope="row" class="eoc-network-country">'
                     +esc(T(name))+'</th>'+''.join(cells)+'</tr>')
@@ -710,12 +719,12 @@ def cooperation_section(active):
     # One full-width categorical matrix for all three networks and all countries.
     st.markdown('<div class="mini-title">'+esc(T('Country participation by network'))+'</div>',
                 unsafe_allow_html=True)
-    legend_colors=[('Participating','#005A8B'),('Interested','#009BDA'),
-                   ('Not participating','#F36B32'),('Not reported','#E7EDF2')]
     legend=''.join(
-        '<span class="eoc-network-legend-item"><span class="eoc-network-swatch" '
-        f'style="background:{color}"></span>{esc(T(status))}</span>'
-        for status,color in legend_colors
+        '<span class="eoc-network-legend-item">'
+        '<span class="eoc-network-legend-symbol" data-status="'
+        +esc(status)+'" aria-hidden="true">'
+        +symbol+'</span>'+esc(T(status))+'</span>'
+        for status,symbol in NETWORK_STATUS_SYMBOLS.items()
     )
     st.markdown('<div class="eoc-network-legend">'+legend+'</div>',
                 unsafe_allow_html=True)
