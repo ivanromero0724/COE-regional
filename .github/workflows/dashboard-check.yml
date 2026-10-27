@@ -54,6 +54,15 @@ jobs:
           section = next(x for x in app.segmented_control if x.key == 'regional_section')
           assert section.value == 'Overview', 'Regional overview must be initially selected'
           assert not any(x.key == 'regional_section' for x in app.sidebar.radio)
+          section.set_value('Capacities & gaps').run(timeout=90)
+          assert not app.exception, [e.message for e in app.exception]
+          assert any('eoc-country-capacity-grid' in x.value for x in app.markdown), (
+              'The full-width country status grid was not rendered'
+          )
+          assert any('eoc-capacity-full' in x.value for x in app.markdown), (
+              'The full-width availability bars were not rendered'
+          )
+          section = next(x for x in app.segmented_control if x.key == 'regional_section')
           section.set_value('Operations & hazards').run(timeout=90)
           assert not app.exception, [e.message for e in app.exception]
           section = next(x for x in app.segmented_control if x.key == 'regional_section')
