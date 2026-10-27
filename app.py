@@ -148,10 +148,10 @@ def ui_style():
     .eoc-capacity-chart-meta{font-size:.73rem;color:#607B8A;margin:-8px 0 3px;}
     /* The outer Streamlit chart card is the only frame in Capacities & gaps.
        Remove the generic Plotly frame nested inside each card. */
+    /* Keep the Plotly chart frame; avoid stacking an outer card around it. */
     .st-key-capacity_visual_gallery [data-testid="stPlotlyChart"]{
-        border:none!important;border-radius:0!important;
-        box-shadow:none!important;background:transparent!important;
-        padding:0!important;
+        border:1px solid #DFE9F1!important;border-radius:12px!important;
+        box-shadow:none!important;background:#FFFFFF!important;
     }
 
 
@@ -605,8 +605,7 @@ def capacity_visual_dashboard(frame, active):
         fig.update_xaxes(range=[0,110],visible=False,fixedrange=True)
         fig.update_yaxes(automargin=True,fixedrange=True,tickfont_size=10)
         st.markdown('<div class="eoc-capacity-section-title">'+T('Capacity availability')+'</div>',unsafe_allow_html=True)
-        with st.container(border=True):
-            st.plotly_chart(fig,use_container_width=True,config={'displayModeBar':False})
+        st.plotly_chart(fig,use_container_width=True,config={'displayModeBar':False})
     st.markdown('<div class="eoc-capacity-section-title">'+
                 ('Distribución de respuestas' if chosen_language()=='es' else 'Response distribution')+
                 '</div>',unsafe_allow_html=True)
@@ -614,19 +613,18 @@ def capacity_visual_dashboard(frame, active):
     for i,(_,indicator) in enumerate(frame.iterrows()):
         counts=capacity_response_distribution(active,indicator)
         with columns[i%2]:
-            with st.container(border=True):
-                title=T(indicator['capacity'])
-                st.markdown('<div class="eoc-capacity-chart-title" title="'+esc(title)+'">'+esc(title)+'</div>',
-                            unsafe_allow_html=True)
-                if counts.empty:
-                    st.caption(T('No valid responses'))
-                    continue
-                kind=('donut','bar','treemap')[i%3]
-                st.plotly_chart(capacity_chart(indicator,counts,kind),
-                                use_container_width=True,config={'displayModeBar':False})
-                st.markdown('<div class="eoc-capacity-chart-meta">'+str(int(counts.sum()))+' '+
-                            ('respuestas válidas' if chosen_language()=='es' else 'valid responses')+
-                            '</div>',unsafe_allow_html=True)
+            title=T(indicator['capacity'])
+            st.markdown('<div class="eoc-capacity-chart-title" title="'+esc(title)+'">'+esc(title)+'</div>',
+                        unsafe_allow_html=True)
+            if counts.empty:
+                st.caption(T('No valid responses'))
+                continue
+            kind=('donut','bar','treemap')[i%3]
+            st.plotly_chart(capacity_chart(indicator,counts,kind),
+                            use_container_width=True,config={'displayModeBar':False})
+            st.markdown('<div class="eoc-capacity-chart-meta">'+str(int(counts.sum()))+' '+
+                        ('respuestas válidas' if chosen_language()=='es' else 'valid responses')+
+                        '</div>',unsafe_allow_html=True)
 
 
 def distribution_html(series,title,ordered,color,active=None,field=None):
