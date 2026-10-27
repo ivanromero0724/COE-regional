@@ -280,21 +280,55 @@ def countries_map(countries, selection=None, lang='en'):
 
 
 def training_comparison(frame,lang='en'):
-    """Paired proportion bars; every bar uses its own non-missing denominator."""
+    """Single grouped comparison; percentages use each question's valid countries."""
     fig=go.Figure()
     labels=[tr(x,lang) for x in frame['area']]
-    for name,ncol,dcol,color in [('Completed','done_n','done_d',NAVY),('Prioritized','priority_n','priority_d',CYAN)]:
-        n=frame[ncol].astype(int).tolist();den=frame[dcol].astype(int).tolist()
-        pct=[100*a/b if b else 0 for a,b in zip(n,den)]
-        captions=[f'{v:.0f}% ({a}/{b})' if b else '—' for v,a,b in zip(pct,n,den)]
-        fig.add_bar(name=tr(name,lang),x=pct,y=labels,orientation='h',marker_color=color,
-                    text=captions,textposition='outside',cliponaxis=False,
-                    hovertemplate='%{y}<br>'+tr(name,lang)+': %{text}<extra></extra>')
-    fig.update_layout(barmode='group',legend=dict(orientation='h',y=1.08,x=0))
-    fig.update_xaxes(title=None,range=[0,135],tickvals=[0,25,50,75,100],ticksuffix='%',
-                     showgrid=True,gridcolor='#EAF0F4',zeroline=False)
-    fig.update_yaxes(autorange='reversed',automargin=True,title=None,showgrid=False)
-    return style(fig, max(460,len(labels)*66+95), dict(l=5,r=20,t=65,b=35))
+    for name,ncol,dcol,color in [
+        ('Completed','done_n','done_d',NAVY),
+        ('Prioritized','priority_n','priority_d',CYAN),
+    ]:
+        n=frame[ncol].astype(int).tolist()
+        den=frame[dcol].astype(int).tolist()
+        percentages=[100*count/valid if valid else 0 for count,valid in zip(n,den)]
+        captions=[f'{pct:.0f}%' if valid else '—'
+                  for pct,valid in zip(percentages,den)]
+        fig.add_bar(
+            name=tr(name,lang),x=percentages,y=labels,orientation='h',
+            marker_color=color,marker_line_width=0,
+            text=captions,textposition='outside',cliponaxis=False,
+            customdata=[[count,valid] for count,valid in zip(n,den)],
+            hovertemplate=('<b>%{y}</b><br>'+tr(name,lang)+
+                           ': %{x:.0f}% (%{customdata[0]}/%{customdata[1]})<extra></extra>'),
+        )
+    fig.update_layout(
+        barmode='group',bargap=.32,bargroupgap=.10,
+        legend=dict(orientation='h',x=0,y=1.085,
+                    xanchor='left',yanchor='bottom',font=dict(size=11)),
+    )
+    fig.update_xaxes(
+        range=[0,112],tickmode='array',tickvals=[0,25,50,75,100],
+        ticktext=['0%','25%','50%','75%','100%'],
+        showgrid=False,zeroline=False,showline=True,
+        linecolor='#91A5B4',linewidth=1.3,
+        ticks='outside',ticklen=5,tickcolor='#91A5B4',
+        tickfont=dict(size=10,color=MUTED),fixedrange=True,
+    )
+    fig.update_yaxes(
+        autorange='reversed',automargin=True,title=None,
+        showgrid=True,gridcolor='#EBF1F5',gridwidth=1,
+        showline=True,linecolor='#91A5B4',linewidth=1.3,
+        tickfont=dict(size=11,color=TEXT),fixedrange=True,
+    )
+    fig=style(fig,max(590,len(labels)*75+120),
+              dict(l=14,r=52,t=76,b=50))
+    fig.update_layout(
+        legend=dict(orientation='h',x=0,y=1.075,
+                    xanchor='left',yanchor='bottom',font=dict(size=11)),
+        paper_bgcolor='#FFFFFF',plot_bgcolor='#FFFFFF',
+        hoverlabel=dict(bgcolor='white',font_size=11),
+        dragmode=False,
+    )
+    return fig
 
 
 def country_training(institution,lang='en'):
