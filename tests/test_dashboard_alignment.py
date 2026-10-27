@@ -30,8 +30,14 @@ def test_map_height_is_proportionate_to_operations_card():
     records, _ = load_data()
     fig = charts.countries_map(country_aggregate(records))
     assert fig is not None
-    assert fig.layout.height == 385
+    assert fig.layout.height == 450
     assert ".card-panel.eoc-pair-overview" in APP
+    assert "with st.container(border=True, key='eoc_coverage_map_panel')" in APP
+    assert "with st.container(border=True, key='eoc_operations_panel')" in APP
+    assert "min-height:450px;margin:0;border:0;padding:0" in APP
+    assert "st-key-eoc_coverage_map_panel" in APP
+    assert "st-key-eoc_operations_panel" in APP
+    assert fig.layout.paper_bgcolor == '#FFFFFF'
 
 
 def test_hazard_chart_and_infrastructure_do_not_force_whitespace():
