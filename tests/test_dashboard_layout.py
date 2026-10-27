@@ -238,6 +238,19 @@ def test_regional_hazards_are_four_donuts_above_country_heatmap():
     assert html.count('class="eoc-hazard-donut"')==4
     assert html.count('class="eoc-hazard-band"')==16
     assert 'conic-gradient(' in html
+    assert all(label in html for label in
+               ('No events','1–2 events','3–5 events','More than 5 events'))
+    assert 'countries with data' not in html
+    from dashboard.visual_style import HAZARD_COLORS, NAVY, CYAN, ORANGE
+    assert HAZARD_COLORS[1:]==(CYAN,NAVY,ORANGE)
+    assert all(color in html for color in HAZARD_COLORS)
+    from dashboard import i18n
+    from unittest.mock import patch
+    with patch('app.chosen_language',return_value='es'):
+        html_es=hazard_summary_cards(active)
+    assert all(label in html_es for label in
+               ('Ningún evento','1–2 eventos','3–5 eventos','Más de 5 eventos'))
+    assert 'países con datos' not in html_es
     assert all(name in html for name in HAZARD_LABELS.values())
     summary=training_summary_data(active)
     from dashboard.data import TRAINING_LABELS
