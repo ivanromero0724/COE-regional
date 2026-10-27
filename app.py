@@ -68,13 +68,18 @@ def ui_style():
         border-radius:12px!important;
         background:#FFFFFF!important;
     }
-    /* The map's Streamlit frame is white; operations uses a single HTML card,
-       avoiding the nested white block that previously covered its lower border. */
-    .st-key-eoc_coverage_map_panel,
-    .st-key-eoc_coverage_map_panel [data-testid="stVerticalBlockBorderWrapper"],
+    /* One CSS frame around the map, identical to the other dashboard cards. */
+    .st-key-eoc_coverage_map_panel{
+        background:#FFFFFF!important;
+        border:1px solid #DFE9F1!important;
+        border-radius:12px!important;
+        padding:16px!important;
+        box-sizing:border-box;
+        overflow:hidden;
+    }
     .st-key-eoc_coverage_map_panel [data-testid="stVerticalBlock"],
     .st-key-eoc_coverage_map_panel [data-testid="stPlotlyChart"]{
-        background-color:#FFFFFF!important;
+        background:#FFFFFF!important;
     }
     [data-testid="stMetric"] {background:#FFF;border:1px solid #DFE9F1;border-radius:12px;padding:14px;min-height:112px;}
     [data-testid="stMetricValue"] {color:#005A8B;font-size:1.5rem!important;font-weight:800;overflow-wrap:anywhere;}
@@ -141,6 +146,9 @@ def ui_style():
     .card-panel.eoc-pair-overview,.card-panel.eoc-pair-capacities,.card-panel.eoc-pair-cooperation{
         min-height:0;display:block;box-sizing:border-box;
     }
+    /* Match the seven-row capacity card and the five-row priority card in height,
+       without stretching the bar rows or adding uneven gaps between them. */
+    .card-panel.eoc-pair-capacities{min-height:425px;margin-bottom:0;}
     /* One card, same outside height as the 450px map plus its frame padding.
        Keep rows at a consistent rhythm; never stretch the inner content. */
     .card-panel.eoc-pair-overview.eoc-operations-card{
@@ -195,7 +203,8 @@ def ui_style():
     .network-meta{font-size:.73rem;line-height:1.45;color:#61798A;}
     @media(max-width:1150px){.kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr));}.kpi-grid.four{grid-template-columns:repeat(2,minmax(0,1fr));}}
     @media(max-width:900px){.eoc-pair-heading{margin-bottom:0;}
-        .card-panel.eoc-pair-overview.eoc-operations-card{height:auto;overflow:visible;}}
+        .card-panel.eoc-pair-overview.eoc-operations-card{height:auto;overflow:visible;}
+        .card-panel.eoc-pair-capacities{min-height:0;}}
     @media(max-width:760px){[data-testid="stMainBlockContainer"],.block-container{padding-top:2.75rem;}.measure-row{grid-template-columns:minmax(0,1fr) 115px;row-gap:6px;gap:7px;}.measure-label{grid-column:1 / -1;overflow-wrap:normal;font-size:.74rem;}.measure-bar{grid-column:1;}.measure-value{grid-column:2;}.dist-row{grid-template-columns:minmax(0,1fr) 80px 112px;gap:6px;}.block-container{padding-left:1rem;padding-right:1rem;}.paho-hero{grid-template-columns:1fr;padding:17px;row-gap:14px;}.brand-set{max-width:360px;}.kpi-grid,.kpi-grid.four{grid-template-columns:repeat(2,minmax(0,1fr));}.network-grid{grid-template-columns:1fr;}.status-tile-grid{grid-template-columns:1fr;}.card-panel{padding:13px;}}
     @media(max-width:460px){.kpi-grid,.kpi-grid.four{grid-template-columns:1fr 1fr;gap:8px;}.kpi{padding:11px;min-height:103px;}.kpi .kpi-value{font-size:1.5rem;}.kpi-grid:not(.four)>.kpi:last-child:nth-child(odd){grid-column:span 2;}.country-flag{font-size:2.4rem;}}
     </style>''',unsafe_allow_html=True)
@@ -335,8 +344,8 @@ def coverage_map(country,selected):
     if fig is None:
         st.info(T('Map file not found. The Americas GeoPackage is expected in data/geografia/paises_americas.gpkg.'))
     else:
-        # White, gray-outlined Streamlit frame: no gray gutters around the map.
-        with st.container(border=True, key='eoc_coverage_map_panel'):
+        # The card's CSS controls its own outline (no extra Streamlit border).
+        with st.container(border=False, key='eoc_coverage_map_panel'):
             st.plotly_chart(fig, width='stretch', config={'displayModeBar':False})
 
 
@@ -379,8 +388,7 @@ def regional_overview(country,active):
             figures.append({'capacity':label,'in_place':sum(v is True for v in vals),
                             'denominator':sum(v is not None for v in vals)})
         st.markdown(capacity_rows_html(pd.DataFrame(figures),pair='capacities'),unsafe_allow_html=True)
-        note('In development or informal is not considered fully in place.')
-    st.markdown('<div class="eoc-note">'+esc(T('PRELIMINARY · Self-reported capacities from responding countries only. Each indicator has its own denominator, reflecting valid answers to that question.'))+'</div>',unsafe_allow_html=True)
+ 
 
 
 def capacity_and_gaps(active):
@@ -602,6 +610,6 @@ def main():
         elif tabscope=='Operations & hazards':operations_section(active)
         else:cooperation_section(active)
     elif view=='Country profiles':country_profile(records,country)
-    st.markdown('<div class="paho-footer">'+esc(T('PAHO / WHO · EOC-NET Americas · 2026  |  Preliminary, self-reported information  |  Analytical dashboard for technical coordination'))+'</div>',unsafe_allow_html=True)
+    st.markdown('<div class="paho-footer">'+esc(T('PAHO / WHO · EOC-NET Americas · 2026  |  Self-reported information  |  Analytical dashboard for technical coordination'))+'</div>',unsafe_allow_html=True)
 
 if __name__=='__main__':main()
