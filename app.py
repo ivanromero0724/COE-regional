@@ -728,16 +728,42 @@ def status_chip(value):
             else f'<span class="status-chip status-no">{esc(T("Partial / absent"))}</span>')
 
 
+def country_answer_caption(institution,column,lang=None):
+    """The same exact bilingual answer abbreviations used by regional charts.
+
+    Use the selected institution's original response, NOT the positive/negative
+    threshold used to draw the status symbol. Different non-qualifying states
+    such as Initial, Developing and Absent must remain distinguishable.
+    """
+    lang=lang or chosen_language()
+    raw=institution.get(f'ANSWER_{column}')
+    if raw is None or pd.isna(raw) or not str(raw).strip():
+        return tr('Not reported',lang)
+    try:
+        return labels_for_question(column,[str(raw)],lang)[0]
+    except ValueError:
+        # When the questionnaire introduces a new unmapped option, expose
+        # its actual answer rather than incorrectly calling it "absent".
+        return str(raw).strip()
+
+
 def status_grid_html(items,paired_infrastructure=False):
-    """Scannable multi-column chips, no wide tables on country pages."""
+    """Status symbol plus the original question-specific survey response.
+
+    Items may supply a third value containing the abbreviation from
+    dashboard.capacity_labels; keep backward compatibility for status-only
+    callers.
+    """
     cards=[]
-    for label,value in items:
+    for item in items:
+        label,value=item[:2]
+        response=item[2] if len(item)>2 else None
         if value is None or pd.isna(value):
             color='#8CA0AF';symbol='—';state=T('Not reported')
         elif bool(value):
-            color='#1D947C';symbol='✓';state=T('In place')
+            color='#1D947C';symbol='✓';state=response if response else T('In place')
         else:
-            color='#F36B32';symbol='×';state=T('Partial / absent')
+            color='#F36B32';symbol='×';state=response if response else T('Partial / absent')
         cards.append(f'<div class="status-tile"><span class="status-symbol" style="color:{color}">{symbol}</span>'
                      f'<span class="status-tile-name">{esc(T(label))}</span><span class="status-tile-state">{esc(state)}</span></div>')
     css='status-tile-grid eoc-pair-infrastructure' if paired_infrastructure else 'status-tile-grid'
@@ -842,7 +868,7 @@ def regional_overview(country,active):
 
 def capacity_and_gaps(active):
     # One section heading; indicator names identify the plots below.
-    section('Capacities & gaps')
+    section('Capacities & gaps',eyebrow='01 / CAPACITY PROFILES')
     caps=capacity_table(active)
     component=st.selectbox(T('Explore a component'),list(CAPACITIES.keys()),
                            format_func=lambda value, _lang=chosen_language(): tr(value, _lang),
@@ -1077,7 +1103,10 @@ def country_profile(records,countries):
     section('Reported institutional capacities','Answers from this institution grouped by PHEOC core component.',
             eyebrow='01 / REPORTED CAPACITIES')
     component=st.selectbox(T('Explore a component'),list(CAPACITIES.keys()),format_func=lambda value, _lang=chosen_language(): tr(value, _lang),key='country_component')
-    st.markdown(status_grid_html([(label,country_capacity(r,col,positive)) for label,col,positive in CAPACITIES[component]]),unsafe_allow_html=True)
+    st.markdown(status_grid_html([
+        (label,country_capacity(r,col,positive),country_answer_caption(r,col))
+        for label,col,positive in CAPACITIES[component]
+    ]),unsafe_allow_html=True)
     note('Only fully qualifying responses are classified as in place. Missing answers remain separate.')
     st.divider()
     a,b=st.columns(2,gap='large')
@@ -1087,7 +1116,10 @@ def country_profile(records,countries):
                         use_container_width=True,config={'displayModeBar':False})
     with b:
         section('Physical infrastructure','Resources the institution reports as available.',eyebrow='03 / INFRASTRUCTURE',paired=True)
-        infrastructure=status_grid_html([(label,r[label] if pd.notna(r[label]) else None) for label in RESOURCE_LABELS.values()],paired_infrastructure=True)
+        infrastructure=status_grid_html([
+            (label,r[label] if pd.notna(r[label]) else None,country_answer_caption(r,col))
+            for col,label in RESOURCE_LABELS.items()
+        ],paired_infrastructure=True)
         st.markdown('<div class="eoc-country-infrastructure-panel">'+infrastructure+'</div>',unsafe_allow_html=True)
     st.divider()
     section('Training and preparedness','Activities completed in the last year and priorities for the next period.',
