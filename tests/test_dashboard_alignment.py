@@ -79,3 +79,16 @@ def test_capacity_panels_are_equal_height_without_obsolete_notes():
     assert "In development or informal is not considered fully in place." not in APP
     assert "PRELIMINARY · Self-reported capacities" not in APP
     assert "justify-content:space-evenly" not in APP
+
+
+def test_priority_capacity_rows_fill_card_without_stretching_other_sections():
+    # The five-row gaps card intentionally gets distributed rows; the seven-row
+    # capacities card keeps its existing, compact layout.
+    assert "grid-template-columns:minmax(0,1fr);" in APP
+    assert "align-content:space-between;" in APP
+    assert ".card-panel.eoc-pair-capacities.eoc-priority-card{" in APP
+    assert ".eoc-priority-card .measure-row{padding:9px 0;}" in APP
+    assert "variant_class=' eoc-priority-card' if pair=='capacities' and variant=='priority'" in APP
+    assert "capacity_rows_html(pd.DataFrame(figures),pair='capacities',variant='priority')" in APP
+    assert "capacity_rows_html(ranked,pair='capacities')" in APP
+    assert "min-height:305px" in APP
