@@ -303,6 +303,7 @@ def countries_map(countries, selection=None, lang='en'):
             line=dict(color='white',width=.65),
             name=tr(status,lang),
             legendgroup=status,showlegend=status not in shown,
+            legendrank=statuses.index(status),
             hoveron='fills',
             hoverinfo='text',
             text=('<b>'+name+'</b><br>ISO: '+str(iso)+'<br>'+
@@ -312,16 +313,7 @@ def countries_map(countries, selection=None, lang='en'):
         shown.add(status)
 
     fig.update_layout(
-        dragmode=False,
-        hovermode='closest',
-        # Overlay an opaque, three-row legend on the lower-left ocean,
-        # rather than reserving extra space above or below the map.
-        legend=dict(title=None,orientation='v',
-                    x=.018,y=.025,xanchor='left',yanchor='bottom',
-                    bgcolor='rgba(255,255,255,0.94)',
-                    bordercolor='#DFE9F1',borderwidth=1,
-                    font=dict(size=11,color=TEXT),
-                    itemsizing='constant',traceorder='normal'),
+        dragmode=False,hovermode='closest',
         paper_bgcolor='#FFFFFF',plot_bgcolor='#FFFFFF',
     )
     fig.update_xaxes(range=[xmin,xmax],fixedrange=True,visible=False,
@@ -332,7 +324,19 @@ def countries_map(countries, selection=None, lang='en'):
                      scaleratio=1,constrain='domain')
     # The map itself fills the frame vertically; the legend overlays it.
     fig=style(fig,480,dict(l=4,r=4,t=5,b=5))
-    fig.update_layout(paper_bgcolor='#FFFFFF',plot_bgcolor='#FFFFFF')
+    # Apply this AFTER style(), otherwise the shared chart style
+    # overwrites the map-specific vertical overlay legend.
+    fig.update_layout(
+        paper_bgcolor='#FFFFFF',plot_bgcolor='#FFFFFF',
+        legend=dict(
+            title=None,orientation='v',x=.018,y=.025,
+            xanchor='left',yanchor='bottom',
+            bgcolor='rgba(255,255,255,0.94)',
+            bordercolor='#DFE9F1',borderwidth=1,
+            font=dict(size=11,color=TEXT),
+            itemsizing='constant',traceorder='normal',
+        ),
+    )
     return fig
 
 
