@@ -588,7 +588,8 @@ def capacity_chart(indicator, counts, chart_kind):
             fixedrange=True,tickfont=dict(size=10,color='#607B8A'))
         fig.update_yaxes(type='category',showticklabels=True,showline=True,
             linecolor='#91A5B4',linewidth=1.3,ticks='outside',ticklen=4,
-            tickcolor='#91A5B4',automargin=True,fixedrange=True,
+            tickcolor='#91A5B4',showgrid=True,gridcolor='#E7EDF3',gridwidth=1,
+            automargin=True,fixedrange=True,
             tickfont=dict(size=11,color='#17324D'))
         fig.update_layout(showlegend=False,height=430,
             margin=dict(l=118,r=40,t=24,b=52),bargap=.28)
@@ -631,6 +632,7 @@ def capacity_visual_dashboard(frame, active):
             fixedrange=True,tickfont_size=10)
         fig.update_yaxes(showline=True,linecolor='#91A5B4',linewidth=1.3,
             ticks='outside',ticklen=4,tickcolor='#91A5B4',
+            showgrid=True,gridcolor='#E7EDF3',gridwidth=1,
             showticklabels=True,automargin=True,fixedrange=True,tickfont_size=10)
         st.markdown('<div class="eoc-capacity-section-title">'+T('Capacity availability')+'</div>',unsafe_allow_html=True)
         st.plotly_chart(fig,use_container_width=True,config={'displayModeBar':False})
