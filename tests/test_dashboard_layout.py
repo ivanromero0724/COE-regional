@@ -125,7 +125,7 @@ def test_capacity_bars_expand_countries_in_place():
     assert '<summary class="eoc-capacity-summary">' in app
     assert "countries_capacity_grid(rows)" in app
     assert 'eoc-country-capacity-grid' in app
-    assert '.eoc-country-capacity-grid{grid-template-columns:1fr;}' in app
+    assert '.eoc-country-capacity-grid,.eoc-country-category-grid{grid-template-columns:1fr;}' in app
     assert 'grid-template-columns:repeat(3,minmax(0,1fr));' in app
     assert '.eoc-capacity-summary:focus-visible' in app
     assert '.eoc-capacity-disclosure[open] .eoc-capacity-chevron' in app
