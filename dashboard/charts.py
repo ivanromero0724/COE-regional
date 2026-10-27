@@ -243,9 +243,14 @@ def responding_country_map_bounds(geo, country_codes):
     # Mexico and every reporting country remain entirely inside the view.
     xpad=max(0.45,(max(lons)-min(lons))*.008)
     ypad=max(0.45,(max(lats)-min(lats))*.008)
-    southern_clearance=3.0  # degrees of room beneath Chile and Argentina
-    return ((min(lons)-xpad,max(lons)+xpad),
-            (min(lats)-ypad-southern_clearance,max(lats)+ypad))
+    southern_clearance=3.0  # room beneath Chile and Argentina
+    # A slight northeast bias places the Guatemala–Brazil response corridor
+    # nearer the center of the frame, without clipping Mexico, the Bahamas,
+    # Argentina or Chile. Use geographic limits, never unequal axis scaling.
+    eastward_focus=5.0
+    northward_focus=2.0
+    return ((min(lons)-xpad,max(lons)+xpad+eastward_focus),
+            (min(lats)-ypad-southern_clearance,max(lats)+ypad+northward_focus))
 
 
 def countries_map(countries, selection=None, lang='en'):
