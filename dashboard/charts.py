@@ -112,7 +112,12 @@ def load_geojson():
     return json.loads(geodf[['ISO_CC','COUNTRY','geometry']].to_json())
 
 
-def countries_map(countries,selection=None,lang='en'):
+def countries_map(countries, selection=None, lang='en'):
+    """Render the bundled GeoPackage without Plotly Geo's external topojson fetch.
+
+    Plotly's MapLibre-backed choroplethmap renders the GeoJSON polygons directly
+    on a token-free white background. No remote base tiles or API key are needed.
+    """
     geo=load_geojson()
     if geo is None:return None
     geo_codes={ft['properties']['ISO_CC'] for ft in geo['features']}
@@ -122,25 +127,33 @@ def countries_map(countries,selection=None,lang='en'):
         if code in stats.index:
             row=stats.loc[code]
             country=row['country'];status=row['eoc_status']
-            if selection is not None and country not in selection: status='Outside filter'
-        else:country='No survey response';status='No survey response'
+            if selection is not None and country not in selection:status='Outside filter'
+        else:
+            country='No survey response';status='No survey response'
         listrows.append({'iso3':code,'country':tr(country,lang),'status':tr(status,lang)})
     data=pd.DataFrame(listrows)
-    order=['Established','In implementation','Not established','Outside filter','No survey response']
-    order=[tr(x,lang) for x in order]
-    colors=['#005A8B','#009BDA','#D75E52','#D5E0E9','#EFF2F4']
-    fig=px.choropleth(data,geojson=geo,locations='iso3',featureidkey='properties.ISO_CC',
-                      color='status',hover_name='country',
-                      custom_data=['iso3'],category_orders={'status':order},
-                      color_discrete_map=dict(zip(order,colors)))
-    fig.update_traces(marker_line_color='white',marker_line_width=.55,
-                      hovertemplate='<b>%{hovertext}</b><br>ISO: %{customdata[0]}<br>'+('Estado' if lang=='es' else 'Status')+': %{fullData.name}<extra></extra>')
-    fig.update_geos(projection_type='mercator',visible=False,
-                    lataxis_range=[-57,34],lonaxis_range=[-117,-32],
-                    showocean=False,showcoastlines=False,showland=False)
-    fig.update_layout(legend=dict(title=None,orientation='h',y=-.04,x=0,font_size=10),dragmode=False)
-    return style(fig,495,dict(l=0,r=0,t=0,b=36))
-
+    status_order=['Established','In implementation','Not established','Outside filter','No survey response']
+    palette=['#005A8B','#009BDA','#D75E52','#D5E0E9','#EFF2F4']
+    fig=px.choropleth_map(
+        data,geojson=geo,locations='iso3',featureidkey='properties.ISO_CC',
+        color='status',hover_name='country',custom_data=['iso3'],
+        category_orders={'status':[tr(x,lang) for x in status_order]},
+        color_discrete_map={tr(s,lang):c for s,c in zip(status_order,palette)},
+        map_style='white-bg',
+        center={'lat':-11,'lon':-79},zoom=1.55,opacity=0.94,
+    )
+    fig.update_traces(
+        marker_line_color='white',marker_line_width=0.65,
+        hovertemplate='<b>%{hovertext}</b><br>ISO: %{customdata[0]}<br>'+
+                      ('Estado' if lang=='es' else 'Status')+
+                      ': %{fullData.name}<extra></extra>'
+    )
+    fig.update_layout(
+        map=dict(style='white-bg',center=dict(lat=-11,lon=-79),zoom=1.55),
+        legend=dict(title=None,orientation='h',y=-.08,x=0,font_size=10),
+        dragmode=False,
+    )
+    return style(fig,500,dict(l=0,r=0,t=0,b=48))
 
 
 def training_comparison(frame,lang='en'):
