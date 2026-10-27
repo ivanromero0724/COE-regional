@@ -143,6 +143,10 @@ def ui_style():
     .country-flag{font-size:3rem;line-height:1;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
     .country-identity .institution{font-size:.85rem;color:#647D8D;margin-top:5px;line-height:1.4;overflow-wrap:anywhere;}
     .card-panel{background:#FFF;border:1px solid #DFE9F1;border-radius:12px;padding:17px 18px;margin:1px 0 12px;min-width:0;}
+    .eoc-capacity-section-title{font-size:.92rem;font-weight:800;color:#17324D;margin:17px 0 9px;}
+    .eoc-capacity-chart-title{min-height:2.2em;max-height:2.8em;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-height:1.35;font-size:.83rem;font-weight:800;color:#17324D;margin:1px 0 3px;}
+    .eoc-capacity-chart-meta{font-size:.73rem;color:#607B8A;margin:-8px 0 3px;}
+
     /* Compact comparisons: align headings without stretching cards or bar spacing.
        Different-length datasets are allowed to finish at their natural height. */
     .eoc-pair-heading{min-height:0;margin:0 0 2px;box-sizing:border-box;}
@@ -514,88 +518,107 @@ def capacity_response_distribution(active, indicator):
 
 
 def capacity_chart(indicator, counts, chart_kind):
-    """Responsive Plotly small multiple; exact choice names live in hover/labels."""
+    """Compact PAHO-style charts; full questionnaire responses on hover."""
     import plotly.graph_objects as go
-    import plotly.express as px
-    colors=['#005A8B','#009BDA','#6EB9D2','#F1A55A','#94AABC','#C9D8E2']
+    colors=['#005A8B','#009BDA','#75B8D6','#F36B32','#8DA9B9','#D9E4EC']
     total=int(counts.sum())
     labels=list(counts.index)
     values=[int(v) for v in counts.values]
     pct=[100*v/total for v in values]
-    short=[label if len(label)<=44 else label[:41]+'…' for label in labels]
+    def short_label(label,limit=27):
+        label=str(label).strip()
+        return label if len(label)<=limit else label[:limit-1].rstrip()+'…'
+    shorter=[short_label(x) for x in labels]
     fig=go.Figure()
     if chart_kind=='donut':
-        fig.add_trace(go.Pie(labels=labels,values=values,hole=.70,sort=False,
-            marker=dict(colors=colors[:len(values)]),
-            textinfo='percent',textposition='outside',
-            hovertemplate='%{label}<br>%{percent} (%{value}/'+str(total)+')<extra></extra>'))
-        fig.add_annotation(text='<b>'+str(total)+'</b><br><span style="font-size:11px">responses</span>',
-                           x=.5,y=.5,showarrow=False,font_size=18)
-        fig.update_layout(showlegend=True,legend=dict(orientation='h',y=-.12,x=0,
-                          font=dict(size=10)))
+        fig.add_trace(go.Pie(
+            labels=shorter,values=values,customdata=labels,hole=.68,sort=False,
+            marker=dict(colors=colors),
+            textinfo='percent',textposition='inside',
+            textfont=dict(size=11,color='white'),
+            hovertemplate='<b>%{customdata}</b><br>%{percent} (%{value}/'+str(total)+')<extra></extra>'))
+        fig.add_annotation(x=.5,y=.5,text='<b>'+str(total)+'</b>',
+                           font=dict(size=23,color='#005A8B'),showarrow=False)
+        fig.update_layout(showlegend=True,legend=dict(
+            orientation='h',x=0,y=-.11,font=dict(size=10),itemsizing='constant'))
     elif chart_kind=='treemap':
-        fig=px.treemap(pd.DataFrame({'answer':labels,'n':values,'pct':pct}),
-            path=['answer'],values='n',color='answer',
-            color_discrete_sequence=colors)
-        fig.update_traces(texttemplate='%{label}<br>%{percentRoot:.0%}',
-                          hovertemplate='%{label}<br>%{value}/'+str(total)+'<extra></extra>',
-                          marker=dict(cornerradius=4))
+        fig.add_trace(go.Treemap(
+            labels=shorter,parents=['']*len(values),values=values,
+            customdata=labels,
+            marker=dict(colors=colors,line=dict(color='white',width=2)),
+            texttemplate='%{label}<br>%{percentRoot:.0%}',
+            textfont=dict(size=11),
+            hovertemplate='<b>%{customdata}</b><br>%{percentRoot:.0%} (%{value}/'+str(total)+')<extra></extra>',
+            tiling=dict(pad=3),
+            branchvalues='total'))
         fig.update_layout(showlegend=False)
     else:
-        fig.add_trace(go.Bar(y=short[::-1],x=pct[::-1],orientation='h',
-            marker_color=[colors[i%len(colors)] for i in range(len(values))][::-1],
-            customdata=[[labels[i],values[i]] for i in range(len(values))][::-1],
-            text=[f'{v:.0f}%' for v in pct[::-1]],textposition='outside',
-            hovertemplate='%{customdata[0]}<br>%{x:.0f}% (%{customdata[1]}/'+str(total)+')<extra></extra>'))
+        order=list(reversed(range(len(values))))
+        fig.add_trace(go.Bar(
+            y=[short_label(labels[i],24) for i in order],
+            x=[pct[i] for i in order],orientation='h',
+            marker_color=[colors[i%len(colors)] for i in order],
+            customdata=[[labels[i],values[i]] for i in order],
+            text=[f'{pct[i]:.0f}%' for i in order],textposition='outside',
+            hovertemplate='<b>%{customdata[0]}</b><br>%{x:.0f}% (%{customdata[1]}/'+str(total)+')<extra></extra>'))
         fig.update_xaxes(range=[0,115],visible=False,fixedrange=True)
         fig.update_yaxes(automargin=True,fixedrange=True,tickfont_size=10)
         fig.update_layout(showlegend=False)
-    fig.update_layout(height=295,margin=dict(l=8,r=12,t=18,b=55 if chart_kind=='donut' else 12),
+    fig.update_layout(
+        height=250,margin=dict(l=8,r=12,t=14,b=50 if chart_kind=='donut' else 12),
         paper_bgcolor='white',plot_bgcolor='white',
         font=dict(family='Arial, sans-serif',color='#17324D',size=11),
+        hoverlabel=dict(bgcolor='white',font_size=11),
         dragmode=False)
     return fig
 
 
 def capacity_visual_dashboard(frame, active):
-    """Varied but consistent chart gallery: regional comparison plus small multiples."""
+    """Visual hierarchy consistent with the existing PAHO regional panels."""
     import plotly.graph_objects as go
     valid=frame[frame.denominator>0].copy()
     if not valid.empty:
         valid['percentage']=100*valid.in_place/valid.denominator
+        labels=[T(x) for x in valid.capacity]
+        concise=[x if len(x)<=33 else x[:32].rstrip()+'…' for x in labels]
         fig=go.Figure(go.Bar(
-            y=[T(x) for x in valid.capacity][::-1],
-            x=valid.percentage.to_list()[::-1],orientation='h',
-            marker_color='#009BDA',text=[
-                f'{p:.0f}% ({int(n)}/{int(d)})'
-                for p,n,d in zip(valid.percentage,valid.in_place,valid.denominator)
-            ][::-1],textposition='outside',cliponaxis=False,
-            hovertemplate='%{y}: %{text}<extra></extra>'))
-        fig.update_layout(height=max(300,len(valid)*43+70),
-            margin=dict(l=10,r=75,t=25,b=12),paper_bgcolor='white',
-            plot_bgcolor='white',font=dict(size=11,color='#17324D'))
-        fig.update_xaxes(range=[0,130],visible=False,fixedrange=True)
-        fig.update_yaxes(automargin=True,fixedrange=True)
-        st.markdown('#### '+T('Capacity availability'))
-        st.plotly_chart(fig,use_container_width=True,config={'displayModeBar':False})
-    st.markdown('#### '+('Distribución de las respuestas' if chosen_language()=='es'
-                       else 'Survey response distributions'))
-    st.caption('Cada gráfico utiliza las respuestas válidas de la pregunta; se conserva el texto de las categorías del Excel.' if chosen_language()=='es'
-               else 'Each chart uses valid answers to that survey item; Excel response categories are preserved.')
+            y=concise[::-1],x=valid.percentage.to_list()[::-1],orientation='h',
+            customdata=[[labels[i],int(valid.in_place.iloc[i]),int(valid.denominator.iloc[i])]
+                        for i in range(len(valid))][::-1],
+            marker_color='#009BDA',
+            text=[f'{p:.0f}%' for p in valid.percentage][::-1],
+            textposition='outside',cliponaxis=False,
+            hovertemplate='<b>%{customdata[0]}</b><br>%{x:.0f}% (%{customdata[1]}/%{customdata[2]})<extra></extra>'))
+        fig.update_layout(
+            height=max(275,len(valid)*35+50),
+            margin=dict(l=10,r=44,t=14,b=12),paper_bgcolor='white',
+            plot_bgcolor='white',font=dict(family='Arial, sans-serif',size=11,color='#17324D'),
+            hoverlabel=dict(bgcolor='white',font_size=11))
+        fig.update_xaxes(range=[0,110],visible=False,fixedrange=True)
+        fig.update_yaxes(automargin=True,fixedrange=True,tickfont_size=10)
+        st.markdown('<div class="eoc-capacity-section-title">'+T('Capacity availability')+'</div>',unsafe_allow_html=True)
+        with st.container(border=True):
+            st.plotly_chart(fig,use_container_width=True,config={'displayModeBar':False})
+    st.markdown('<div class="eoc-capacity-section-title">'+
+                ('Distribución de respuestas' if chosen_language()=='es' else 'Response distribution')+
+                '</div>',unsafe_allow_html=True)
     columns=st.columns(2,gap='medium')
     for i,(_,indicator) in enumerate(frame.iterrows()):
         counts=capacity_response_distribution(active,indicator)
         with columns[i%2]:
             with st.container(border=True):
-                st.markdown('**'+T(indicator['capacity'])+'**')
+                title=T(indicator['capacity'])
+                st.markdown('<div class="eoc-capacity-chart-title" title="'+esc(title)+'">'+esc(title)+'</div>',
+                            unsafe_allow_html=True)
                 if counts.empty:
                     st.caption(T('No valid responses'))
                     continue
                 kind=('donut','bar','treemap')[i%3]
                 st.plotly_chart(capacity_chart(indicator,counts,kind),
                                 use_container_width=True,config={'displayModeBar':False})
-                st.caption(f'{int(counts.sum())} '+('respuestas válidas' if chosen_language()=='es'
-                                                     else 'valid responses'))
+                st.markdown('<div class="eoc-capacity-chart-meta">'+str(int(counts.sum()))+' '+
+                            ('respuestas válidas' if chosen_language()=='es' else 'valid responses')+
+                            '</div>',unsafe_allow_html=True)
 
 
 def distribution_html(series,title,ordered,color,active=None,field=None):
