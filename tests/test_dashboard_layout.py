@@ -25,3 +25,14 @@ def test_hazard_heatmap_has_legible_labels():
     assert list(fig.data[0].x) == ['Geo / weather','Biological','Social','Technological']
     assert len(fig.data[0].y) == 2
     assert 'Not reported' in fig.data[0].customdata[0]
+
+def test_streamlit_header_is_opaque_and_fixed():
+    app = (ROOT / 'app.py').read_text(encoding='utf-8')
+    header_css = app.split('[data-testid="stHeader"]{', 1)[1].split('}', 1)[0]
+    assert 'position:fixed!important;' in header_css
+    assert 'top:0!important;' in header_css
+    assert 'background:#F7FAFC!important;' in header_css
+    assert 'background-image:none!important;' in header_css
+    assert 'opacity:1!important;' in header_css
+    assert 'backdrop-filter:none!important;' in header_css
+    assert 'background:rgba(247,250,252,.93)' not in app
