@@ -77,9 +77,17 @@ def ui_style():
         background:#FFFFFF!important;
         border:1px solid #DFE9F1!important;
         border-radius:12px!important;
-        padding:6px!important;
+        padding:0!important;
         box-sizing:border-box;
         overflow:hidden;
+    }
+    /* Remove Streamlit's extra chart wrapper spacing so the map fills
+       the card right up to its single outline. */
+    .st-key-eoc_coverage_map_panel [data-testid="stPlotlyChart"]{
+        padding:0!important;
+        margin:0!important;
+        border:0!important;
+        border-radius:0!important;
     }
     .st-key-eoc_coverage_map_panel [data-testid="stVerticalBlock"],
     .st-key-eoc_coverage_map_panel [data-testid="stPlotlyChart"]{
