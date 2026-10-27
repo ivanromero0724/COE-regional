@@ -50,3 +50,8 @@ Column-position mappings are in `scripts/generate_country_profiles.py`. If quest
 - **Operational resources:** dot markers show whether each item was reported, not selected, or unreported.
 - **Training:** two-column matrix; check means completed and star means identified priority.
 - **Strengths and improvement priorities:** panels have independent content-driven heights rather than fixed equal-sized containers.
+## Interactive Streamlit dashboard (regional → country)
+
+The 2026 **EOC-NET Americas** dashboard is implemented in [`app.py`](app.py), using the live workbook in `data/`, the same **24-item maturity rubric** as the PDF fact sheets, and `data/geografia/paises_americas.gpkg` copied from the El Niño OPS repository. It includes a regional map, capacity and readiness summaries, training, networks, institution-specific pages (including both Colombian institutions), and a privacy-safe CSV export. Its design uses the PAHO blue/cyan/orange identity and both tracked institutional logos.
+
+**Deployment:** connect this GitHub repository to Streamlit Community Cloud and set the **main file path to `app.py`**. See [`STREAMLIT_DEPLOY.md`](STREAMLIT_DEPLOY.md) for detailed setup, methodological safeguards and tests. The dashboard is **not yet hosted**; deploying it requires a Streamlit Cloud app associated with this repository. The survey results and maturity scores are descriptive and self-reported.
