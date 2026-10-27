@@ -42,6 +42,33 @@ The exact implementation is in `scripts/generate_country_profiles.py`, within `D
 
 **Worked example — Argentina, Governance & legal** (current source workbook): framework **25**, national plan **100**, formal SOP **0**, finance **25**. Arithmetic mean: `(25 + 100 + 0 + 25)/4 = 37.5`, rounded to **38/100** on the PDF. This does **not** mean Argentina meets 38% of an internationally validated capacity standard.
 
+## Responding-country benchmark (orange reference line)
+
+Each fact sheet now compares the **institutional response score** (blue bar) with the **mean among countries represented by scored survey responses** (orange vertical marker). This is **not the mean for all countries in the Americas**, nor a representative regional estimate.
+
+For each domain, the automated algorithm:
+
+1. Computes each institution's domain score as defined above, excluding missing item values.
+2. Excludes records that explicitly report no health EOC from EOC-specific benchmark calculations.
+3. When a country has several EOC responses, averages those institutional domain scores to obtain a **single country value** for that domain.
+4. Takes an **unweighted arithmetic mean across countries** with valid domain values. Each country is counted once, irrespective of the number of institutions or survey rows. No-response countries are excluded.
+
+`benchmark(d) = mean_over_responding_countries( mean_over_scorable_institutions_in_country(score(institution,d)) )`
+
+**Current source workbook (2026, 18 survey records, 15 responding countries):**
+
+| Domain | Mean of responding-country domain scores | Countries with valid scores |
+| --- | ---: | ---: |
+| Governance & legal | 62.9 | 15 |
+| Operations & decisions | 81.1 | 15 |
+| Human resources | 56.4 | 15 |
+| Information management | 63.3 | 15 |
+| Coordination | 77.6 | 15 |
+
+These descriptive values **are recalculated automatically** whenever the survey data change. Rounding is performed for displayed institution domain scores first, consistent with the bars in the current generator. Coverage may differ by domain as further data are collected.
+
+**Interpretation:** an orange line left of a response's blue-bar endpoint indicates the response's descriptive score exceeds the mean of participating countries for that domain. Neither the country-weighted benchmark nor the institutional score is an official or validated PAHO performance measure.
+
 ## Methodological caveats
 
 1. Domain definitions, thresholds, category weights, and color ranges are analyst choices; they were not externally validated. They can change substantially if the survey owner approves a different rubric.
