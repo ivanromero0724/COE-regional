@@ -41,3 +41,12 @@ python scripts/generate_country_profiles.py
 ## When the survey schema changes
 
 Column-position mappings are in `scripts/generate_country_profiles.py`. If questionnaire fields are inserted, renamed or reordered, update the mappings and check country output before release. The generator is deterministic and does not call translation or generative AI APIs.
+
+## Fact sheet visual conventions
+
+- **Capability snapshot:** blue bar = score for the surveyed EOC/institution; orange vertical marker = mean of responding countries, with each country counted once (multiple institutional records are averaged within their country). The label includes the number of countries contributing to the benchmark. This is not an Americas-wide population estimate or an official PAHO assessment. See `docs/capability_scoring.md`.
+- **Hazards coordinated:** three small squares display the ordinal frequency band (none, 1–2, 3–5, >5 events); they do not encode exact event counts.
+- **Institutional & operational attributes:** grouped label-and-status matrix, retaining all 20 documented items while using colored status labels.
+- **Operational resources:** dot markers show whether each item was reported, not selected, or unreported.
+- **Training:** two-column matrix; check means completed and star means identified priority.
+- **Strengths and improvement priorities:** panels have independent content-driven heights rather than fixed equal-sized containers.
