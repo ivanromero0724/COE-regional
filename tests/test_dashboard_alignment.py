@@ -11,7 +11,7 @@ APP = (Path(__file__).resolve().parents[1] / "app.py").read_text(encoding="utf-8
 
 
 def test_comparisons_do_not_stretch_bar_cards():
-    for pair in ("overview", "capacities", "cooperation"):
+    for pair in ("overview", "cooperation"):
         assert f".card-panel.eoc-pair-{pair}" in APP
         assert f"pair='{pair}'" in APP or pair == "overview"
     assert "justify-content:space-evenly" not in APP
@@ -74,24 +74,16 @@ def test_operations_no_double_border_or_white_overlay():
     assert "overflow-x:hidden;" in APP
 
 
-def test_capacity_panels_are_equal_height_without_obsolete_notes():
-    assert ".card-panel.eoc-pair-capacities{min-height:305px;margin-bottom:0;padding:13px 16px;}" in APP
-    assert ".card-panel.eoc-pair-capacities .measure-row{padding:6px 0;min-height:35px;}" in APP
-    assert "min-height:425px" not in APP
-    assert ".card-panel.eoc-pair-capacities{min-height:0;}" in APP
+def test_overview_capacities_and_gaps_are_full_width_stacked():
+    overview=APP.split('def regional_overview(country,active):',1)[1].split('def capacity_and_gaps(active):',1)[0]
+    after_map=overview.split("    st.divider()",1)[1]
+    assert "st.columns(" not in after_map
+    assert after_map.index("section('Most widely reported capacities'") < after_map.index("section('Priority capacity gaps'")
+    assert "capacity_rows_html(ranked,variant='full',country=active)" in after_map
+    assert "capacity_rows_html(pd.DataFrame(figures),variant='full',country=active)" in after_map
+    assert "pair='capacities'" not in after_map
+    assert ".card-panel.eoc-pair-capacities{min-height:305px" not in APP
+    assert ".card-panel.eoc-pair-capacities.eoc-priority-card" not in APP
+    assert ".eoc-capacity-full .eoc-capacity-summary{" in APP
     assert "In development or informal is not considered fully in place." not in APP
     assert "PRELIMINARY · Self-reported capacities" not in APP
-    assert "justify-content:space-evenly" not in APP
-
-
-def test_priority_capacity_rows_fill_card_without_stretching_other_sections():
-    # The five-row gaps card intentionally gets distributed rows; the seven-row
-    # capacities card keeps its existing, compact layout.
-    assert "grid-template-columns:minmax(0,1fr);" in APP
-    assert "align-content:space-between;" in APP
-    assert ".card-panel.eoc-pair-capacities.eoc-priority-card{" in APP
-    assert ".eoc-priority-card .measure-row{padding:9px 0;}" in APP
-    assert "' eoc-priority-card' if pair=='capacities' and variant=='priority'" in APP
-    assert "capacity_rows_html(pd.DataFrame(figures),pair='capacities',variant='priority',country=active)" in APP
-    assert "capacity_rows_html(ranked,pair='capacities',country=active)" in APP
-    assert "min-height:305px" in APP

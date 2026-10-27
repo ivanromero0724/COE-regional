@@ -143,22 +143,11 @@ def ui_style():
     /* Compact comparisons: align headings without stretching cards or bar spacing.
        Different-length datasets are allowed to finish at their natural height. */
     .eoc-pair-heading{min-height:0;margin:0 0 2px;box-sizing:border-box;}
-    .card-panel.eoc-pair-overview,.card-panel.eoc-pair-capacities,.card-panel.eoc-pair-cooperation{
+    .card-panel.eoc-pair-overview,.card-panel.eoc-pair-cooperation{
         min-height:0;display:block;box-sizing:border-box;
     }
-    /* Match the seven-row capacity card and the five-row priority card in height,
-       without stretching the bar rows or adding uneven gaps between them. */
-    /* Compact capacity comparison: matched modest height, without oversized empty areas. */
-    .card-panel.eoc-pair-capacities{min-height:305px;margin-bottom:0;padding:13px 16px;}
-    .card-panel.eoc-pair-capacities .measure-row{padding:6px 0;min-height:35px;}
-    /* Five priority rows use the available card height evenly, without changing
-       the seven-row capacities card or creating a large empty area at the bottom. */
-    .card-panel.eoc-pair-capacities.eoc-priority-card{
-        display:grid;
-        grid-template-columns:minmax(0,1fr);
-        align-content:space-between;
-    }
-    .eoc-priority-card .measure-row{padding:9px 0;}
+    /* Overview 03/04 are stacked and have content-driven heights;
+       eoc-capacity-full supplies their wide, aligned bar columns. */
     /* One card, same outside height as the 450px map plus its frame padding.
        Keep rows at a consistent rhythm; never stretch the inner content. */
     .card-panel.eoc-pair-overview.eoc-operations-card{
@@ -428,9 +417,8 @@ def capacity_rows_html(frame,title=None,pair=None,variant=None,country=None):
         rows=regional_indicator_rows(country,r) if country is not None else None
         contents.append(disclosure_bar(r['capacity'],r['in_place'],r['denominator'],rows))
     h=f'<div class="card-title">{esc(T(title))}</div>' if title else ''
-    pair_class=f' eoc-pair-{pair}' if pair in ('capacities','cooperation') else ''
-    variant_class=(' eoc-priority-card' if pair=='capacities' and variant=='priority'
-                   else ' eoc-capacity-full' if variant=='full' else '')
+    pair_class=f' eoc-pair-{pair}' if pair=='cooperation' else ''
+    variant_class=' eoc-capacity-full' if variant=='full' else ''
     return f'<div class="card-panel{pair_class}{variant_class}">{"".join([h]+contents)}</div>'
 
 
@@ -556,28 +544,31 @@ def regional_overview(country,active):
                     distribution_html(active.activation,'Activation after formal decision',times,CYAN,active,'activation')+
                     '</div>',unsafe_allow_html=True)
     st.divider()
-    left,right=st.columns(2,gap='large')
-    with left:
-        section('Most widely reported capacities',
-                'Countries reporting an established or functional capacity.',eyebrow='03 / REPORTED CAPACITIES',paired=True)
-        ranked=capacity_table(active)
-        ranked=ranked[ranked.component.isin(CAPACITIES)]
-        ranked=ranked[ranked.denominator>0].sort_values(['in_place','capacity'],ascending=[False,True]).head(7)
-        st.markdown(capacity_rows_html(ranked,pair='capacities',country=active),unsafe_allow_html=True)
-    with right:
-        section('Priority capacity gaps','Countries with the following capacities fully in place.',eyebrow='04 / COOPERATION PRIORITIES',paired=True)
-        priorities=[('Sustainable financing',36,('d','e')),
-                    ('Formal surge staffing',77,('d','e')),
-                    ('Updated surge roster',78,('a',)),
-                    ('Integrated information tools',107,('d','e')),
-                    ('Structured information exchange',105,('d',))]
-        figures=[]
-        for label,col,positive in priorities:
-            vals=[country_capacity(row,col,positive) for _,row in active.iterrows()]
-            figures.append({'capacity':label,'in_place':sum(v is True for v in vals),
-                            'denominator':sum(v is not None for v in vals),
-                             'col':col,'positive':positive})
-        st.markdown(capacity_rows_html(pd.DataFrame(figures),pair='capacities',variant='priority',country=active),unsafe_allow_html=True)
+    # Both comparisons occupy the full content width, stacked vertically.
+    # Keep the per-bar country drilldowns and original valid-response counts.
+    section('Most widely reported capacities',
+            'Countries reporting an established or functional capacity.',
+            eyebrow='03 / REPORTED CAPACITIES')
+    ranked=capacity_table(active)
+    ranked=ranked[ranked.component.isin(CAPACITIES)]
+    ranked=ranked[ranked.denominator>0].sort_values(['in_place','capacity'],ascending=[False,True]).head(7)
+    st.markdown(capacity_rows_html(ranked,variant='full',country=active),unsafe_allow_html=True)
+    st.divider()
+    section('Priority capacity gaps',
+            'Countries with the following capacities fully in place.',
+            eyebrow='04 / COOPERATION PRIORITIES')
+    priorities=[('Sustainable financing',36,('d','e')),
+                ('Formal surge staffing',77,('d','e')),
+                ('Updated surge roster',78,('a',)),
+                ('Integrated information tools',107,('d','e')),
+                ('Structured information exchange',105,('d',))]
+    figures=[]
+    for label,col,positive in priorities:
+        vals=[country_capacity(row,col,positive) for _,row in active.iterrows()]
+        figures.append({'capacity':label,'in_place':sum(v is True for v in vals),
+                        'denominator':sum(v is not None for v in vals),
+                        'col':col,'positive':positive})
+    st.markdown(capacity_rows_html(pd.DataFrame(figures),variant='full',country=active),unsafe_allow_html=True)
  
 
 

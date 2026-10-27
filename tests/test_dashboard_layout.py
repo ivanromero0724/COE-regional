@@ -160,3 +160,24 @@ def test_expandable_capacity_bars_keep_visible_blue_fill():
     app = (ROOT / 'app.py').read_text(encoding='utf-8')
     assert '.measure-fill{display:block;height:100%;background:#009BDA;' in app
     assert '<span class="measure-bar"><span class="measure-fill" style="width:' in app
+
+
+def test_overview_full_width_drilldowns_retain_country_details():
+    """The two overview sections span the page and remain fully expandable."""
+    import app as dashboard_app
+    from dashboard.data import load_data,country_aggregate,capacity_table,CAPACITIES
+    records,_=load_data()
+    active=country_aggregate(records)
+    ranked=capacity_table(active)
+    ranked=ranked[ranked.component.isin(CAPACITIES)]
+    ranked=ranked[ranked.denominator>0].sort_values(
+        ['in_place','capacity'],ascending=[False,True]).head(7)
+    html=dashboard_app.capacity_rows_html(ranked,variant='full',country=active)
+    assert 'class="card-panel eoc-capacity-full"' in html
+    assert html.count('<details class="eoc-capacity-disclosure">')==7
+    assert html.count('class="eoc-country-capacity-item"')==7*len(active)
+    source=(ROOT / 'app.py').read_text(encoding='utf-8')
+    overview=source.split('def regional_overview(country,active):',1)[1].split(
+        'def capacity_and_gaps(active):',1)[0]
+    assert "capacity_rows_html(pd.DataFrame(figures),variant='full',country=active)" in overview
+    assert "st.columns(2,gap='large')" not in overview
