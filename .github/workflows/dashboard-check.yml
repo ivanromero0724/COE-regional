@@ -97,10 +97,14 @@ jobs:
               'The old country capacity selector must be removed'
           )
           section = next(x for x in app.segmented_control if x.key == 'regional_section')
-          section.set_value('Operations & hazards').run(timeout=90)
+          section.set_value('Hazards & training').run(timeout=90)
           assert not app.exception, [e.message for e in app.exception]
-          assert any('eoc-training-bars' in x.value and 'eoc-capacity-disclosure' in x.value
-                     for x in app.markdown), 'Training completion and priority should open country statuses'
+          assert any('eoc-hazard-grid' in x.value for x in app.markdown), (
+              'Four hazard donut cards should precede the country heatmap'
+          )
+          assert not any('eoc-training-bars' in x.value for x in app.markdown), (
+              'Training must render as a single chart, not expandable country rows'
+          )
           assert not any('Physical infrastructure' in x.value
                          or 'Infraestructura física' in x.value for x in app.markdown), (
               'Physical infrastructure must only be explored under Capacities & gaps'
@@ -110,7 +114,7 @@ jobs:
               'Training should be the second regional operations section'
           )
           section = next(x for x in app.segmented_control if x.key == 'regional_section')
-          assert section.value == 'Operations & hazards'
+          assert section.value == 'Hazards & training'
           section.set_value('Networks & cooperation').run(timeout=90)
           assert not app.exception, [e.message for e in app.exception]
           assert any('<div class="network-card">' in x.value for x in app.markdown), (
