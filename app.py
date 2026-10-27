@@ -151,6 +151,14 @@ def ui_style():
     /* Compact capacity comparison: matched modest height, without oversized empty areas. */
     .card-panel.eoc-pair-capacities{min-height:305px;margin-bottom:0;padding:13px 16px;}
     .card-panel.eoc-pair-capacities .measure-row{padding:6px 0;min-height:35px;}
+    /* Five priority rows use the available card height evenly, without changing
+       the seven-row capacities card or creating a large empty area at the bottom. */
+    .card-panel.eoc-pair-capacities.eoc-priority-card{
+        display:grid;
+        grid-template-columns:minmax(0,1fr);
+        align-content:space-between;
+    }
+    .eoc-priority-card .measure-row{padding:9px 0;}
     /* One card, same outside height as the 450px map plus its frame padding.
        Keep rows at a consistent rhythm; never stretch the inner content. */
     .card-panel.eoc-pair-overview.eoc-operations-card{
@@ -264,7 +272,7 @@ def kpi_grid(cards,columns=5):
     st.markdown(f'<div class="kpi-grid{style}">{"".join(items)}</div>',unsafe_allow_html=True)
 
 
-def capacity_rows_html(frame,title=None,pair=None):
+def capacity_rows_html(frame,title=None,pair=None,variant=None):
     """Small visual bars with explicit percentage AND numerator / denominator."""
     contents=[]
     for _,r in frame.iterrows():
@@ -276,7 +284,8 @@ def capacity_rows_html(frame,title=None,pair=None):
                         f'<div class="measure-value">{esc(visible)}</div></div>')
     h=f'<div class="card-title">{esc(T(title))}</div>' if title else ''
     pair_class=f' eoc-pair-{pair}' if pair in ('capacities','cooperation') else ''
-    return f'<div class="card-panel{pair_class}">{h}{"".join(contents)}</div>'
+    variant_class=' eoc-priority-card' if pair=='capacities' and variant=='priority' else ''
+    return f'<div class="card-panel{pair_class}{variant_class}">{h}{"".join(contents)}</div>'
 
 
 def distribution_html(series,title,ordered,color):
@@ -389,7 +398,7 @@ def regional_overview(country,active):
             vals=[country_capacity(row,col,positive) for _,row in active.iterrows()]
             figures.append({'capacity':label,'in_place':sum(v is True for v in vals),
                             'denominator':sum(v is not None for v in vals)})
-        st.markdown(capacity_rows_html(pd.DataFrame(figures),pair='capacities'),unsafe_allow_html=True)
+        st.markdown(capacity_rows_html(pd.DataFrame(figures),pair='capacities',variant='priority'),unsafe_allow_html=True)
  
 
 
