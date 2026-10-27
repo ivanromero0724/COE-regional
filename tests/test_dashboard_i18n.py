@@ -47,3 +47,11 @@ def test_training_chart_shows_percent_and_fraction_in_both_languages():
             assert all('%' in text and '/' in text for text in trace.text if text != '—')
     assert charts.country_training(rows.iloc[0], lang='es').data[0].z is not None
     assert charts.country_hazards(rows.iloc[0], lang='es').data[0].x is not None
+
+def test_map_presence_title_translates_in_both_languages():
+    assert tr('Which countries have EOC-S?', 'en') == 'Which countries have EOC-S?'
+    assert tr('Which countries have EOC-S?', 'es') == '¿Qué países tienen COE-S?'
+    assert tr('01 / EOC-S STATUS', 'es') == '01 / ESTADO DE LOS COE-S'
+    assert 'sin respuesta' in tr(
+        'Established or in implementation; countries without survey responses remain gray.', 'es'
+    )
