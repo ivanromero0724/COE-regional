@@ -131,6 +131,7 @@ def ui_style():
         line-height:1.05;letter-spacing:-.035em;overflow-wrap:anywhere;word-break:normal;
     }
     .kpi .kpi-value.long{font-size:clamp(.95rem,1.15vw,1.16rem);line-height:1.22;letter-spacing:0;}
+    .kpi .kpi-count{font-size:.88rem;font-weight:650;letter-spacing:0;color:#637D90;white-space:nowrap;}
     .kpi-icon{
         grid-area:icon;display:flex;justify-content:center;align-items:center;
         width:34px;height:34px;border-radius:10px;background:#EAF4FA;color:#005A8B;
@@ -399,12 +400,15 @@ def kpi_grid(cards,columns=5):
     fallback='<path d="M4 18V6M4 18h16M8 14l4-4 3 3 5-6"/>'
     for label,value in cards:
         display=str(value)
-        long=' long' if len(display)>12 else ''
+        matched=re.fullmatch(r'(\\d+(?:\\.\\d+)?%) \\((\\d+/\\d+)\\)', display)
+        pretty=(f'{esc(matched.group(1))} <span class="kpi-count">({esc(matched.group(2))})</span>'
+                if matched else esc(T(display)))
+        long=' long' if len(display)>12 and not matched else ''
         tone=' accent' if label.lower().startswith(('in implementation','activation')) else ''
         svg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+KPI_ICON_PATHS.get(label,fallback)+'</svg>'
         items.append(f'<div class="kpi{tone}"><div class="kpi-label">{esc(T(label))}</div>'
                      f'<div class="kpi-icon" aria-hidden="true">{svg}</div>'
-                     f'<div class="kpi-value{long}">{esc(T(display))}</div></div>')
+                     f'<div class="kpi-value{long}">{pretty}</div></div>')
     style=' four' if columns==4 else ''
     st.markdown(f'<div class="kpi-grid{style}">{"".join(items)}</div>',unsafe_allow_html=True)
 
