@@ -21,6 +21,7 @@ from dashboard.data import (
 from dashboard import charts as viz
 from dashboard.capacity_labels import labels_for_question
 from dashboard.treemap import overview_treemap_html, cooperation_treemap_html
+from dashboard.narratives import narrative_for_display
 from dashboard.visual_style import TREEMAP_COLORS, treemap_text_color
 from dashboard.i18n import T, tr, chosen_language
 
@@ -1085,16 +1086,18 @@ def country_profile(records,countries):
     st.plotly_chart(viz.country_training(r,lang=chosen_language()),
                     use_container_width=True,config={'displayModeBar':False})
     st.divider()
-    section('Reported experience','Original-language responses, without machine translation.',eyebrow='05 / INSTITUTIONAL NOTES')
+    section('Reported experience',eyebrow='05 / INSTITUTIONAL NOTES')
     a,b=st.columns(2,gap='large')
-    for col,key,title in ((a,'Reported strengths (original language)','Reported strengths'),
-                          (b,'Improvement areas (original language)','Areas for improvement')):
+    for col,source,kind,title in (
+        (a,'Reported strengths (original language)','strengths','Reported strengths'),
+        (b,'Improvement areas (original language)','improve','Areas for improvement')
+    ):
         with col:
             with st.container(border=True):
                 st.markdown('**'+T(title)+'**')
-                st.write(r[key] or T('No narrative response provided.'))
+                st.write(narrative_for_display(r.record_id,kind,r[source],chosen_language()))
     if r['Recent activations (original language)']:
-        with st.expander(T('Recent events / activations · original response')):
+        with st.expander(T('Recent events / activations')):
             st.write(r['Recent activations (original language)'])
     skills=[name for name in COOPERATION_SKILLS.values() if pd.notna(r['Skill: '+name]) and bool(r['Skill: '+name])]
     modes=[name for name in COOPERATION_MODES.values() if pd.notna(r['Mode: '+name]) and bool(r['Mode: '+name])]
