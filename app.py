@@ -148,7 +148,9 @@ def ui_style():
     }
     /* Match the seven-row capacity card and the five-row priority card in height,
        without stretching the bar rows or adding uneven gaps between them. */
-    .card-panel.eoc-pair-capacities{min-height:425px;margin-bottom:0;}
+    /* Compact capacity comparison: matched modest height, without oversized empty areas. */
+    .card-panel.eoc-pair-capacities{min-height:305px;margin-bottom:0;padding:13px 16px;}
+    .card-panel.eoc-pair-capacities .measure-row{padding:6px 0;min-height:35px;}
     /* One card, same outside height as the 450px map plus its frame padding.
        Keep rows at a consistent rhythm; never stretch the inner content. */
     .card-panel.eoc-pair-overview.eoc-operations-card{
