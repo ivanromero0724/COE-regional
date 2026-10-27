@@ -617,11 +617,7 @@ def capacity_chart(indicator, counts, chart_kind):
 
 
 def capacity_visual_dashboard(frame, active):
-    """Component indicators, without the redundant overall availability chart."""
-    st.markdown('<div class="eoc-capacity-section-title">'+
-                ('Capacidades y brechas por indicador' if chosen_language()=='es'
-                 else 'Capacities & gaps by indicator')+
-                '</div>',unsafe_allow_html=True)
+    """Direct indicator gallery without a second redundant section heading."""
     items=list(frame.iterrows())
     for row_index in range(0,len(items),2):
         columns=st.columns(2,gap='medium')
@@ -788,9 +784,8 @@ def regional_overview(country,active):
 
 
 def capacity_and_gaps(active):
-    section('Core capacities reported as in place',
-            'Country counts reflect only recognized answers to each survey item.',
-            eyebrow='01 / CAPACITY PROFILES')
+    # One section heading; indicator names identify the plots below.
+    section('Capacities & gaps')
     caps=capacity_table(active)
     component=st.selectbox(T('Explore a component'),list(CAPACITIES.keys()),
                            format_func=lambda value, _lang=chosen_language(): tr(value, _lang),
