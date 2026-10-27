@@ -44,7 +44,10 @@ def test_training_chart_shows_percent_and_fraction_in_both_languages():
         assert len(fig.data) == 2
         for trace in fig.data:
             assert len(trace.text) == len(TRAINING_LABELS)
-            assert all('%' in text and '/' in text for text in trace.text if text != '—')
+            # Keep the labels compact; full counts stay available on hover.
+            assert all('%' in value for value in trace.text if value != '—')
+            assert '%{customdata[0]}/%{customdata[1]}' in trace.hovertemplate
+            assert all(0 <= n <= d <= len(frame) for n,d in trace.customdata)
     assert charts.country_training(rows.iloc[0], lang='es').data[0].z is not None
     assert charts.country_hazards(rows.iloc[0], lang='es').data[0].x is not None
 
