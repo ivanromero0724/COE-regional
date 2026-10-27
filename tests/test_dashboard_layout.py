@@ -112,17 +112,44 @@ def test_sidebar_contains_no_technical_metadata_or_regional_filters():
     assert 'subregion=st.selectbox(' not in main
 
 
-def test_capacities_and_countries_use_two_full_width_sections():
-    """No squeezed side-by-side table; full-width bars followed by country tiles."""
+def test_capacity_bars_expand_countries_in_place():
+    """The whole horizontal bar is a disclosure, so no second selector/table."""
     app = (ROOT / 'app.py').read_text(encoding='utf-8')
     section = app.split('def capacity_and_gaps(active):', 1)[1].split('def operations_section(active):', 1)[0]
     assert 'st.columns(' not in section
-    assert "capacity_rows_html(sliced,'Capacity availability',variant='full')" in section
-    assert section.index("variant='full'") < section.index("T('Countries reporting each capacity')")
-    assert "st.markdown(countries_capacity_grid(rows),unsafe_allow_html=True)" in section
+    assert "capacity_drilldown_html(sliced,active,component)" in section
+    assert "key='capacity_country_view'" not in app
     assert "compact_table(['Country','Reported capacity'],rows" not in section
-    assert 'def countries_capacity_grid(rows):' in app
+    assert 'def capacity_drilldown_html(frame, active, component):' in app
+    assert '<details class="eoc-capacity-disclosure">' in app
+    assert '<summary class="eoc-capacity-summary">' in app
+    assert "countries_capacity_grid(rows)" in app
     assert 'eoc-country-capacity-grid' in app
     assert '.eoc-country-capacity-grid{grid-template-columns:1fr;}' in app
     assert 'grid-template-columns:repeat(3,minmax(0,1fr));' in app
-    assert "else ' eoc-capacity-full' if variant=='full'" in app
+    assert '.eoc-capacity-summary:focus-visible' in app
+    assert '.eoc-capacity-disclosure[open] .eoc-capacity-chevron' in app
+
+
+def test_capacity_disclosures_preserve_counts_and_country_statuses():
+    """One expandable row per capacity, each containing all reporting countries."""
+    import app as dashboard_app
+    from dashboard.data import load_data, country_aggregate, capacity_table, CAPACITIES
+
+    records, _ = load_data()
+    countries = country_aggregate(records)
+    component = next(iter(CAPACITIES))
+    frame = capacity_table(countries)
+    frame = frame[frame.component == component]
+    html = dashboard_app.capacity_drilldown_html(frame, countries, component)
+    assert html.count('<details class="eoc-capacity-disclosure">') == len(frame)
+    assert html.count('<summary class="eoc-capacity-summary">') == len(frame)
+    assert html.count('class="eoc-country-capacity-item"') == len(frame) * len(countries)
+    for _, item in frame.iterrows():
+        assert item["capacity"] in html
+        pct = 100 * item["in_place"] / item["denominator"] if item["denominator"] else 0
+        expected = (f'{pct:.0f}% ({int(item["in_place"])}/{int(item["denominator"])})'
+                    if item["denominator"] else 'No valid responses')
+        assert expected in html
+    assert 'class="status-chip status-yes"' in html
+    assert 'class="status-chip status-no"' in html
