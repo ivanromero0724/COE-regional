@@ -245,12 +245,13 @@ def ui_style():
     }
     .eoc-training-group-title:first-of-type{margin-top:4px;}
     .network-grid{align-items:start;}
-    .network-card summary{list-style:none;cursor:pointer;position:relative;}
-    .network-card summary::-webkit-details-marker{display:none;}
-    .network-card summary:focus-visible{outline:2px solid #009BDA;outline-offset:4px;}
-    .network-card .eoc-capacity-chevron{position:absolute;top:4px;right:4px;}
-    .network-card[open] .eoc-capacity-chevron{transform:rotate(225deg);}
-    .network-card .eoc-capacity-detail{margin:14px -3px 0;padding:10px;}
+    /* Network summary cards stay static. The country-level breakdown is the
+       separate categorical matrix below, not three accordion panels. */
+    .eoc-network-legend{display:flex;gap:10px 21px;flex-wrap:wrap;
+        align-items:center;margin:12px 0 9px;font-size:.77rem;color:#45667A;}
+    .eoc-network-legend-item{display:inline-flex;gap:7px;align-items:center;}
+    .eoc-network-swatch{display:inline-block;width:13px;height:13px;
+        border-radius:3px;flex-shrink:0;border:1px solid rgba(35,70,95,.07);}
     .mini-title{font-size:.85rem;font-weight:800;color:#005A8B;margin:14px 0 6px;}
     .dist-row{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(70px,1fr) 115px;gap:10px;align-items:center;padding:6px 0;}
     .dist-label{font-size:.77rem;color:#29485F;overflow-wrap:anywhere;}
@@ -265,7 +266,6 @@ def ui_style():
     .status-yes{background:#E6F5EF;color:#18795E;}
     .status-no{background:#FFF0E8;color:#A84C2F;}
     .status-interest{background:#E5F5FD;color:#006C9A;}
-    .eoc-network-detail-grid{display:grid;gap:8px;}
     .status-unknown{background:#EFF3F6;color:#687C8B;}
     .status-tile-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:8px 0 18px;}
     .status-tile{border:1px solid #DFE9F1;border-radius:10px;background:white;padding:12px;display:grid;grid-template-columns:24px minmax(0,1fr);gap:4px 8px;align-items:center;}
@@ -467,14 +467,6 @@ def status_chip(value):
             else f'<span class="status-chip status-no">{esc(T("Partial / absent"))}</span>')
 
 
-def network_status_chip(value):
-    """Show network answers verbatim, not as an in-place capacity judgement."""
-    style={'Participating':'status-yes','Interested':'status-interest',
-           'Not participating':'status-no','Not reported':'status-unknown'}
-    return ('<span class="status-chip '+style.get(value,'status-unknown')+'">'
-            +esc(T(value))+'</span>')
-
-
 def status_grid_html(items,paired_infrastructure=False):
     """Scannable multi-column chips, no wide tables on country pages."""
     cards=[]
@@ -631,26 +623,32 @@ def cooperation_section(active):
               +part_html(interested,'#009BDA','Interested')
               +part_html(inactive,'#CFDDE6','Not participating')+'</div>')
         primary_pct=100*participating/answered if answered else 0
-        countries=''.join(
-            '<div class="eoc-country-capacity-item"><span class="eoc-country-capacity-name">'
-            +esc(T(row.country))+'</span>'+network_status_chip(row[name])+'</div>'
-            for _,row in active.sort_values('country').iterrows()
-        )
         cards.append(
-            f'<details class="network-card"><summary>'
+            '<div class="network-card">'
             f'<div class="network-name">{esc(T(name))}</div>'
-            f'<span class="eoc-capacity-chevron" aria-hidden="true"></span>'
             f'<div class="network-count">{primary_pct:.0f}% '
             f'<span style="font-size:.82rem;color:#688193">({participating}/{answered})</span></div>'
             +bar+
             f'<div class="network-meta">{esc(T("Participating"))} {participating}/{answered} · '
             f'{esc(T("Interested"))} {interested}/{answered} · '
             f'{esc(T("Not participating"))} {inactive}/{answered}</div>'
-            '</summary><div class="eoc-capacity-detail">'
-            '<div class="eoc-capacity-detail-title">'+esc(T('Reported status by country'))+'</div>'
-            '<div class="eoc-network-detail-grid">'+countries+'</div></div></details>'
+            '</div>'
         )
     st.markdown('<div class="network-grid">'+''.join(cards)+'</div>',unsafe_allow_html=True)
+    # One full-width categorical matrix for all three networks and all countries.
+    st.markdown('<div class="mini-title">'+esc(T('Country participation by network'))+'</div>',
+                unsafe_allow_html=True)
+    legend_colors=[('Participating','#005A8B'),('Interested','#009BDA'),
+                   ('Not participating','#F36B32'),('Not reported','#E7EDF2')]
+    legend=''.join(
+        '<span class="eoc-network-legend-item"><span class="eoc-network-swatch" '
+        f'style="background:{color}"></span>{esc(T(status))}</span>'
+        for status,color in legend_colors
+    )
+    st.markdown('<div class="eoc-network-legend">'+legend+'</div>',
+                unsafe_allow_html=True)
+    st.plotly_chart(viz.network_participation_heatmap(active,lang=chosen_language()),
+                    width='stretch',config={'displayModeBar':False})
     st.divider()
     a,b=st.columns(2,gap='large')
     with a:
