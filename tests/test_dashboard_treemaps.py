@@ -211,3 +211,20 @@ def test_cooperation_treemaps_rank_actual_country_offers_bilingually():
                 assert f'({n}/{d})' in html
     with pytest.raises(ValueError):
         cooperation_treemap_html(frame,kind='unrecognized')
+
+
+def test_all_treemap_tile_faces_have_square_corners():
+    """All shared HTML treemaps use the same squared-off block style."""
+    from pathlib import Path
+    app=(Path(__file__).resolve().parents[1]/'app.py').read_text(encoding='utf-8')
+    rule=app.split('.eoc-overview-treemap-face{',1)[1].split('}',1)[0]
+    assert 'border-radius:0;' in rule
+    assert 'border-radius:7px' not in rule
+    # Overview and cooperation both render that exact shared face class.
+    overview=overview_treemap_html(_data()[0],'available')
+    assert 'class="eoc-overview-treemap-face"' in overview
+    from dashboard.data import COOPERATION_MODES
+    frame=pd.DataFrame([{'capacity':v,'in_place':3,'denominator':5}
+                        for v in COOPERATION_MODES.values()])
+    coop=cooperation_treemap_html(frame,kind='modalities')
+    assert 'class="eoc-overview-treemap-face eoc-cooperation-tile-face"' in coop
