@@ -32,12 +32,21 @@ def test_map_height_is_proportionate_to_operations_card():
     records, _ = load_data()
     fig = charts.countries_map(country_aggregate(records))
     assert fig is not None
-    assert fig.layout.height == 480
+    assert fig.layout.height == 600
     assert ".card-panel.eoc-pair-overview" in APP
     assert "with st.container(border=False, key='eoc_coverage_map_panel')" in APP
     assert "with st.container(border=True, key='eoc_operations_panel')" not in APP
     assert 'card-panel eoc-pair-overview eoc-operations-card' in APP
-    assert 'height:calc(480px + 12px + 2px)' in APP
+    # Chart plus its two 1px borders: same exterior height on both columns.
+    map_css=APP.split('.st-key-eoc_coverage_map_panel{',1)[1].split('}',1)[0]
+    ops_css=APP.split('.card-panel.eoc-pair-overview.eoc-operations-card{',1)[1].split('}',1)[0]
+    assert 'height:602px;' in map_css
+    assert 'min-height:602px;' in map_css
+    assert 'height:602px;' in ops_css
+    assert 'box-sizing:border-box;' in ops_css
+    assert fig.layout.height + 2 == 602
+    assert fig.layout.yaxis.scaleanchor == 'x'
+    assert fig.layout.yaxis.scaleratio == 1
     assert "overflow-y:auto;" in APP
     assert "st-key-eoc_coverage_map_panel" in APP
     assert fig.layout.paper_bgcolor == '#FFFFFF'
