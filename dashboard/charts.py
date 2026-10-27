@@ -153,7 +153,10 @@ def countries_map(countries, selection=None, lang='en'):
         legend=dict(title=None,orientation='h',y=-.08,x=0,font_size=10),
         dragmode=False,
     )
-    return style(fig,385,dict(l=0,r=0,t=0,b=38))
+    # Opaque white plot canvas fills the complete gray-bordered dashboard card.
+    fig=style(fig,450,dict(l=0,r=0,t=0,b=38))
+    fig.update_layout(paper_bgcolor='#FFFFFF',plot_bgcolor='#FFFFFF')
+    return fig
 
 
 def training_comparison(frame,lang='en'):
