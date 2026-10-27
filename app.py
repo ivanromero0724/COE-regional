@@ -19,6 +19,7 @@ from dashboard.data import (
   capacity_table, country_capacity
 )
 from dashboard import charts as viz
+from dashboard.capacity_labels import labels_for_question
 from dashboard.treemap import overview_treemap_html
 from dashboard.i18n import T, tr, chosen_language
 
@@ -579,7 +580,7 @@ def capacity_chart(indicator, counts, chart_kind):
     pct=[100*v/total for v in values]
     def short_label(label,limit=36):
         return textwrap.shorten(' '.join(str(label).split()),width=limit,placeholder='…')
-    shorter=capacity_answer_labels(labels,chosen_language())
+    shorter=labels_for_question(int(indicator['col']),labels,chosen_language())
     fig=go.Figure()
     if chart_kind=='donut':
         fig.add_trace(go.Pie(
