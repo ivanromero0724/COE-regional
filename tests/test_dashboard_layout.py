@@ -52,3 +52,21 @@ def test_paho_and_eoc_logos_are_enlarged_and_responsive():
     assert ".brand-set img{display:block;width:100%;height:96px;" in app
     assert ".brand-set{max-width:360px;}" in app
     assert "object-fit:contain" in app
+
+
+def test_map_heading_and_chart_borders_consistent():
+    app = (ROOT / "app.py").read_text(encoding="utf-8")
+    assert "Which countries have EOC-S?" in app
+    assert "Where have countries responded?" not in app
+    assert "border-color:#DFE9F1!important;" in app
+    assert "border:1px solid #DFE9F1;" in app
+    assert 'border-radius:12px!important;' in app
+    # Every standalone Plotly chart has the same outline as the HTML cards.
+    plotly_css = app.split('[data-testid="stPlotlyChart"]{', 1)[1].split('}', 1)[0]
+    assert "border:1px solid #DFE9F1;" in plotly_css
+    assert "border-radius:12px;" in plotly_css
+    # The map's own native frame provides its outline: no nested second border.
+    map_css = app.split('.st-key-eoc_coverage_map_panel [data-testid="stPlotlyChart"]{', 1)[1].split('}', 1)[0]
+    assert "border:0!important;" in map_css
+    assert "border-radius:0!important;" in map_css
+    assert "border:1px solid #DFE9F1;border-top:3px solid #005A8B;" in app
