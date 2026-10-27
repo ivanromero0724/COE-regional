@@ -614,41 +614,10 @@ def capacity_chart(indicator, counts, chart_kind):
 
 
 def capacity_visual_dashboard(frame, active):
-    """Visual hierarchy consistent with the existing PAHO regional panels."""
-    import plotly.graph_objects as go
-    valid=frame[frame.denominator>0].copy()
-    if not valid.empty:
-        valid['percentage']=100*valid.in_place/valid.denominator
-        labels=[T(x) for x in valid.capacity]
-        concise=[x if len(x)<=42 else x[:41].rsplit(' ',1)[0]+'…' for x in labels]
-        fig=go.Figure(go.Bar(
-            y=concise[::-1],x=valid.percentage.to_list()[::-1],orientation='h',
-            customdata=[[labels[i],int(valid.in_place.iloc[i]),int(valid.denominator.iloc[i])]
-                        for i in range(len(valid))][::-1],
-            marker_color='#009BDA',
-            text=[f'{p:.0f}%' for p in valid.percentage][::-1],
-            textposition='outside',cliponaxis=False,
-            hovertemplate='<b>%{customdata[0]}</b><br>%{x:.0f}% (%{customdata[1]}/%{customdata[2]})<extra></extra>'))
-        fig.update_layout(
-            height=max(380,len(valid)*48+85),
-            margin=dict(l=18,r=48,t=30,b=54),paper_bgcolor='white',
-            plot_bgcolor='white',font=dict(family='"Avenir Next", Avenir, "Segoe UI", Arial, sans-serif',size=11,color='#17324D'),
-            hoverlabel=dict(bgcolor='white',font_size=11),bargap=.25)
-        fig.update_xaxes(range=[0,105],tickmode='array',
-            tickvals=[0,25,50,75,100],
-            ticktext=['0%','25%','50%','75%','100%'],
-            showticklabels=True,showline=True,linecolor='#91A5B4',linewidth=1.3,
-            ticks='outside',ticklen=5,tickcolor='#91A5B4',
-            showgrid=False,zeroline=False,
-            fixedrange=True,tickfont_size=10)
-        fig.update_yaxes(showline=True,linecolor='#91A5B4',linewidth=1.3,
-            ticks='outside',ticklen=4,tickcolor='#91A5B4',
-            showgrid=True,gridcolor='#E7EDF3',gridwidth=1,
-            showticklabels=True,automargin=True,fixedrange=True,tickfont_size=10)
-        st.markdown('<div class="eoc-capacity-section-title">'+T('Capacity availability')+'</div>',unsafe_allow_html=True)
-        st.plotly_chart(fig,use_container_width=True,config={'displayModeBar':False})
+    """Component indicators, without the redundant overall availability chart."""
     st.markdown('<div class="eoc-capacity-section-title">'+
-                ('Distribución de respuestas' if chosen_language()=='es' else 'Response distribution')+
+                ('Capacidades y brechas por indicador' if chosen_language()=='es'
+                 else 'Capacities & gaps by indicator')+
                 '</div>',unsafe_allow_html=True)
     items=list(frame.iterrows())
     for row_index in range(0,len(items),2):
