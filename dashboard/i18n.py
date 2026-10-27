@@ -117,7 +117,7 @@ ES = {
     'countries answered':'países respondieron', 'participating':'participan',
     'interested':'interesados', 'not participating':'no participan',
     'Participating':'Participa','Interested':'Interesado','Not participating':'No participa',
-    'See country-level network participation':'Ver participación en redes por país',
+    'Country participation by network':'Participación de los países por red',
     'Expertise countries can share':'Capacidades que los países pueden compartir',
     'Technical expertise reported for cooperation.':'Capacidades técnicas reportadas para cooperación.',
     '02 / CAPACITIES OFFERED':'02 / CAPACIDADES OFRECIDAS',
