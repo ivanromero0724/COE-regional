@@ -947,7 +947,7 @@ def cooperation_section(active):
         bar=('<div style="display:flex;height:12px;width:100%;border-radius:99px;overflow:hidden;background:#EAF1F5">'
               +part_html(participating,'#005A8B','Participating')
               +part_html(interested,'#009BDA','Interested')
-              +part_html(inactive,'#CFDDE6','Not participating')+'</div>')
+              +part_html(inactive,ORANGE,'Not participating')+'</div>')
         primary_pct=100*participating/answered if answered else 0
         cards.append(
             '<div class="network-card">'
