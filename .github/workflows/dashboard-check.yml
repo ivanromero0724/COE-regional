@@ -56,11 +56,20 @@ jobs:
           assert not any(x.key == 'regional_section' for x in app.sidebar.radio)
           section.set_value('Capacities & gaps').run(timeout=90)
           assert not app.exception, [e.message for e in app.exception]
-          assert any('eoc-country-capacity-grid' in x.value for x in app.markdown), (
-              'The full-width country status grid was not rendered'
+          html = next(
+              (x.value for x in app.markdown if 'eoc-capacity-disclosure' in x.value), ''
           )
-          assert any('eoc-capacity-full' in x.value for x in app.markdown), (
-              'The full-width availability bars were not rendered'
+          assert '<details class="eoc-capacity-disclosure">' in html, (
+              'The interactive capacity rows were not rendered'
+          )
+          assert '<summary class="eoc-capacity-summary">' in html, (
+              'The bar rows must be clickable summaries'
+          )
+          assert html.count('class="eoc-country-capacity-item"') >= 15, (
+              'The expanded country statuses must be embedded in each row'
+          )
+          assert not any(x.key == 'capacity_country_view' for x in app.selectbox), (
+              'The old country capacity selector must be removed'
           )
           section = next(x for x in app.segmented_control if x.key == 'regional_section')
           section.set_value('Operations & hazards').run(timeout=90)
