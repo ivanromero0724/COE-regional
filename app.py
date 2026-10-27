@@ -189,34 +189,34 @@ def ui_style():
         box-sizing:border-box;border-radius:0;color:white;overflow:hidden;
     }
     .eoc-overview-treemap-label{
-        color:inherit;font-size:.80rem;font-weight:760;line-height:1.25;
+        color:inherit;font-size:.75rem;font-weight:760;line-height:1.27;
         overflow:hidden;overflow-wrap:anywhere;
         display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;
     }
     .eoc-overview-treemap-metric{
-        color:inherit;font-size:1.35rem;line-height:1.05;font-weight:800;white-space:nowrap;
+        color:inherit;font-size:1.24rem;line-height:1.05;font-weight:800;white-space:nowrap;
     }
-    .eoc-overview-treemap-metric small{font-size:.73rem;line-height:1.2;font-weight:650;}
+    .eoc-overview-treemap-metric small{font-size:.68rem;line-height:1.2;font-weight:650;}
     /* Cooperation uses the same treemap identity as Overview, with extra
        vertical space for nine expertise labels. No accordion/country breakdown. */
     .eoc-overview-treemap-plot.eoc-cooperation-treemap-plot{height:450px;}
     .eoc-cooperation-tile-face{padding:10px;gap:4px;}
     .eoc-cooperation-tile-face .eoc-overview-treemap-label{
-        font-size:.76rem;line-height:1.24;-webkit-line-clamp:4;
+        font-size:.72rem;line-height:1.24;-webkit-line-clamp:4;
     }
-    .eoc-cooperation-tile-face .eoc-overview-treemap-metric{font-size:1.16rem;}
+    .eoc-cooperation-tile-face .eoc-overview-treemap-metric{font-size:1.08rem;}
     @media(max-width:950px){
         .eoc-overview-treemap-plot.eoc-cooperation-treemap-plot{height:410px;}
         .eoc-cooperation-tile-face{padding:7px;}
-        .eoc-cooperation-tile-face .eoc-overview-treemap-label{font-size:.69rem;}
-        .eoc-cooperation-tile-face .eoc-overview-treemap-metric{font-size:1rem;}
+        .eoc-cooperation-tile-face .eoc-overview-treemap-label{font-size:.66rem;}
+        .eoc-cooperation-tile-face .eoc-overview-treemap-metric{font-size:.94rem;}
     }
     @media(max-width:950px){
         .eoc-overview-treemap-plot{height:410px;}
         .eoc-overview-treemap-face{padding:8px;}
-        .eoc-overview-treemap-label{font-size:.72rem;}
-        .eoc-overview-treemap-metric{font-size:1.12rem;}
-        .eoc-overview-treemap-metric small{font-size:.64rem;}
+        .eoc-overview-treemap-label{font-size:.68rem;}
+        .eoc-overview-treemap-metric{font-size:1.04rem;}
+        .eoc-overview-treemap-metric small{font-size:.60rem;}
     }
     /* One card, same outside height as the 450px map plus its frame padding.
        Keep rows at a consistent rhythm; never stretch the inner content. */
@@ -633,7 +633,7 @@ def capacity_chart(indicator, counts, chart_kind):
                         line=dict(color='white',width=2)),
             texttemplate='<b>%{label}</b><br>%{percentRoot:.0%}',
             textposition='top left',
-            textfont=dict(size=12,color=[treemap_text_color(c) for c in tile_colors]),
+            textfont=dict(size=11,color=[treemap_text_color(c) for c in tile_colors]),
             hovertemplate='<b>%{customdata}</b><br>%{percentRoot:.0%} (%{value:.1f}/'+str(total)+' '+unit+')<extra></extra>',
             pathbar=dict(visible=False),tiling=dict(pad=4)))
         fig.update_layout(showlegend=False,height=430,
