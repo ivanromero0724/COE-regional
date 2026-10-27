@@ -59,6 +59,10 @@ def test_map_heading_and_chart_borders_consistent():
     assert "Which countries have EOC-S?" in app
     assert "Where have countries responded?" not in app
     assert "border-color:#DFE9F1!important;" in app
+    assert "with st.container(border=False, key='eoc_coverage_map_panel')" in app
+    assert "with st.container(border=True, key='eoc_coverage_map_panel')" not in app
+    assert ".st-key-eoc_coverage_map_panel{" in app
+    assert "border:1px solid #DFE9F1!important;" in app
     assert "border:1px solid #DFE9F1;" in app
     assert 'border-radius:12px!important;' in app
     # Every standalone Plotly chart has the same outline as the HTML cards.
@@ -70,6 +74,8 @@ def test_map_heading_and_chart_borders_consistent():
     assert "border:0!important;" in map_css
     assert "border-radius:0!important;" in map_css
     assert "border:1px solid #DFE9F1;border-top:3px solid #005A8B;" in app
+    assert "PRELIMINARY · Self-reported capacities from responding countries only." not in app
+    assert "Preliminary, self-reported information" not in app
 
 
 def test_regional_section_navigation_is_top_horizontal_segmented_control():
