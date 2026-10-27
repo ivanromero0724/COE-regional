@@ -74,17 +74,12 @@ jobs:
           )
           section.set_value('Capacities & gaps').run(timeout=90)
           assert not app.exception, [e.message for e in app.exception]
-          html = next(
-              (x.value for x in app.markdown if '<details class="eoc-capacity-disclosure">' in x.value), ''
+          assert any('Distribución de respuestas' in x.value for x in app.markdown), (
+              'The categorical capacity chart gallery was not rendered'
           )
-          assert '<details class="eoc-capacity-disclosure">' in html, (
-              'The interactive capacity rows were not rendered'
-          )
-          assert '<summary class="eoc-capacity-summary">' in html, (
-              'The bar rows must be clickable summaries'
-          )
-          assert html.count('class="eoc-country-capacity-item"') >= 15, (
-              'The expanded country statuses must be embedded in each row'
+          assert any('Disponibilidad de capacidades' in x.value or 'Capacity availability' in x.value
+                     for x in app.markdown), (
+              'The regional capacity comparison chart is missing'
           )
           assert not any('Information systems and surge workforce' in x.value
                          or 'Sistemas de información y personal de refuerzo' in x.value
