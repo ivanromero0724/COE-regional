@@ -759,7 +759,7 @@ def status_grid_html(items,paired_infrastructure=False):
         label,value=item[:2]
         response=item[2] if len(item)>2 else None
         if value is None or pd.isna(value):
-            color='#8CA0AF';symbol='—';state=T('Not reported')
+            color='#8CA0AF';symbol='—';state=response if response else T('Not reported')
         elif bool(value):
             color='#1D947C';symbol='✓';state=response if response else T('In place')
         else:
