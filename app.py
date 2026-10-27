@@ -62,6 +62,16 @@ def ui_style():
     h1,h2,h3,h4{color:#005A8B;font-weight:800;letter-spacing:-.025em;}
     h2{font-size:1.42rem!important;}h3{font-size:1.06rem!important;}
     [data-testid="stVerticalBlockBorderWrapper"] > div {border-color:#DFE9F1!important;background:#FFF;border-radius:14px!important;}
+    /* Both overview visual panels use the same white Streamlit bordered surface. */
+    .st-key-eoc_coverage_map_panel,
+    .st-key-eoc_operations_panel,
+    .st-key-eoc_coverage_map_panel [data-testid="stVerticalBlockBorderWrapper"],
+    .st-key-eoc_operations_panel [data-testid="stVerticalBlockBorderWrapper"],
+    .st-key-eoc_coverage_map_panel [data-testid="stVerticalBlock"],
+    .st-key-eoc_operations_panel [data-testid="stVerticalBlock"],
+    .st-key-eoc_coverage_map_panel [data-testid="stPlotlyChart"]{
+        background-color:#FFFFFF!important;
+    }
     [data-testid="stMetric"] {background:#FFF;border:1px solid #E1EAF1;border-radius:13px;padding:14px;min-height:112px;}
     [data-testid="stMetricValue"] {color:#005A8B;font-size:1.5rem!important;font-weight:800;overflow-wrap:anywhere;}
     [data-testid="stMetricLabel"] {font-size:.75rem!important;color:#597184;}
@@ -123,6 +133,15 @@ def ui_style():
     .card-panel.eoc-pair-overview,.card-panel.eoc-pair-capacities,.card-panel.eoc-pair-cooperation{
         min-height:0;display:block;box-sizing:border-box;
     }
+    /* The map and operations content are both 450px tall inside identical frames.
+       Bar rows remain compact and attached to their own subsection titles. */
+    .st-key-eoc_operations_panel .card-panel.eoc-pair-overview{
+        min-height:450px;margin:0;border:0;padding:0;border-radius:0;
+        background:#FFFFFF;
+    }
+    .st-key-eoc_operations_panel .dist-row{min-height:40px;padding:8px 0;}
+    .st-key-eoc_operations_panel .mini-title{margin:10px 0 7px;}
+    .st-key-eoc_coverage_map_panel [data-testid="stPlotlyChart"]{border-radius:0;}
     .status-tile-grid.eoc-pair-infrastructure{min-height:0;margin:0;grid-template-rows:auto;box-sizing:border-box;}
     .card-title{font-size:.85rem;font-weight:800;color:#005A8B;margin:0 0 12px;}
     .measure-row{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(65px,1fr) 116px;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #EDF2F6;min-height:38px;}
@@ -156,7 +175,8 @@ def ui_style():
     .network-count{font-size:1.55rem;color:#005A8B;font-weight:800;margin:7px 0;}
     .network-meta{font-size:.73rem;line-height:1.45;color:#61798A;}
     @media(max-width:1150px){.kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr));}.kpi-grid.four{grid-template-columns:repeat(2,minmax(0,1fr));}}
-    @media(max-width:900px){.eoc-pair-heading{margin-bottom:0;}}
+    @media(max-width:900px){.eoc-pair-heading{margin-bottom:0;}
+        .st-key-eoc_operations_panel .card-panel.eoc-pair-overview{min-height:0;}}
     @media(max-width:760px){[data-testid="stMainBlockContainer"],.block-container{padding-top:2.75rem;}.measure-row{grid-template-columns:minmax(0,1fr) 115px;row-gap:6px;gap:7px;}.measure-label{grid-column:1 / -1;overflow-wrap:normal;font-size:.74rem;}.measure-bar{grid-column:1;}.measure-value{grid-column:2;}.dist-row{grid-template-columns:minmax(0,1fr) 80px 112px;gap:6px;}.block-container{padding-left:1rem;padding-right:1rem;}.paho-hero{grid-template-columns:1fr;padding:17px;row-gap:14px;}.brand-set{max-width:360px;}.kpi-grid,.kpi-grid.four{grid-template-columns:repeat(2,minmax(0,1fr));}.network-grid{grid-template-columns:1fr;}.status-tile-grid{grid-template-columns:1fr;}.card-panel{padding:13px;}}
     @media(max-width:460px){.kpi-grid,.kpi-grid.four{grid-template-columns:1fr 1fr;gap:8px;}.kpi{padding:11px;min-height:103px;}.kpi .kpi-value{font-size:1.5rem;}.kpi-grid:not(.four)>.kpi:last-child:nth-child(odd){grid-column:span 2;}.country-flag{font-size:2.4rem;}}
     </style>''',unsafe_allow_html=True)
@@ -296,7 +316,7 @@ def coverage_map(country,selected):
     if fig is None:
         st.info(T('Map file not found. The Americas GeoPackage is expected in data/geografia/paises_americas.gpkg.'))
     else:
-        # Use the same gray outlined surface as other regional panels.
+        # White, gray-outlined Streamlit frame: no gray gutters around the map.
         with st.container(border=True, key='eoc_coverage_map_panel'):
             st.plotly_chart(fig, width='stretch', config={'displayModeBar':False})
 
@@ -313,9 +333,11 @@ def regional_overview(country,active):
         section('How the EOC-S operate','One observation per responding country.',eyebrow='02 / OPERATIONS',paired=True)
         modes=['24/7 continuous','Response + monitoring','Response only','Not formally defined','Not reported']
         times=['Under 2 hours','2–6 hours','Over 6 hours','Not defined','Not reported']
-        st.markdown('<div class="card-panel eoc-pair-overview">'+distribution_html(active.operating_mode,'Operating mode',modes,BLUE)
-                    +distribution_html(active.activation,'Activation after formal decision',times,CYAN)
-                    +'</div>',unsafe_allow_html=True)
+        # Match the map's bordered frame, padding and visualization height.
+        with st.container(border=True, key='eoc_operations_panel'):
+            st.markdown('<div class="card-panel eoc-pair-overview">'+distribution_html(active.operating_mode,'Operating mode',modes,BLUE)
+                        +distribution_html(active.activation,'Activation after formal decision',times,CYAN)
+                        +'</div>',unsafe_allow_html=True)
     st.divider()
     left,right=st.columns(2,gap='large')
     with left:
