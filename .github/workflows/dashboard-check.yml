@@ -34,8 +34,8 @@ jobs:
         run: pip install -r requirements.txt
       - name: Check syntax, survey and cartographic layer
         run: |
-          python -m py_compile app.py dashboard/data.py dashboard/charts.py dashboard/i18n.py
-          python -m pytest -q tests/test_dashboard_data.py tests/test_dashboard_layout.py tests/test_dashboard_i18n.py tests/test_dashboard_map.py tests/test_dashboard_alignment.py tests/test_dashboard_drilldowns.py tests/test_dashboard_network_heatmap.py
+          python -m py_compile app.py dashboard/data.py dashboard/charts.py dashboard/i18n.py dashboard/treemap.py
+          python -m pytest -q tests/test_dashboard_data.py tests/test_dashboard_layout.py tests/test_dashboard_i18n.py tests/test_dashboard_map.py tests/test_dashboard_alignment.py tests/test_dashboard_drilldowns.py tests/test_dashboard_network_heatmap.py tests/test_dashboard_treemaps.py
       - name: Smoke-test bilingual pages and regional charts
         run: |
           python - <<'PYTEST'
@@ -57,8 +57,13 @@ jobs:
           assert any('eoc-country-category-item' in x.value for x in app.markdown), (
               'Operating and activation bars should open matching countries'
           )
-          assert any('eoc-country-capacity-item' in x.value for x in app.markdown), (
-              'Overview capacity comparisons should open country statuses'
+          treemaps=[x.value for x in app.markdown if 'class="eoc-overview-treemap-card"' in x.value]
+          assert len(treemaps)==2, 'Overview should show the two regional treemaps'
+          assert sum(x.count('class="eoc-overview-treemap-tile"') for x in treemaps)==12, (
+              'Overview should include seven reported capacities and five priority gaps'
+          )
+          assert all('eoc-country-capacity-item' not in x for x in treemaps), (
+              'Overview must summarize regional percentages without country drilldowns'
           )
           section.set_value('Capacities & gaps').run(timeout=90)
           assert not app.exception, [e.message for e in app.exception]
