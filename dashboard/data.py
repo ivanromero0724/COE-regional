@@ -223,7 +223,7 @@ def country_aggregate(df:pd.DataFrame)->pd.DataFrame:
              'formal_document': (any(v == True for v in g.formal_document) if g.formal_document.notna().any() else None)}
         for col in {c for items in CAPACITIES.values() for _,c,_ in items}:
             values=[str(v) for v in g[f'ANSWER_{col}'].dropna().unique() if str(v).strip()]
-            row[f'ANSWER_{col}']=' / '.join(values) if values else None
+            row[f'ANSWER_{col}']=(values[0] if len(values)==1 else '__MIXED__' if values else None)
         for label in HAZARD_LABELS.values():
             row[label]=g[label].max(skipna=True)
         for label in RESOURCE_LABELS.values():
