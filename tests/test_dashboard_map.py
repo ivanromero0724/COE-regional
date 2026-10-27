@@ -77,3 +77,8 @@ def test_five_overview_kpis_share_one_navy_treatment():
     rendered=markdown.call_args.args[0]
     assert rendered.count('class="kpi"')==5
     assert 'class="kpi accent"' not in rendered
+    # Only the icon stroke turns orange; backgrounds, borders and KPI text stay blue.
+    source=(Path(__file__).resolve().parents[1]/'app.py').read_text(encoding='utf-8')
+    assert '.kpi-grid:not(.four) .kpi-icon{color:#F36B32;}' in source
+    assert 'border-radius:10px;background:#EAF4FA;color:#005A8B;' in source
+    assert '.kpi{\n' in source
