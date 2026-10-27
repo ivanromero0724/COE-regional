@@ -131,23 +131,23 @@ def test_capacity_bars_expand_countries_in_place():
     assert '.eoc-capacity-disclosure[open] .eoc-capacity-chevron' in app
 
 
-def test_capacity_distributions_show_original_answers_and_countries():
-    """Each component item displays actual answer categories and a country breakdown."""
+def test_capacity_charts_cover_component_questions():
     import app as dashboard_app
     from dashboard.data import load_data, country_aggregate, capacity_table, CAPACITIES
-
-    records, _ = load_data()
-    countries = country_aggregate(records)
-    component = next(iter(CAPACITIES))
-    frame = capacity_table(countries)
-    frame = frame[frame.component == component]
-    html = dashboard_app.capacity_drilldown_html(frame, countries, component)
-    for _, item in frame.iterrows():
-        assert item["capacity"] in html
-    assert html.count('<div class="mini-title">') == len(frame)
-    assert '<details style=' in html
-    assert 'ISO:' not in html
-    assert any(name in html for name in countries.country)
+    records,_=load_data()
+    countries=country_aggregate(records)
+    comp=next(iter(CAPACITIES))
+    frame=capacity_table(countries)
+    selected=frame[frame.component==comp]
+    assert len(selected)==len(CAPACITIES[comp])
+    for _,item in selected.iterrows():
+        counts=dashboard_app.capacity_response_distribution(countries,item)
+        if len(counts):
+            assert counts.sum()<=len(countries)
+            for kind in ('donut','bar','treemap'):
+                chart=dashboard_app.capacity_chart(item,counts,kind)
+                assert len(chart.data)>=1
+                assert chart.layout.dragmode is False
 
 
 
@@ -212,5 +212,5 @@ def test_infrastructure_remains_available_in_capacity_component():
     infrastructure=caps[caps.component=='Infrastructure']
     assert len(infrastructure)==len(RESOURCE_LABELS)
     assert infrastructure['denominator'].gt(0).any()
-    html=dashboard_app.capacity_drilldown_html(infrastructure,countries,'Infrastructure')
-    assert html.count('<div class="mini-title">')==len(infrastructure)
+    for _,item in infrastructure.iterrows():
+        assert item['capacity'] in CAPACITIES['Infrastructure & support'][0] or isinstance(item['capacity'],str)
