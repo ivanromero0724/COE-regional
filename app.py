@@ -20,7 +20,7 @@ from dashboard.data import (
 )
 from dashboard import charts as viz
 from dashboard.capacity_labels import labels_for_question
-from dashboard.treemap import overview_treemap_html
+from dashboard.treemap import overview_treemap_html, cooperation_treemap_html
 from dashboard.i18n import T, tr, chosen_language
 
 st.set_page_config(page_title='EOC-NET Americas | PAHO 2026',page_icon='🌎',layout='wide',initial_sidebar_state='expanded')
@@ -185,6 +185,20 @@ def ui_style():
         color:inherit;font-size:1.35rem;line-height:1.05;font-weight:800;white-space:nowrap;
     }
     .eoc-overview-treemap-metric small{font-size:.73rem;line-height:1.2;font-weight:650;}
+    /* Cooperation uses the same treemap identity as Overview, with extra
+       vertical space for nine expertise labels. No accordion/country breakdown. */
+    .eoc-cooperation-treemap-plot{height:450px;}
+    .eoc-cooperation-tile-face{padding:10px;gap:4px;}
+    .eoc-cooperation-tile-face .eoc-overview-treemap-label{
+        font-size:.76rem;line-height:1.24;-webkit-line-clamp:4;
+    }
+    .eoc-cooperation-tile-face .eoc-overview-treemap-metric{font-size:1.16rem;}
+    @media(max-width:950px){
+        .eoc-cooperation-treemap-plot{height:410px;}
+        .eoc-cooperation-tile-face{padding:7px;}
+        .eoc-cooperation-tile-face .eoc-overview-treemap-label{font-size:.69rem;}
+        .eoc-cooperation-tile-face .eoc-overview-treemap-metric{font-size:1rem;}
+    }
     @media(max-width:950px){
         .eoc-overview-treemap-plot{height:325px;}
         .eoc-overview-treemap-face{padding:8px;}
@@ -985,26 +999,29 @@ def cooperation_section(active):
     st.divider()
     a,b=st.columns(2,gap='large')
     with a:
-        section('Expertise countries can share','Technical expertise reported for cooperation.',
+        section('Expertise countries can share',
                 eyebrow='02 / CAPACITIES OFFERED',paired=True)
         entries=[]
         for name in COOPERATION_SKILLS.values():
             answered=active['Skill: '+name].dropna()
-            entries.append({'capacity':name,'in_place':sum(bool(x) for x in answered),
-                            'denominator':len(answered),'status_col':'Skill: '+name})
-        ranked=pd.DataFrame(entries).sort_values('in_place',ascending=False).head(9)
-        st.markdown(capacity_rows_html(ranked,pair='cooperation',country=active),unsafe_allow_html=True)
+            entries.append({'capacity':name,'in_place':int((answered==True).sum()),
+                            'denominator':len(answered)})
+        ranked=(pd.DataFrame(entries).sort_values(
+            ['in_place','capacity'],ascending=[False,True]).head(9))
+        st.markdown(cooperation_treemap_html(ranked,lang=chosen_language(),kind='expertise'),
+                    unsafe_allow_html=True)
     with b:
-        section('How countries can cooperate','Reported modalities of technical collaboration.',
+        section('How countries can cooperate',
                 eyebrow='03 / MODALITIES',paired=True)
         entries=[]
         for name in COOPERATION_MODES.values():
             answered=active['Mode: '+name].dropna()
-            entries.append({'capacity':name,'in_place':sum(bool(x) for x in answered),
-                            'denominator':len(answered),'status_col':'Mode: '+name})
-        ranked=pd.DataFrame(entries).sort_values('in_place',ascending=False)
-        st.markdown(capacity_rows_html(ranked,pair='cooperation',country=active),unsafe_allow_html=True)
-    st.markdown('<div class="eoc-note">'+esc(T('The cooperation and network questions were completed by fewer countries. Each indicator uses the number of valid responses to that specific question.'))+'</div>',unsafe_allow_html=True)
+            entries.append({'capacity':name,'in_place':int((answered==True).sum()),
+                            'denominator':len(answered)})
+        ranked=(pd.DataFrame(entries).sort_values(
+            ['in_place','capacity'],ascending=[False,True]))
+        st.markdown(cooperation_treemap_html(ranked,lang=chosen_language(),kind='modalities'),
+                    unsafe_allow_html=True)
 
 
 def flag_from_iso(iso):
