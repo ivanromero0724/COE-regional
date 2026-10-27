@@ -222,8 +222,13 @@ def country_aggregate(df:pd.DataFrame)->pd.DataFrame:
              'activation':next((v for v in ('Under 2 hours','2–6 hours','Over 6 hours','Not defined') if v in set(g.activation)),'Not reported'),
              'formal_document': (any(v == True for v in g.formal_document) if g.formal_document.notna().any() else None)}
         for col in {c for items in CAPACITIES.values() for _,c,_ in items}:
-            values=[str(v) for v in g[f'ANSWER_{col}'].dropna().unique() if str(v).strip()]
-            row[f'ANSWER_{col}']=(values[0] if len(values)==1 else '__MIXED__' if values else None)
+            # Keep every institutional answer for the regional distributions.
+            # Each country contributes a total weight of one across its
+            # valid institutional answers (including conflicting reports).
+            values=[str(v).strip() for v in g[f'ANSWER_{col}'].dropna()
+                    if str(v).strip()]
+            row[f'ANSWER_{col}']=values[0] if len(values)==1 else None
+            row[f'ANSWER_CHOICES_{col}']=tuple(values)
         for label in HAZARD_LABELS.values():
             row[label]=g[label].max(skipna=True)
         for label in RESOURCE_LABELS.values():
