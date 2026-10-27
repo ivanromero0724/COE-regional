@@ -43,11 +43,28 @@ def test_map_height_is_proportionate_to_operations_card():
     assert fig.layout.paper_bgcolor == '#FFFFFF'
 
 
-def test_hazard_chart_and_infrastructure_do_not_force_whitespace():
+def test_hazard_and_infrastructure_cards_have_the_same_height():
     records, _ = load_data()
     fig = charts.country_hazards(records.iloc[0])
     assert fig.layout.height == 340
     assert ".status-tile-grid.eoc-pair-infrastructure{min-height:0" in APP
+    assert ".eoc-country-infrastructure-panel{height:340px;" in APP
+    profile=APP.split('def country_profile(records,countries):',1)[1].split('def main():',1)[0]
+    assert 'class="eoc-country-infrastructure-panel"' in profile
+    assert "st.plotly_chart(viz.country_hazards(" in profile
+
+
+def test_country_experience_cards_share_one_stretching_css_grid():
+    profile=APP.split('def country_profile(records,countries):',1)[1].split('def main():',1)[0]
+    assert 'class="eoc-country-experience-grid"' in profile
+    assert 'class="eoc-country-experience-card"' in profile
+    assert "st.container(border=True)" not in profile
+    assert '.eoc-country-experience-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:stretch;' in APP
+    assert '.eoc-country-experience-card{box-sizing:border-box;' in APP
+    assert 'padding:16px 18px;height:100%;' in APP
+    assert 'white-space:pre-line;overflow-wrap:anywhere;' in APP
+    # Paragraphs and emphasized phrases are still readable and safely escaped.
+    assert "esc(value),flags=re.S)" in profile
 
 
 def test_cards_are_compact_and_have_relevant_accessible_icons():
