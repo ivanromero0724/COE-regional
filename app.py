@@ -146,6 +146,14 @@ def ui_style():
     .eoc-capacity-section-title{font-size:.92rem;font-weight:800;color:#17324D;margin:17px 0 9px;}
     .eoc-capacity-chart-title{min-height:2.2em;max-height:2.8em;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-height:1.35;font-size:.83rem;font-weight:800;color:#17324D;margin:1px 0 3px;}
     .eoc-capacity-chart-meta{font-size:.73rem;color:#607B8A;margin:-8px 0 3px;}
+    /* The outer Streamlit chart card is the only frame in Capacities & gaps.
+       Remove the generic Plotly frame nested inside each card. */
+    .st-key-capacity_visual_gallery [data-testid="stPlotlyChart"]{
+        border:none!important;border-radius:0!important;
+        box-shadow:none!important;background:transparent!important;
+        padding:0!important;
+    }
+
 
     /* Compact comparisons: align headings without stretching cards or bar spacing.
        Different-length datasets are allowed to finish at their natural height. */
@@ -778,7 +786,8 @@ def capacity_and_gaps(active):
                            key='capacity_component')
     sliced=caps[caps.component==component]
     # Full categorical distributions; click each answer category to see countries.
-    capacity_visual_dashboard(sliced,active)
+    with st.container(border=False,key="capacity_visual_gallery"):
+        capacity_visual_dashboard(sliced,active)
     note('Each country is counted once; categories reproduce survey responses. Where several institutions answered, the country response is consolidated.')
 
 def operations_section(active):
