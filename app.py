@@ -434,7 +434,7 @@ def capacity_rows_html(frame,title=None,pair=None,variant=None,country=None):
     return f'<div class="card-panel{pair_class}{variant_class}">{"".join([h]+contents)}</div>'
 
 
-def capacity_drilldown_html(frame,active,component):
+def capacity_drilldown_html(frame, active, component):
     """Clickable capacity bars with valid-response country statuses below each."""
     return ('<div class="card-panel eoc-capacity-full">'
             '<div class="card-title">'+esc(T('Capacity availability'))+'</div>'
