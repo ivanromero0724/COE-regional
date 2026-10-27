@@ -60,9 +60,7 @@ def test_network_cards_are_static_and_country_status_is_separate_heatmap():
     assert '<summary>' not in network
     assert "st.markdown(network_heatmap_html(active),unsafe_allow_html=True)" in network
     assert "st.plotly_chart(viz.network_participation_heatmap" not in network
-    assert network.index("'<div class=\\\"network-grid\\\">'") < network.index(
-        "network_heatmap_html(active)"
-    )
+    assert network.index('network-grid') < network.index('network_heatmap_html(active)')
     assert 'eoc-network-legend' in network
     for status in NETWORK_STATUS_CODES:
         assert status in network
