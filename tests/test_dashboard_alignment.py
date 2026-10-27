@@ -11,9 +11,10 @@ APP = (Path(__file__).resolve().parents[1] / "app.py").read_text(encoding="utf-8
 
 
 def test_comparisons_do_not_stretch_bar_cards():
-    for pair in ("overview", "cooperation"):
-        assert f".card-panel.eoc-pair-{pair}" in APP
-        assert f"pair='{pair}'" in APP or pair == "overview"
+    # Only the older Overview bars retain card-panel pairing.
+    assert ".card-panel.eoc-pair-overview" in APP
+    # The cooperation cards are now HTML treemaps rather than expandable bars.
+    assert "cooperation_treemap_html(ranked,lang=chosen_language()" in APP
     assert "justify-content:space-evenly" not in APP
     assert "min-height:500px" not in APP
     assert "min-height:435px" not in APP
