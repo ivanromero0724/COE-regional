@@ -359,15 +359,15 @@ def ui_style():
     .status-tile-name{font-size:.79rem;font-weight:700;color:#29485F;overflow-wrap:anywhere;}
     .status-tile-state{font-size:.72rem;color:#607B8A;}
     .network-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0;}
-    .network-card{border:1px solid #DFE9F1;border-top:3px solid #009BDA;border-radius:12px;background:#fff;padding:15px;min-height:120px;}
+    .network-card{border:1px solid #DFE9F1;border-radius:12px;background:#FFFFFF;padding:15px;min-height:120px;box-shadow:none;}
     /* Four comparable event-frequency donuts, matching the static network cards. */
     .eoc-hazard-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:12px 0 22px;}
     .eoc-hazard-card{display:flex;flex-direction:column;align-items:stretch;min-width:0;min-height:324px;}
     .eoc-hazard-card .network-name{min-height:2.65em;line-height:1.35;text-align:center;}
     .eoc-hazard-donut{width:144px;height:144px;border-radius:50%;margin:12px auto 18px;position:relative;flex-shrink:0;}
-    .eoc-hazard-donut:before{content:'';position:absolute;inset:26px;background:#FFF;border-radius:50%;}
-    .eoc-hazard-donut-center{position:absolute;inset:26px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#005A8B;}
-    .eoc-hazard-donut-center strong{font-size:1.65rem;line-height:1.06;}
+    .eoc-hazard-donut:before{content:'';position:absolute;inset:30px;background:#FFF;border-radius:50%;}
+    .eoc-hazard-donut-center{position:absolute;inset:30px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#005A8B;}
+    .eoc-hazard-donut-center strong{font-size:1.3rem;line-height:1.06;}
     .eoc-hazard-donut-center span{font-size:.60rem;line-height:1.2;color:#607B8A;max-width:83px;margin-top:3px;}
     .eoc-hazard-bands{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px 10px;margin-top:auto;}
     .eoc-hazard-band{display:flex;align-items:center;justify-content:space-between;gap:5px;font-size:.76rem;color:#435E70;}
@@ -378,7 +378,7 @@ def ui_style():
     @media(max-width:1040px){.eoc-hazard-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
     @media(max-width:560px){.eoc-hazard-grid{grid-template-columns:1fr;}.eoc-hazard-card{min-height:0;}.eoc-hazard-card .network-name{min-height:0;}}
 
-    .network-name{font-size:.79rem;font-weight:800;color:#005A8B;}
+    .network-name{font-size:.83rem;font-weight:800;color:#17324D;line-height:1.35;}
     .network-count{font-size:1.55rem;color:#005A8B;font-weight:800;margin:7px 0;}
     .network-meta{font-size:.73rem;line-height:1.45;color:#61798A;}
     @media(max-width:1150px){.kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr));}.kpi-grid.four{grid-template-columns:repeat(2,minmax(0,1fr));}.eoc-country-capacity-grid,.eoc-country-category-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
@@ -558,7 +558,7 @@ def capacity_chart(indicator, counts, chart_kind):
     """PAHO chart layout aligned with Cluster Salud v2: readable heights and spacing."""
     import plotly.graph_objects as go
     import textwrap
-    colors=['#005A8B','#009BDA','#F36B32','#75B8D6','#53A567','#8DA9B9','#8C6BB1']
+    colors=viz.CAPACITY_COLORS
     total=int(counts.sum())
     labels=list(counts.index)
     values=[float(v) for v in counts.values]
@@ -819,7 +819,7 @@ def hazard_summary_cards(active):
     The denominator is the number of reporting countries for that hazard;
     missing answers do NOT represent zero events.
     """
-    colors=('#D8E3EB','#83BEDD','#009BDA','#005A8B')
+    colors=viz.HAZARD_COLORS
     bands=('0','1–2','3–5','>5')
     pieces=[]
     for name in HAZARD_LABELS.values():
