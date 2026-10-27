@@ -62,13 +62,11 @@ def ui_style():
     h1,h2,h3,h4{color:#005A8B;font-weight:800;letter-spacing:-.025em;}
     h2{font-size:1.42rem!important;}h3{font-size:1.06rem!important;}
     [data-testid="stVerticalBlockBorderWrapper"] > div {border-color:#DFE9F1!important;background:#FFF;border-radius:14px!important;}
-    /* Both overview visual panels use the same white Streamlit bordered surface. */
+    /* The map's Streamlit frame is white; operations uses a single HTML card,
+       avoiding the nested white block that previously covered its lower border. */
     .st-key-eoc_coverage_map_panel,
-    .st-key-eoc_operations_panel,
     .st-key-eoc_coverage_map_panel [data-testid="stVerticalBlockBorderWrapper"],
-    .st-key-eoc_operations_panel [data-testid="stVerticalBlockBorderWrapper"],
     .st-key-eoc_coverage_map_panel [data-testid="stVerticalBlock"],
-    .st-key-eoc_operations_panel [data-testid="stVerticalBlock"],
     .st-key-eoc_coverage_map_panel [data-testid="stPlotlyChart"]{
         background-color:#FFFFFF!important;
     }
@@ -133,14 +131,22 @@ def ui_style():
     .card-panel.eoc-pair-overview,.card-panel.eoc-pair-capacities,.card-panel.eoc-pair-cooperation{
         min-height:0;display:block;box-sizing:border-box;
     }
-    /* The map and operations content are both 450px tall inside identical frames.
-       Bar rows remain compact and attached to their own subsection titles. */
-    .st-key-eoc_operations_panel .card-panel.eoc-pair-overview{
-        min-height:450px;margin:0;border:0;padding:0;border-radius:0;
+    /* One card, same outside height as the 450px map plus its frame padding.
+       Keep rows at a consistent rhythm; never stretch the inner content. */
+    .card-panel.eoc-pair-overview.eoc-operations-card{
+        height:calc(450px + 2rem + 2px);
+        min-height:0;
+        margin:0;
+        padding:16px 18px;
+        border:1px solid #DFE9F1;
+        border-radius:12px;
+        box-sizing:border-box;
         background:#FFFFFF;
+        overflow-y:auto;
+        overflow-x:hidden;
     }
-    .st-key-eoc_operations_panel .dist-row{min-height:40px;padding:8px 0;}
-    .st-key-eoc_operations_panel .mini-title{margin:10px 0 7px;}
+    .eoc-operations-card .dist-row{min-height:46px;padding:8px 0;}
+    .eoc-operations-card .mini-title{margin:10px 0 7px;}
     .st-key-eoc_coverage_map_panel [data-testid="stPlotlyChart"]{border-radius:0;}
     .status-tile-grid.eoc-pair-infrastructure{min-height:0;margin:0;grid-template-rows:auto;box-sizing:border-box;}
     .card-title{font-size:.85rem;font-weight:800;color:#005A8B;margin:0 0 12px;}
@@ -176,7 +182,7 @@ def ui_style():
     .network-meta{font-size:.73rem;line-height:1.45;color:#61798A;}
     @media(max-width:1150px){.kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr));}.kpi-grid.four{grid-template-columns:repeat(2,minmax(0,1fr));}}
     @media(max-width:900px){.eoc-pair-heading{margin-bottom:0;}
-        .st-key-eoc_operations_panel .card-panel.eoc-pair-overview{min-height:0;}}
+        .card-panel.eoc-pair-overview.eoc-operations-card{height:auto;overflow:visible;}}
     @media(max-width:760px){[data-testid="stMainBlockContainer"],.block-container{padding-top:2.75rem;}.measure-row{grid-template-columns:minmax(0,1fr) 115px;row-gap:6px;gap:7px;}.measure-label{grid-column:1 / -1;overflow-wrap:normal;font-size:.74rem;}.measure-bar{grid-column:1;}.measure-value{grid-column:2;}.dist-row{grid-template-columns:minmax(0,1fr) 80px 112px;gap:6px;}.block-container{padding-left:1rem;padding-right:1rem;}.paho-hero{grid-template-columns:1fr;padding:17px;row-gap:14px;}.brand-set{max-width:360px;}.kpi-grid,.kpi-grid.four{grid-template-columns:repeat(2,minmax(0,1fr));}.network-grid{grid-template-columns:1fr;}.status-tile-grid{grid-template-columns:1fr;}.card-panel{padding:13px;}}
     @media(max-width:460px){.kpi-grid,.kpi-grid.four{grid-template-columns:1fr 1fr;gap:8px;}.kpi{padding:11px;min-height:103px;}.kpi .kpi-value{font-size:1.5rem;}.kpi-grid:not(.four)>.kpi:last-child:nth-child(odd){grid-column:span 2;}.country-flag{font-size:2.4rem;}}
     </style>''',unsafe_allow_html=True)
@@ -333,11 +339,11 @@ def regional_overview(country,active):
         section('How the EOC-S operate','One observation per responding country.',eyebrow='02 / OPERATIONS',paired=True)
         modes=['24/7 continuous','Response + monitoring','Response only','Not formally defined','Not reported']
         times=['Under 2 hours','2–6 hours','Over 6 hours','Not defined','Not reported']
-        # Match the map's bordered frame, padding and visualization height.
-        with st.container(border=True, key='eoc_operations_panel'):
-            st.markdown('<div class="card-panel eoc-pair-overview">'+distribution_html(active.operating_mode,'Operating mode',modes,BLUE)
-                        +distribution_html(active.activation,'Activation after formal decision',times,CYAN)
-                        +'</div>',unsafe_allow_html=True)
+        # Single bordered HTML card: no nested Streamlit frame/white overlay.
+        st.markdown('<div class="card-panel eoc-pair-overview eoc-operations-card">'+
+                    distribution_html(active.operating_mode,'Operating mode',modes,BLUE)+
+                    distribution_html(active.activation,'Activation after formal decision',times,CYAN)+
+                    '</div>',unsafe_allow_html=True)
     st.divider()
     left,right=st.columns(2,gap='large')
     with left:
