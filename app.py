@@ -6,6 +6,7 @@ Data is bundled in data/ and refreshed by a GitHub/Streamlit Cloud redeploy.
 from __future__ import annotations
 import base64
 import html
+import re
 from io import BytesIO
 from PIL import Image
 from pathlib import Path
