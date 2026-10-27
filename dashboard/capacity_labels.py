@@ -44,9 +44,7 @@ def labels_for_question(column, responses, lang='en'):
     result=[]
     for response in responses:
         raw=str(response).strip()
-        if raw=='__MIXED__':
-            pair=('Respuestas diferentes','Different responses')
-        elif column in RESOURCE_COLUMNS:
+        if column in RESOURCE_COLUMNS:
             pair=('Disponible','Available') if raw in ('1','1.0','True','true','Sí','Si') else ('No disponible','Not available')
         elif column==67:
             pair=(f'{raw} personas',f'{raw} staff')
