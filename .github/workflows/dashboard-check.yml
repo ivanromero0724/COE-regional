@@ -34,17 +34,27 @@ jobs:
         run: pip install -r requirements.txt
       - name: Check syntax, survey and cartographic layer
         run: |
-          python -m py_compile app.py dashboard/data.py dashboard/charts.py
-          python -m pytest -q tests/test_dashboard_data.py tests/test_dashboard_layout.py
-      - name: Smoke-test Streamlit application
+          python -m py_compile app.py dashboard/data.py dashboard/charts.py dashboard/i18n.py
+          python -m pytest -q tests/test_dashboard_data.py tests/test_dashboard_layout.py tests/test_dashboard_i18n.py
+      - name: Smoke-test bilingual pages and regional charts
         run: |
-          python - <<'PY'
+          python - <<'PYTEST'
           from streamlit.testing.v1 import AppTest
+
           app = AppTest.from_file('app.py').run(timeout=90)
           assert not app.exception, [e.message for e in app.exception]
-          main_nav = [x for x in app.radio if x.label == 'Explore']
-          assert main_nav and 'Methods & data' not in main_nav[0].options
-          main_nav[0].set_value('Country profiles').run(timeout=90)
+          locale = next(x for x in app.radio if x.key == 'coe_language')
+          assert locale.value == 'en', 'English must be the initial language'
+
+          # Check regional charts in Spanish, then country view in Spanish.
+          locale.set_value('es').run(timeout=90)
           assert not app.exception, [e.message for e in app.exception]
-          print('Regional and country pages load; methods page absent')
-          PY
+          section = next(x for x in app.radio if x.key == 'regional_section')
+          section.set_value('Operations & hazards').run(timeout=90)
+          assert not app.exception, [e.message for e in app.exception]
+          nav = next(x for x in app.radio if x.key == 'main_view')
+          nav.set_value('Country profiles').run(timeout=90)
+          assert not app.exception, [e.message for e in app.exception]
+          assert all(x.value != 'Methods & data' for x in app.radio)
+          print('English default, Spanish charts, and country view: PASS')
+          PYTEST

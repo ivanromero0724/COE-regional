@@ -18,6 +18,7 @@ from dashboard.data import (
   capacity_table, country_capacity
 )
 from dashboard import charts as viz
+from dashboard.i18n import T, tr, chosen_language
 
 st.set_page_config(page_title='EOC-NET Americas | PAHO 2026',page_icon='🌎',layout='wide',initial_sidebar_state='expanded')
 BLUE='#005A8B';CYAN='#009BDA';ORANGE='#F36B32';TEXT='#17324D';MUTED='#607B8A'
@@ -44,15 +45,7 @@ def ui_style():
     [data-testid="stHeader"] {background:rgba(247,250,252,.93);}
     [data-testid="stSidebar"] {background:#FFFFFF;border-right:1px solid #E1EAF1;}
     [data-testid="stSidebar"] [data-testid="stImage"] {margin-bottom:8px;}
-    /* Reference: cluster-salud-vzla-2.0 / src/ui.py — centered 1280px canvas. */
-    [data-testid="stMainBlockContainer"], .block-container {
-        width:min(100%,1280px)!important;
-        max-width:1280px!important;
-        margin-left:auto!important;
-        margin-right:auto!important;
-        padding:1.1rem 1.35rem 2.6rem;
-        box-sizing:border-box;
-    }
+    [data-testid="stMainBlockContainer"], .block-container {width:min(100%,1280px)!important;max-width:1280px!important;margin-left:auto!important;margin-right:auto!important;padding:1.1rem 1.35rem 2.6rem;box-sizing:border-box;}
     h1,h2,h3,h4{color:#005A8B;font-weight:800;letter-spacing:-.025em;}
     h2{font-size:1.42rem!important;}h3{font-size:1.06rem!important;}
     [data-testid="stVerticalBlockBorderWrapper"] > div {border-color:#DFE9F1!important;background:#FFF;border-radius:14px!important;}
@@ -89,16 +82,16 @@ def ui_style():
     .country-identity .institution{font-size:.85rem;color:#647D8D;margin-top:5px;line-height:1.4;overflow-wrap:anywhere;}
     .card-panel{background:#FFF;border:1px solid #DFE9F1;border-radius:12px;padding:17px 18px;margin:1px 0 12px;min-width:0;}
     .card-title{font-size:.85rem;font-weight:800;color:#005A8B;margin:0 0 12px;}
-    .measure-row{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(65px,1fr) 64px;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #EDF2F6;min-height:38px;}
+    .measure-row{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(65px,1fr) 116px;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #EDF2F6;min-height:38px;}
     .measure-row:last-child{border-bottom:0;}
     .measure-label{font-size:.80rem;font-weight:600;color:#29485F;line-height:1.35;overflow-wrap:anywhere;}
     .measure-bar{width:100%;height:9px;border-radius:999px;background:#E7F0F6;overflow:hidden;}
     .measure-fill{height:100%;background:#009BDA;border-radius:999px;}
-    .measure-value{font-size:.79rem;font-weight:800;color:#005A8B;text-align:right;white-space:nowrap;}
+    .measure-value{font-size:.77rem;font-weight:800;color:#005A8B;text-align:right;white-space:nowrap;}
     .mini-title{font-size:.85rem;font-weight:800;color:#005A8B;margin:14px 0 6px;}
-    .dist-row{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(70px,1fr) 35px;gap:10px;align-items:center;padding:6px 0;}
+    .dist-row{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(70px,1fr) 115px;gap:10px;align-items:center;padding:6px 0;}
     .dist-label{font-size:.77rem;color:#29485F;overflow-wrap:anywhere;}
-    .dist-count{font-size:.78rem;color:#005A8B;font-weight:800;text-align:right;}
+    .dist-count{white-space:nowrap;font-size:.78rem;color:#005A8B;font-weight:800;text-align:right;}
     .stat-table{width:100%;border-collapse:collapse;font-size:.80rem;}
     .stat-table th{text-align:left;font-size:.71rem;text-transform:uppercase;letter-spacing:.04em;color:#607B8A;background:#F0F6FA;padding:9px 11px;}
     .stat-table td{padding:10px 11px;border-bottom:1px solid #E8F0F5;vertical-align:middle;}
@@ -109,13 +102,18 @@ def ui_style():
     .status-yes{background:#E6F5EF;color:#18795E;}
     .status-no{background:#FFF0E8;color:#A84C2F;}
     .status-unknown{background:#EFF3F6;color:#687C8B;}
+    .status-tile-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:8px 0 18px;}
+    .status-tile{border:1px solid #DFE9F1;border-radius:10px;background:white;padding:12px;display:grid;grid-template-columns:24px minmax(0,1fr);gap:4px 8px;align-items:center;}
+    .status-symbol{font-size:1.2rem;font-weight:900;grid-row:span 2;}
+    .status-tile-name{font-size:.79rem;font-weight:700;color:#29485F;overflow-wrap:anywhere;}
+    .status-tile-state{font-size:.72rem;color:#607B8A;}
     .network-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0;}
     .network-card{border:1px solid #DFE9F1;border-top:3px solid #009BDA;border-radius:11px;background:#fff;padding:15px;min-height:120px;}
     .network-name{font-size:.79rem;font-weight:800;color:#005A8B;}
     .network-count{font-size:1.55rem;color:#005A8B;font-weight:800;margin:7px 0;}
     .network-meta{font-size:.73rem;line-height:1.45;color:#61798A;}
     @media(max-width:1150px){.kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr));}.kpi-grid.four{grid-template-columns:repeat(2,minmax(0,1fr));}}
-    @media(max-width:760px){.measure-row{grid-template-columns:minmax(0,1fr) 62px;row-gap:6px;}.measure-label{grid-column:1 / -1;overflow-wrap:normal;}.measure-bar{grid-column:1;}.measure-value{grid-column:2;}.block-container{padding-left:1rem;padding-right:1rem;}.paho-hero{grid-template-columns:1fr;padding:17px;row-gap:14px;}.brand-set{max-width:320px;}.kpi-grid,.kpi-grid.four{grid-template-columns:repeat(2,minmax(0,1fr));}.network-grid{grid-template-columns:1fr;}.measure-row{grid-template-columns:minmax(0,1.1fr) minmax(45px,1fr) 55px;gap:7px;}.measure-label{font-size:.74rem;}.card-panel{padding:13px;}}
+    @media(max-width:760px){.measure-row{grid-template-columns:minmax(0,1fr) 115px;row-gap:6px;gap:7px;}.measure-label{grid-column:1 / -1;overflow-wrap:normal;font-size:.74rem;}.measure-bar{grid-column:1;}.measure-value{grid-column:2;}.dist-row{grid-template-columns:minmax(0,1fr) 80px 112px;gap:6px;}.block-container{padding-left:1rem;padding-right:1rem;}.paho-hero{grid-template-columns:1fr;padding:17px;row-gap:14px;}.brand-set{max-width:320px;}.kpi-grid,.kpi-grid.four{grid-template-columns:repeat(2,minmax(0,1fr));}.network-grid{grid-template-columns:1fr;}.status-tile-grid{grid-template-columns:1fr;}.card-panel{padding:13px;}}
     @media(max-width:460px){.kpi-grid,.kpi-grid.four{grid-template-columns:1fr 1fr;gap:8px;}.kpi{padding:11px;min-height:103px;}.kpi .kpi-value{font-size:1.5rem;}.kpi-grid:not(.four)>.kpi:last-child:nth-child(odd){grid-column:span 2;}.country-flag{font-size:2.4rem;}}
     </style>''',unsafe_allow_html=True)
 
@@ -124,19 +122,19 @@ def header():
     eoc=img64(ROOT/'logos/logo_EOC.png');paho=img64(ROOT/'logos/PAHO_eng.png')
     content=f'<img src="data:image/png;base64,{eoc}" alt="EOC-NET"/><img src="data:image/png;base64,{paho}" alt="PAHO/WHO"/>'
     st.markdown(f'''<div class="paho-header"><div class="paho-strip"></div><div class="paho-hero">
-       <div><div class="paho-eyebrow">EOC-NET / THE AMERICAS · 2026</div>
-       <div class="paho-title">Health Emergency Operations Centres</div>
-       <div class="paho-desc">Regional survey dashboard · Institutional preparedness, operational capacities and cooperation</div></div>
+       <div><div class="paho-eyebrow">{esc(T("EOC-NET / THE AMERICAS · 2026"))}</div>
+       <div class="paho-title">{esc(T("Health Emergency Operations Centres"))}</div>
+       <div class="paho-desc">{esc(T("Regional survey dashboard · Institutional preparedness, operational capacities and cooperation"))}</div></div>
        <div class="brand-set">{content}</div></div></div>''',unsafe_allow_html=True)
 
 
 def section(title,subtitle='',eyebrow=None):
-    if eyebrow:st.markdown(f'<div class="section-eyebrow">{esc(eyebrow)}</div>',unsafe_allow_html=True)
-    st.markdown(f'<div class="section-title">{esc(title)}</div>',unsafe_allow_html=True)
-    if subtitle:st.markdown(f'<div class="section-desc">{esc(subtitle)}</div>',unsafe_allow_html=True)
+    if eyebrow:st.markdown(f'<div class="section-eyebrow">{esc(T(eyebrow))}</div>',unsafe_allow_html=True)
+    st.markdown(f'<div class="section-title">{esc(T(title))}</div>',unsafe_allow_html=True)
+    if subtitle:st.markdown(f'<div class="section-desc">{esc(T(subtitle))}</div>',unsafe_allow_html=True)
 
 
-def note(msg):st.markdown(f'<div class="small-note">{esc(msg)}</div>',unsafe_allow_html=True)
+def note(msg):st.markdown(f'<div class="small-note">{esc(T(msg))}</div>',unsafe_allow_html=True)
 
 
 def kpi_grid(cards,columns=5):
@@ -146,47 +144,64 @@ def kpi_grid(cards,columns=5):
         display=str(value)
         long=' long' if len(display)>15 or len(label)>24 else ''
         tone=' accent' if label.lower().startswith(('in implementation','activation')) else ''
-        items.append(f'<div class="kpi{tone}"><div class="kpi-label">{esc(label)}</div>'
-                     f'<div class="kpi-value{long}">{esc(display)}</div></div>')
+        items.append(f'<div class="kpi{tone}"><div class="kpi-label">{esc(T(label))}</div>'
+                     f'<div class="kpi-value{long}">{esc(T(display))}</div></div>')
     style=' four' if columns==4 else ''
     st.markdown(f'<div class="kpi-grid{style}">{"".join(items)}</div>',unsafe_allow_html=True)
 
 
 def capacity_rows_html(frame,title=None):
-    """Names and denominators remain aligned in narrow columns."""
+    """Small visual bars with explicit percentage AND numerator / denominator."""
     contents=[]
     for _,r in frame.iterrows():
         numerator=int(r['in_place']); denominator=int(r['denominator'])
         percent=100*numerator/denominator if denominator else 0
-        contents.append(f'<div class="measure-row"><div class="measure-label">{esc(r["capacity"])}</div>'
+        visible=f'{percent:.0f}% ({numerator}/{denominator})' if denominator else T('No valid responses')
+        contents.append(f'<div class="measure-row"><div class="measure-label">{esc(T(r["capacity"]))}</div>'
                         f'<div class="measure-bar"><div class="measure-fill" style="width:{percent:.1f}%"></div></div>'
-                        f'<div class="measure-value">{numerator}/{denominator}</div></div>')
-    h=f'<div class="card-title">{esc(title)}</div>' if title else ''
+                        f'<div class="measure-value">{esc(visible)}</div></div>')
+    h=f'<div class="card-title">{esc(T(title))}</div>' if title else ''
     return f'<div class="card-panel">{h}{"".join(contents)}</div>'
 
 
 def distribution_html(series,title,ordered,color):
+    """Percentage uses all displayed response categories, including missing as its own group."""
     total=int(series.isin(ordered).sum())
     entries=[]
     for label in ordered:
         n=int((series==label).sum())
         if not n:continue
         pct=100*n/total if total else 0
-        entries.append(f'<div class="dist-row"><div class="dist-label">{esc(label)}</div>'
+        entries.append(f'<div class="dist-row"><div class="dist-label">{esc(T(label))}</div>'
                        f'<div class="measure-bar"><div class="measure-fill" style="width:{pct:.1f}%;background:{color}"></div></div>'
-                       f'<div class="dist-count">{n}</div></div>')
-    return f'<div class="mini-title">{esc(title)}</div>{"".join(entries)}'
+                       f'<div class="dist-count">{pct:.0f}% ({n}/{total})</div></div>')
+    return f'<div class="mini-title">{esc(T(title))}</div>{"".join(entries)}'
 
 
 def status_chip(value):
     if value is None or pd.isna(value):
-        return '<span class="status-chip status-unknown">Not reported</span>'
-    return ('<span class="status-chip status-yes">In place</span>' if bool(value)
-            else '<span class="status-chip status-no">Partial / absent</span>')
+        return f'<span class="status-chip status-unknown">{esc(T("Not reported"))}</span>'
+    return (f'<span class="status-chip status-yes">{esc(T("In place"))}</span>' if bool(value)
+            else f'<span class="status-chip status-no">{esc(T("Partial / absent"))}</span>')
+
+
+def status_grid_html(items):
+    """Scannable multi-column chips, no wide tables on country pages."""
+    cards=[]
+    for label,value in items:
+        if value is None or pd.isna(value):
+            color='#8CA0AF';symbol='—';state=T('Not reported')
+        elif bool(value):
+            color='#1D947C';symbol='✓';state=T('In place')
+        else:
+            color='#F36B32';symbol='×';state=T('Partial / absent')
+        cards.append(f'<div class="status-tile"><span class="status-symbol" style="color:{color}">{symbol}</span>'
+                     f'<span class="status-tile-name">{esc(T(label))}</span><span class="status-tile-state">{esc(state)}</span></div>')
+    return '<div class="status-tile-grid">'+''.join(cards)+'</div>'
 
 
 def compact_table(headers,body,maxheight=None):
-    head=''.join(f'<th>{esc(x)}</th>' for x in headers)
+    head=''.join(f'<th>{esc(T(x))}</th>' for x in headers)
     rows=''.join('<tr>'+''.join(f'<td>{item}</td>' for item in row)+'</tr>' for row in body)
     height=f' style="max-height:{maxheight}px"' if maxheight else ''
     st.markdown(f'<div class="stat-table-wrap"{height}><table class="stat-table"><thead><tr>{head}</tr></thead><tbody>{rows}</tbody></table></div>',unsafe_allow_html=True)
@@ -209,11 +224,11 @@ def country_metric_values(country):
 
 
 def coverage_map(country,selected):
-    try: fig=viz.countries_map(country,selected)
+    try: fig=viz.countries_map(country,selected,lang=chosen_language())
     except Exception as e:
-        st.error('The geographic layer could not be read. Check data/geografia/paises_americas.gpkg.');return
+        st.error(T('The geographic layer could not be read. Check data/geografia/paises_americas.gpkg.'));return
     if fig is None:
-        st.info('Map file not found. The Americas GeoPackage is expected in data/geografia/paises_americas.gpkg.')
+        st.info(T('Map file not found. The Americas GeoPackage is expected in data/geografia/paises_americas.gpkg.'))
     else:st.plotly_chart(fig,use_container_width=True,config={'displayModeBar':False})
 
 
@@ -255,7 +270,7 @@ def regional_overview(country,active):
                             'denominator':sum(v is not None for v in vals)})
         st.markdown(capacity_rows_html(pd.DataFrame(figures)),unsafe_allow_html=True)
         note('In development or informal is not considered fully in place.')
-    st.markdown('<div class="eoc-note">PRELIMINARY · Self-reported capacities from responding countries only. Each indicator has its own denominator, reflecting valid answers to that question.</div>',unsafe_allow_html=True)
+    st.markdown('<div class="eoc-note">'+esc(T('PRELIMINARY · Self-reported capacities from responding countries only. Each indicator has its own denominator, reflecting valid answers to that question.'))+'</div>',unsafe_allow_html=True)
 
 
 def capacity_and_gaps(active):
@@ -263,20 +278,20 @@ def capacity_and_gaps(active):
             'Country counts reflect only recognized answers to each survey item.',
             eyebrow='01 / CAPACITY PROFILES')
     caps=capacity_table(active)
-    component=st.selectbox('Explore a component',list(CAPACITIES.keys()),key='capacity_component')
+    component=st.selectbox(T('Explore a component'),list(CAPACITIES.keys()),format_func=T,key='capacity_component')
     sliced=caps[caps.component==component]
     a,b=st.columns([1.04,1],gap='large')
     with a:
         st.markdown(capacity_rows_html(sliced,'Capacity availability'),unsafe_allow_html=True)
     with b:
-        st.markdown('<div class="mini-title">Countries reporting each capacity</div>',unsafe_allow_html=True)
-        chosen=st.selectbox('Choose capacity',list(sliced.capacity),key='capacity_country_view')
+        st.markdown('<div class="mini-title">'+esc(T('Countries reporting each capacity'))+'</div>',unsafe_allow_html=True)
+        chosen=st.selectbox(T('Choose capacity'),list(sliced.capacity),format_func=T,key='capacity_country_view')
         item=sliced[sliced.capacity==chosen].iloc[0]
         positive=next((valid for lab,col,valid in CAPACITIES[component] if lab==chosen),())
         rows=[]
         for _,r in active.sort_values('country').iterrows():
             status=country_capacity(r,int(item['col']),positive)
-            rows.append((esc(r.country),status_chip(status)))
+            rows.append((esc(T(r.country)),status_chip(status)))
         compact_table(['Country','Reported capacity'],rows,maxheight=450)
         note('Colombia is counted once at regional level when at least one institution reports an in-place capacity.')
     st.divider()
@@ -290,28 +305,26 @@ def operations_section(active):
     section('Hazards coordinated during the past two years',
             'Categories reflect ordinal frequency bands, not exact event counts.',
             eyebrow='01 / TYPES OF EMERGENCIES')
-    st.plotly_chart(viz.hazard_heatmap(active.sort_values('country')),
+    st.plotly_chart(viz.hazard_heatmap(active.sort_values('country'),lang=chosen_language()),
                     use_container_width=True,config={'displayModeBar':False})
     st.divider()
-    a,b=st.columns(2,gap='large')
-    with a:
-        section('Physical infrastructure','Countries reporting these resources.',eyebrow='02 / INFRASTRUCTURE')
-        cards=[]
-        for label in RESOURCE_LABELS.values():
-            valid=active[label].dropna()
-            cards.append({'capacity':label,'in_place':sum(bool(v) for v in valid),'denominator':len(valid)})
-        st.markdown(capacity_rows_html(pd.DataFrame(cards)),unsafe_allow_html=True)
-    with b:
-        section('Training completed and prioritized','Each country counted once per course.',eyebrow='03 / WORKFORCE DEVELOPMENT')
-        training=[]
-        for course in TRAINING_LABELS:
-            done=active['Completed: '+course].dropna()
-            priority=active['Priority: '+course].dropna()
-            training.append((course,sum(bool(v) for v in done),sum(bool(v) for v in priority)))
-        body=[(esc(label),f'<span class="status-chip status-yes">{done} completed</span>',
-                        f'<span class="status-chip status-unknown">{priority} priorities</span>')
-              for label,done,priority in training]
-        compact_table(['Training area','Last year','Next period'],body)
+    section('Physical infrastructure','Countries reporting these resources.',eyebrow='02 / INFRASTRUCTURE')
+    cards=[]
+    for label in RESOURCE_LABELS.values():
+        valid=active[label].dropna()
+        cards.append({'capacity':label,'in_place':sum(bool(v) for v in valid),'denominator':len(valid)})
+    st.markdown(capacity_rows_html(pd.DataFrame(cards)),unsafe_allow_html=True)
+    st.divider()
+    section('Training completed and prioritized','Each country counted once per course.',eyebrow='03 / WORKFORCE DEVELOPMENT')
+    training=[]
+    for course in TRAINING_LABELS:
+        done=active['Completed: '+course].dropna()
+        priority=active['Priority: '+course].dropna()
+        training.append({'area':course, 'done_n':sum(bool(v) for v in done), 'done_d':len(done),
+                         'priority_n':sum(bool(v) for v in priority), 'priority_d':len(priority)})
+    st.plotly_chart(viz.training_comparison(pd.DataFrame(training),lang=chosen_language()),
+                    use_container_width=True,config={'displayModeBar':False})
+
 
 
 def cooperation_section(active):
@@ -323,16 +336,30 @@ def cooperation_section(active):
         valid=active[name]
         counts=valid.value_counts()
         answered=int((valid!='Not reported').sum())
-        cards.append(f'<div class="network-card"><div class="network-name">{esc(name)}</div>'
-                     f'<div class="network-count">{answered} <span style="font-size:.78rem;font-weight:600;color:#688193">countries answered</span></div>'
-                     f'<div class="network-meta">{int(counts.get("Participating",0))} participating · '
-                     f'{int(counts.get("Interested",0))} interested · '
-                     f'{int(counts.get("Not participating",0))} not participating</div></div>')
+        participating=int(counts.get('Participating',0))
+        interested=int(counts.get('Interested',0))
+        inactive=int(counts.get('Not participating',0))
+        def part_html(n, color, caption):
+            pct=(100*n/answered if answered else 0)
+            return (f'<div style="width:{pct:.2f}%;background:{color};height:100%" '
+                    f'title="{esc(T(caption))}: {pct:.0f}% ({n}/{answered})"></div>')
+        bar=('<div style="display:flex;height:12px;width:100%;border-radius:99px;overflow:hidden;background:#EAF1F5">'
+              +part_html(participating,'#005A8B','Participating')
+              +part_html(interested,'#009BDA','Interested')
+              +part_html(inactive,'#CFDDE6','Not participating')+'</div>')
+        primary_pct=100*participating/answered if answered else 0
+        cards.append(f'<div class="network-card"><div class="network-name">{esc(T(name))}</div>'
+                     f'<div class="network-count">{primary_pct:.0f}% '
+                     f'<span style="font-size:.82rem;color:#688193">({participating}/{answered})</span></div>'
+                     +bar+
+                     f'<div class="network-meta">{esc(T("Participating"))} {participating}/{answered} · '
+                     f'{esc(T("Interested"))} {interested}/{answered} · '
+                     f'{esc(T("Not participating"))} {inactive}/{answered}</div></div>')
     st.markdown('<div class="network-grid">'+''.join(cards)+'</div>',unsafe_allow_html=True)
-    with st.expander('See country-level network participation'):
+    with st.expander(T('See country-level network participation')):
         rows=[]
         for _,r in active.sort_values('country').iterrows():
-            rows.append(tuple([esc(r.country)]+[esc(r[name]) for name in NETWORK_NAMES.values()]))
+            rows.append(tuple([esc(T(r.country))]+[esc(T(r[name])) for name in NETWORK_NAMES.values()]))
         compact_table(['Country']+list(NETWORK_NAMES.values()),rows,maxheight=450)
     st.divider()
     a,b=st.columns(2,gap='large')
@@ -354,7 +381,7 @@ def cooperation_section(active):
             entries.append({'capacity':name,'in_place':sum(bool(x) for x in answered),'denominator':len(answered)})
         ranked=pd.DataFrame(entries).sort_values('in_place',ascending=False)
         st.markdown(capacity_rows_html(ranked),unsafe_allow_html=True)
-    st.markdown('<div class="eoc-note">The cooperation and network questions were completed by fewer countries. Each indicator uses the number of valid responses to that specific question.</div>',unsafe_allow_html=True)
+    st.markdown('<div class="eoc-note">'+esc(T('The cooperation and network questions were completed by fewer countries. Each indicator uses the number of valid responses to that specific question.'))+'</div>',unsafe_allow_html=True)
 
 
 def flag_from_iso(iso):
@@ -365,51 +392,36 @@ def flag_from_iso(iso):
 
 
 def country_profile(records,countries):
-    region=st.selectbox('Select a country',sorted(records.country.unique()),key='selected_country')
+    region=st.selectbox(T('Select a country'),sorted(records.country.unique()),format_func=T,key='selected_country')
     options=records[records.country==region].sort_values('institution')
-    rows={f'{x.institution} · Excel row {x.source_excel_row}':int(i) for i,x in options.iterrows()}
-    selected=st.selectbox('Reporting institution',list(rows.keys()),key='selected_institution')
+    rows={f'{T(x.institution)} · {T("Excel row")} {x.source_excel_row}':int(i) for i,x in options.iterrows()}
+    selected=st.selectbox(T('Reporting institution'),list(rows.keys()),key='selected_institution')
     r=records.loc[rows[selected]]
     st.markdown(f'<div class="country-identity"><div class="country-flag">{flag_from_iso(r.iso3)}</div>'
-                f'<div><div class="bigcountry">{esc(r.country)}</div>'
-                f'<div class="institution">{esc(r.institution)}</div></div></div>',unsafe_allow_html=True)
+                f'<div><div class="bigcountry">{esc(T(r.country))}</div>'
+                f'<div class="institution">{esc(T(r.institution))}</div></div></div>',unsafe_allow_html=True)
     staff=f'{int(r.staff_24_7)}' if pd.notna(r.staff_24_7) else 'Not reported'
     kpi_grid([('EOC status',r.eoc_status),('Operating mode',r.operating_mode),
               ('Activation time',r.activation),('24/7 duty staff',staff)],columns=4)
     section('Reported institutional capacities','Answers from this institution grouped by PHEOC core component.',
             eyebrow='01 / REPORTED CAPACITIES')
-    component=st.selectbox('Explore a component',list(CAPACITIES.keys()),key='country_component')
-    body=[]
-    for label,col,positive in CAPACITIES[component]:
-        status=country_capacity(r,col,positive)
-        body.append((esc(label),status_chip(status)))
-    compact_table(['Capacity','Status'],body)
+    component=st.selectbox(T('Explore a component'),list(CAPACITIES.keys()),format_func=T,key='country_component')
+    st.markdown(status_grid_html([(label,country_capacity(r,col,positive)) for label,col,positive in CAPACITIES[component]]),unsafe_allow_html=True)
     note('Only fully qualifying responses are classified as in place. Missing answers remain separate.')
     st.divider()
     a,b=st.columns(2,gap='large')
     with a:
         section('Hazards coordinated','Frequency band for the selected institution.',eyebrow='02 / LAST TWO YEARS')
-        bands={0:'No events',1:'1–2 events',2:'3–5 events',3:'More than 5 events'}
-        lines=[]
-        for label in HAZARD_LABELS.values():
-            v=r[label]
-            display=bands[int(v)] if pd.notna(v) else 'Not reported'
-            lines.append((esc(label),f'<span class="status-chip status-unknown">{esc(display)}</span>'))
-        compact_table(['Hazard type','Reported frequency'],lines)
+        st.plotly_chart(viz.country_hazards(r,lang=chosen_language()),
+                        use_container_width=True,config={'displayModeBar':False})
     with b:
         section('Physical infrastructure','Resources the institution reports as available.',eyebrow='03 / INFRASTRUCTURE')
-        rows=[(esc(label),status_chip(r[label] if pd.notna(r[label]) else None)) for label in RESOURCE_LABELS.values()]
-        compact_table(['Resource','Reported status'],rows)
+        st.markdown(status_grid_html([(label,r[label] if pd.notna(r[label]) else None) for label in RESOURCE_LABELS.values()]),unsafe_allow_html=True)
     st.divider()
     section('Training and preparedness','Activities completed in the last year and priorities for the next period.',
             eyebrow='04 / PEOPLE AND TRAINING')
-    training=[]
-    for label in TRAINING_LABELS:
-        done=r['Completed: '+label]
-        priority=r['Priority: '+label]
-        training.append((esc(label),status_chip(done if pd.notna(done) else None),
-                         status_chip(priority if pd.notna(priority) else None)))
-    compact_table(['Training area','Completed last year','Future priority'],training)
+    st.plotly_chart(viz.country_training(r,lang=chosen_language()),
+                    use_container_width=True,config={'displayModeBar':False})
     st.divider()
     section('Reported experience','Original-language responses, without machine translation.',eyebrow='05 / INSTITUTIONAL NOTES')
     a,b=st.columns(2,gap='large')
@@ -417,17 +429,17 @@ def country_profile(records,countries):
                           (b,'Improvement areas (original language)','Areas for improvement')):
         with col:
             with st.container(border=True):
-                st.markdown('**'+title+'**')
-                st.write(r[key] or 'No narrative response provided.')
+                st.markdown('**'+T(title)+'**')
+                st.write(r[key] or T('No narrative response provided.'))
     if r['Recent activations (original language)']:
-        with st.expander('Recent events / activations · original response'):
+        with st.expander(T('Recent events / activations · original response')):
             st.write(r['Recent activations (original language)'])
     skills=[name for name in COOPERATION_SKILLS.values() if pd.notna(r['Skill: '+name]) and bool(r['Skill: '+name])]
     modes=[name for name in COOPERATION_MODES.values() if pd.notna(r['Mode: '+name]) and bool(r['Mode: '+name])]
     if skills or modes:
-        with st.expander('Technical capabilities and contributions this institution can offer'):
-            st.markdown('**Expertise:** '+(', '.join(skills) if skills else 'Not reported'))
-            st.markdown('**Modalities:** '+(', '.join(modes) if modes else 'Not reported'))
+        with st.expander(T('Technical capabilities and contributions this institution can offer')):
+            st.markdown('**'+T('Expertise:')+'** '+(', '.join(map(T,skills)) if skills else T('Not reported')))
+            st.markdown('**'+T('Modalities:')+'** '+(', '.join(map(T,modes)) if modes else T('Not reported')))
     note('Each institution has its own response. Colombia’s two institutions remain separate.')
 
 
@@ -443,31 +455,33 @@ def main():
         st.stop()
     country=country_aggregate(records)
     with st.sidebar:
-        st.markdown('<div class="section-eyebrow">REGIONAL MONITORING</div>',unsafe_allow_html=True)
-        st.markdown('### EOC-S · Americas')
-        st.caption('PAHO/WHO survey 2026')
-        view=st.radio('Explore', ['Regional overview','Country profiles'],label_visibility='collapsed')
+        st.radio('Language / Idioma',['en','es'],format_func=lambda v: 'English' if v=='en' else 'Español',
+                 horizontal=True,key='coe_language')
+        st.markdown(f'<div class="section-eyebrow">{esc(T("REGIONAL MONITORING"))}</div>',unsafe_allow_html=True)
+        st.markdown('### '+T('EOC-S · Americas'))
+        st.caption(T('PAHO/WHO survey 2026'))
+        view=st.radio(T('Explore'), ['Regional overview','Country profiles'],format_func=T,label_visibility='collapsed',key='main_view')
         if view=='Regional overview':
             st.divider()
-            subregion=st.selectbox('Geographic area',['All regions']+sorted(country.subregion.unique()))
+            subregion=st.selectbox(T('Geographic area'),['All regions']+sorted(country.subregion.unique()),format_func=T,key='geo_area')
             available=country if subregion=='All regions' else country[country.subregion==subregion]
-            selected=st.multiselect('Countries (optional)',available.country.tolist(),default=[],
-                                    help='Leave empty to include all countries in the selected area.')
-            tabscope=st.radio('Regional section',['Overview','Capacities & gaps','Operations & hazards','Networks & cooperation'])
+            selected=st.multiselect(T('Countries (optional)'),available.country.tolist(),default=[],format_func=T,key='country_filter',
+                                    help=T('Leave empty to include all countries in the selected area.'))
+            tabscope=st.radio(T('Regional section'),['Overview','Capacities & gaps','Operations & hazards','Networks & cooperation'],format_func=T,key='regional_section')
         st.divider()
-        st.caption(f'2026 survey · {len(country)} countries · {len(records)} institutional responses')
-        st.caption('Source: local Excel in `data/` · Updated with GitHub redeploy')
+        st.caption(f'2026 · {len(country)} {T("countries")} · {len(records)} {T("institutional responses")}')
+        st.caption(T('Source: local Excel in `data/` · Updated with GitHub redeploy'))
     header()
     if view=='Regional overview':
         active=available[available.country.isin(selected)] if selected else available
         if active.empty:
-            st.info('Select at least one country to display regional indicators.')
+            st.info(T('Select at least one country to display regional indicators.'))
             st.stop()
         if tabscope=='Overview':regional_overview(country,active)
         elif tabscope=='Capacities & gaps':capacity_and_gaps(active)
         elif tabscope=='Operations & hazards':operations_section(active)
         else:cooperation_section(active)
     elif view=='Country profiles':country_profile(records,country)
-    st.markdown('<div class="paho-footer">PAHO / WHO · EOC-NET Americas · 2026  |  Preliminary, self-reported information  |  Analytical dashboard for technical coordination</div>',unsafe_allow_html=True)
+    st.markdown('<div class="paho-footer">'+esc(T('PAHO / WHO · EOC-NET Americas · 2026  |  Preliminary, self-reported information  |  Analytical dashboard for technical coordination'))+'</div>',unsafe_allow_html=True)
 
 if __name__=='__main__':main()

@@ -7,7 +7,8 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
-from dashboard.data import HAZARD_LABELS,GPKG
+from dashboard.data import HAZARD_LABELS,TRAINING_LABELS,GPKG
+from dashboard.i18n import tr
 
 NAVY='#005A8B'; BLUE='#236192'; CYAN='#009BDA'; ORANGE='#F36B32'
 TEXT='#17324D'; MUTED='#597083'; PALE='#EAF3F9'; GRAY='#E5EDF3'
@@ -25,16 +26,19 @@ def style(fig,height=340,margin=None):
     return fig
 
 
-def horizontal_bars(data,x='in_place',y='capacity',height=350,divide=False,selected=None):
+def horizontal_bars(data,x='in_place',y='capacity',height=350,divide=False,selected=None,lang='en'):
+    """Percentages of valid responses, annotated with numerator and denominator."""
     v=data.sort_values(x,ascending=True)
-    fig=go.Figure()
-    fig.add_trace(go.Bar(y=v[y],x=v[x],orientation='h',marker_color=CYAN,
-              text=[f'{int(n)}/{int(d)}' if pd.notna(d) else str(n) for n,d in zip(v[x],v.get('denominator',[np.nan]*len(v)))],
-              textposition='outside',cliponaxis=False,hovertemplate='%{y}: %{x}<extra></extra>'))
-    fig.update_xaxes(showgrid=True,gridcolor='#F0F4F7',zeroline=False,range=[0,max(4,float(v[x].max())*1.18)])
+    pct=[100*float(n)/float(d) if d else 0 for n,d in zip(v[x],v.denominator)]
+    fig=go.Figure(go.Bar(y=[tr(q,lang) for q in v[y]],x=pct,orientation='h',marker_color=CYAN,
+              text=[f'{z:.0f}% ({int(n)}/{int(d)})' if d else tr('No valid responses',lang)
+                    for z,n,d in zip(pct,v[x],v.denominator)],
+              textposition='outside',cliponaxis=False,
+              hovertemplate='%{y}<br>%{text}<extra></extra>'))
+    fig.update_xaxes(showgrid=True,gridcolor='#F0F4F7',zeroline=False,range=[0,128],
+                     tickvals=[0,25,50,75,100],ticksuffix='%')
     fig.update_yaxes(showgrid=False,title=None,automargin=True)
-    return style(fig,height=height,margin=dict(l=10,r=65,b=28,t=24))
-
+    return style(fig,height=height,margin=dict(l=12,r=52,b=28,t=20))
 
 
 def operating_chart(frame):
@@ -64,21 +68,22 @@ def activation_chart(frame):
     return style(fig,170,dict(l=8,r=12,t=12,b=50))
 
 
-def hazard_heatmap(frame):
+def hazard_heatmap(frame,lang='en'):
     """Four short, readable headers; contrasting text for dark and light cells."""
     cats=list(HAZARD_LABELS.values())
     if frame.empty:return go.Figure()
     vals=frame[cats].to_numpy(dtype=float)
-    countries=list(frame['country'])
-    short=['Geo / weather','Biological','Social','Technological']
-    text=[['Not reported' if pd.isna(v) else ['None','1–2','3–5','>5'][int(v)] for v in row]
+    countries=[tr(q,lang) for q in frame['country']]
+    short=([tr(q,lang) for q in ['Geological / weather','Biological / epidemic','Social / human-caused','Technological']]
+           if lang=='es' else ['Geo / weather','Biological','Social','Technological'])
+    text=[[tr('Not reported',lang) if pd.isna(v) else ['0','1–2','3–5','>5'][int(v)] for v in row]
           for row in vals]
     z=np.where(np.isnan(vals),0,vals+1)
     cmap=[[0,'#F0F4F7'],[.249,'#F0F4F7'],[.25,'#E8F4FA'],[.499,'#E8F4FA'],
           [.5,'#91CAE8'],[.749,'#91CAE8'],[.75,CYAN],[.999,CYAN],[1,NAVY]]
     fig=go.Figure(go.Heatmap(z=z,x=short,y=countries,zmin=0,zmax=4,
                   colorscale=cmap,showscale=False,customdata=text,
-                  hovertemplate='<b>%{y} · %{x}</b><br>Frequency: %{customdata}<extra></extra>',
+                  hovertemplate='<b>%{y} · %{x}</b><br>'+('Frecuencia: ' if lang=='es' else 'Frequency: ')+'%{customdata}<extra></extra>',
                   xgap=4,ygap=4))
     for i,name in enumerate(countries):
         for j,label in enumerate(text[i]):
@@ -107,7 +112,7 @@ def load_geojson():
     return json.loads(geodf[['ISO_CC','COUNTRY','geometry']].to_json())
 
 
-def countries_map(countries,selection=None):
+def countries_map(countries,selection=None,lang='en'):
     geo=load_geojson()
     if geo is None:return None
     geo_codes={ft['properties']['ISO_CC'] for ft in geo['features']}
@@ -119,18 +124,82 @@ def countries_map(countries,selection=None):
             country=row['country'];status=row['eoc_status']
             if selection is not None and country not in selection: status='Outside filter'
         else:country='No survey response';status='No survey response'
-        listrows.append({'iso3':code,'country':country,'status':status})
+        listrows.append({'iso3':code,'country':tr(country,lang),'status':tr(status,lang)})
     data=pd.DataFrame(listrows)
     order=['Established','In implementation','Not established','Outside filter','No survey response']
+    order=[tr(x,lang) for x in order]
     colors=['#005A8B','#009BDA','#D75E52','#D5E0E9','#EFF2F4']
     fig=px.choropleth(data,geojson=geo,locations='iso3',featureidkey='properties.ISO_CC',
                       color='status',hover_name='country',
                       custom_data=['iso3'],category_orders={'status':order},
                       color_discrete_map=dict(zip(order,colors)))
     fig.update_traces(marker_line_color='white',marker_line_width=.55,
-                      hovertemplate='<b>%{hovertext}</b><br>ISO: %{customdata[0]}<br>Status: %{fullData.name}<extra></extra>')
+                      hovertemplate='<b>%{hovertext}</b><br>ISO: %{customdata[0]}<br>'+('Estado' if lang=='es' else 'Status')+': %{fullData.name}<extra></extra>')
     fig.update_geos(projection_type='mercator',visible=False,
                     lataxis_range=[-57,34],lonaxis_range=[-117,-32],
                     showocean=False,showcoastlines=False,showland=False)
     fig.update_layout(legend=dict(title=None,orientation='h',y=-.04,x=0,font_size=10),dragmode=False)
     return style(fig,495,dict(l=0,r=0,t=0,b=36))
+
+
+
+def training_comparison(frame,lang='en'):
+    """Paired proportion bars; every bar uses its own non-missing denominator."""
+    fig=go.Figure()
+    labels=[tr(x,lang) for x in frame['area']]
+    for name,ncol,dcol,color in [('Completed','done_n','done_d',NAVY),('Prioritized','priority_n','priority_d',CYAN)]:
+        n=frame[ncol].astype(int).tolist();den=frame[dcol].astype(int).tolist()
+        pct=[100*a/b if b else 0 for a,b in zip(n,den)]
+        captions=[f'{v:.0f}% ({a}/{b})' if b else '—' for v,a,b in zip(pct,n,den)]
+        fig.add_bar(name=tr(name,lang),x=pct,y=labels,orientation='h',marker_color=color,
+                    text=captions,textposition='outside',cliponaxis=False,
+                    hovertemplate='%{y}<br>'+tr(name,lang)+': %{text}<extra></extra>')
+    fig.update_layout(barmode='group',legend=dict(orientation='h',y=1.08,x=0))
+    fig.update_xaxes(title=None,range=[0,135],tickvals=[0,25,50,75,100],ticksuffix='%',
+                     showgrid=True,gridcolor='#EAF0F4',zeroline=False)
+    fig.update_yaxes(autorange='reversed',automargin=True,title=None,showgrid=False)
+    return style(fig, max(460,len(labels)*66+95), dict(l=5,r=20,t=65,b=35))
+
+
+def country_training(institution,lang='en'):
+    """Binary training matrix, not a maturity score or artificial percentage."""
+    labels=[tr(n,lang) for n in TRAINING_LABELS]
+    fields=['Completed: ','Priority: ']
+    z=[];text=[];custom=[]
+    for name in TRAINING_LABELS:
+        row=[];caption=[];hover=[]
+        for field in fields:
+            v=institution.get(field+name)
+            if pd.isna(v):rank=0;label=tr('Not reported',lang);caption.append('—')
+            elif bool(v):rank=2;label=tr('In place',lang);caption.append('✓')
+            else:rank=1;label=tr('Partial / absent',lang);caption.append('×')
+            row.append(rank);hover.append(label)
+        z.append(row);text.append(caption);custom.append(hover)
+    cols=[tr('Completed',lang),tr('Prioritized',lang)]
+    fig=go.Figure(go.Heatmap(z=z,x=cols,y=labels,zmin=0,zmax=2,showscale=False,
+       colorscale=[[0,'#EEF2F5'],[.249,'#EEF2F5'],[.25,'#FDEBDD'],[.749,'#FDEBDD'],[.75,'#CDEFE7'],[1,'#CDEFE7']],
+       customdata=custom,hovertemplate='%{y} · %{x}<br>%{customdata}<extra></extra>',
+       xgap=4,ygap=4))
+    for i,label in enumerate(labels):
+        for j,col in enumerate(cols):
+            fig.add_annotation(x=col,y=label,text=text[i][j],showarrow=False,
+                font=dict(size=16,color=(GREEN if z[i][j]==2 else RED if z[i][j]==1 else MUTED)))
+    fig.update_yaxes(autorange='reversed',automargin=True,title=None,showgrid=False)
+    fig.update_xaxes(side='top',title=None,showgrid=False)
+    return style(fig,max(370,len(labels)*43+70),dict(l=8,r=12,t=45,b=15))
+
+
+def country_hazards(institution,lang='en'):
+    """Ordinal bands: a chart of reported frequency categories, never percent of events."""
+    labels=[tr(v,lang) for v in HAZARD_LABELS.values()]
+    vals=[institution.get(v) for v in HAZARD_LABELS.values()]
+    scores=[int(v) if pd.notna(v) else 0 for v in vals]
+    captions=([tr('No events',lang),tr('1–2 events',lang),tr('3–5 events',lang),tr('More than 5 events',lang)])
+    notes=[captions[int(v)] if pd.notna(v) else tr('Not reported',lang) for v in vals]
+    fig=go.Figure(go.Bar(y=labels,x=scores,orientation='h',marker_color=CYAN,
+                         text=notes,textposition='outside',cliponaxis=False,
+                         hovertemplate='%{y}: %{text}<extra></extra>'))
+    fig.update_xaxes(range=[0,4.8],tickvals=[0,1,2,3],ticktext=['0','1–2','3–5','>5'],
+                     showgrid=True,gridcolor='#EAF0F4',title=None,zeroline=False)
+    fig.update_yaxes(autorange='reversed',automargin=True,showgrid=False,title=None)
+    return style(fig,310,dict(l=8,r=15,t=20,b=35))
