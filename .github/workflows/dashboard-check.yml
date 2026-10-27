@@ -74,6 +74,9 @@ jobs:
           assert html.count('class="eoc-country-capacity-item"') >= 15, (
               'The expanded country statuses must be embedded in each row'
           )
+          assert not any('Information systems and surge workforce' in x.value
+                         or 'Sistemas de información y personal de refuerzo' in x.value
+                         for x in app.markdown), 'Duplicated capacities must not appear'
           assert not any(x.key == 'capacity_country_view' for x in app.selectbox), (
               'The old country capacity selector must be removed'
           )
@@ -82,8 +85,13 @@ jobs:
           assert not app.exception, [e.message for e in app.exception]
           assert any('eoc-training-bars' in x.value and 'eoc-capacity-disclosure' in x.value
                      for x in app.markdown), 'Training completion and priority should open country statuses'
-          assert any('eoc-country-capacity-item' in x.value for x in app.markdown), (
-              'Regional infrastructure bars should open country responses'
+          assert not any('Physical infrastructure' in x.value
+                         or 'Infraestructura física' in x.value for x in app.markdown), (
+              'Physical infrastructure must only be explored under Capacities & gaps'
+          )
+          assert any('02 / DESARROLLO DEL PERSONAL' in x.value
+                     for x in app.markdown), (
+              'Training should be the second regional operations section'
           )
           section = next(x for x in app.segmented_control if x.key == 'regional_section')
           assert section.value == 'Operations & hazards'

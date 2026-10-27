@@ -181,3 +181,38 @@ def test_overview_full_width_drilldowns_retain_country_details():
         'def capacity_and_gaps(active):',1)[0]
     assert "capacity_rows_html(pd.DataFrame(figures),variant='full',country=active)" in overview
     assert "st.columns(2,gap='large')" not in overview
+
+
+def test_regional_capacity_component_is_the_only_regional_capacity_explorer():
+    """Consolidated regional capacity and infrastructure indicators remain in the component selector."""
+    source=(ROOT/'app.py').read_text(encoding='utf-8')
+    capacities=source.split('def capacity_and_gaps(active):',1)[1].split('def operations_section(active):',1)[0]
+    operations=source.split('def operations_section(active):',1)[1].split('NETWORK_STATUS_SYMBOLS=',1)[0]
+    assert "key='capacity_component'" in capacities
+    assert "list(CAPACITIES.keys())" in capacities
+    assert "capacity_drilldown_html(sliced,active,component)" in capacities
+    assert "Information systems and surge workforce" not in capacities
+    assert "capacity_rows_html(focus,country=active)" not in capacities
+    assert "section('Physical infrastructure'" not in operations
+    assert "RESOURCE_LABELS.values()" not in operations
+    assert "capacity_rows_html(pd.DataFrame(cards)" not in operations
+    assert "section('Hazards coordinated during the past two years'" in operations
+    assert "section('Training completed and prioritized'" in operations
+    assert "eyebrow='02 / WORKFORCE DEVELOPMENT'" in operations
+    # The national institution detail is not removed by this regional simplification.
+    national=source.split('def country_profile(',1)[1] if 'def country_profile(' in source else source
+    assert "section('Physical infrastructure','Resources the institution reports as available.'" in national
+
+
+def test_infrastructure_remains_available_in_capacity_component():
+    from dashboard.data import CAPACITIES, RESOURCE_LABELS, load_data, country_aggregate, capacity_table
+    import app as dashboard_app
+    records,_=load_data()
+    countries=country_aggregate(records)
+    caps=capacity_table(countries)
+    assert 'Infrastructure' in CAPACITIES or 'Infrastructure' in set(caps.component)
+    infrastructure=caps[caps.component=='Infrastructure']
+    assert len(infrastructure)==len(RESOURCE_LABELS)
+    assert infrastructure['denominator'].gt(0).any()
+    html=dashboard_app.capacity_drilldown_html(infrastructure,countries,'Infrastructure')
+    assert html.count('<details class="eoc-capacity-disclosure">')==len(infrastructure)

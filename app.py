@@ -618,11 +618,6 @@ def capacity_and_gaps(active):
     # Each full-width bar expands its country breakdown in place when clicked.
     st.markdown(capacity_drilldown_html(sliced,active,component),unsafe_allow_html=True)
     note('Colombia is counted once at regional level when at least one institution reports an in-place capacity.')
-    st.divider()
-    section('Information systems and surge workforce','Key capacities for technical cooperation.')
-    focus=caps[caps.capacity.isin(['Integrated/interoperable platform','Formal SITREP process',
-                       'Updated surge roster','Formal surge procedure','Redundant internet connection','Backup power generator'])]
-    st.markdown(capacity_rows_html(focus,country=active),unsafe_allow_html=True)
 
 def operations_section(active):
     section('Hazards coordinated during the past two years',
@@ -631,15 +626,7 @@ def operations_section(active):
     st.plotly_chart(viz.hazard_heatmap(active.sort_values('country'),lang=chosen_language()),
                     use_container_width=True,config={'displayModeBar':False})
     st.divider()
-    section('Physical infrastructure','Countries reporting these resources.',eyebrow='02 / INFRASTRUCTURE')
-    cards=[]
-    for label in RESOURCE_LABELS.values():
-        valid=active[label].dropna()
-        cards.append({'capacity':label,'in_place':sum(bool(v) for v in valid),
-                      'denominator':len(valid),'status_col':label})
-    st.markdown(capacity_rows_html(pd.DataFrame(cards),country=active),unsafe_allow_html=True)
-    st.divider()
-    section('Training completed and prioritized','Each country counted once per course.',eyebrow='03 / WORKFORCE DEVELOPMENT')
+    section('Training completed and prioritized','Each country counted once per course.',eyebrow='02 / WORKFORCE DEVELOPMENT')
     st.markdown(training_drilldown_html(active),unsafe_allow_html=True)
 
 
