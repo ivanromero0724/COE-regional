@@ -499,13 +499,56 @@ def capacity_rows_html(frame,title=None,pair=None,variant=None,country=None):
 
 
 def capacity_drilldown_html(frame, active, component):
-    """Clickable capacity bars with valid-response country statuses below each."""
-    return ('<div class="card-panel eoc-capacity-full">'
-            '<div class="card-title">'+esc(T('Capacity availability'))+'</div>'
-            +''.join(disclosure_bar(
-                r['capacity'],r['in_place'],r['denominator'],
-                regional_indicator_rows(active,r)) for _,r in frame.iterrows())
-            +'</div>')
+    """Full survey answer distribution for each indicator; expandable countries."""
+    palette=['#005A8B','#009BDA','#65B6D0','#F1A55A','#91A5B4','#D5E0E9']
+    result=['<div class="card-panel eoc-capacity-full">',
+            '<div class="card-title">'+esc(T('Capacity availability'))+'</div>']
+    for _,indicator in frame.iterrows():
+        col=int(indicator['col'])
+        answer_field=f'ANSWER_{col}'
+        if answer_field not in active.columns:
+            continue
+        categories={}
+        for _,country in active.sort_values('country').iterrows():
+            value=country.get(answer_field)
+            if pd.isna(value) or not str(value).strip():
+                continue
+            # Keep exact questionnaire option, minus the alphabetic choice prefix.
+            raw=str(value).strip()
+            label=re.sub(r'^[a-zA-Z]\\.\\s+', '', raw).strip() or raw
+            categories.setdefault(label,[]).append(str(country['country']))
+        total=sum(len(names) for names in categories.values())
+        result.append('<div style="margin:20px 0 24px">')
+        result.append('<div class="mini-title">'+esc(T(indicator['capacity']))+'</div>')
+        if not total:
+            result.append('<div class="small-note">'+esc(T('No valid responses'))+'</div></div>')
+            continue
+        ranked=sorted(categories.items(),key=lambda item:(-len(item[1]),item[0]))
+        bars=[]
+        for j,(label,names) in enumerate(ranked):
+            width=100*len(names)/total
+            color=palette[j%len(palette)]
+            bars.append(f'<div title="{esc(label)}: {width:.0f}% ({len(names)}/{total})" '
+                        f'style="width:{width:.3f}%;height:100%;background:{color}"></div>')
+        result.append('<div style="display:flex;height:17px;border-radius:5px;overflow:hidden;'
+                      'background:#ECF2F6;margin:9px 0 12px">'+''.join(bars)+'</div>')
+        for j,(label,names) in enumerate(ranked):
+            percentage=100*len(names)/total
+            color=palette[j%len(palette)]
+            country_list=', '.join(esc(T(name)) for name in sorted(names))
+            result.append(
+                '<details style="border-bottom:1px solid #E5EDF3;padding:7px 0">'
+                '<summary style="cursor:pointer;display:flex;align-items:center;gap:10px;'
+                'font-size:.83rem;color:#17324D">'
+                f'<span style="width:10px;height:10px;background:{color};border-radius:2px;flex-shrink:0"></span>'
+                f'<span style="flex:1">{esc(label)}</span>'
+                f'<strong>{percentage:.0f}% <span style="color:#6A8190;font-size:.76rem">'
+                f'({len(names)}/{total})</span></strong></summary>'
+                f'<div style="padding:10px 8px 5px 20px;color:#526F84;font-size:.8rem">'
+                f'{country_list}</div></details>'
+            )
+        result.append('</div>')
+    return ''.join(result)+'</div>'
 
 
 def distribution_html(series,title,ordered,color,active=None,field=None):
@@ -664,9 +707,9 @@ def capacity_and_gaps(active):
                            format_func=lambda value, _lang=chosen_language(): tr(value, _lang),
                            key='capacity_component')
     sliced=caps[caps.component==component]
-    # Each full-width bar expands its country breakdown in place when clicked.
+    # Full categorical distributions; click each answer category to see countries.
     st.markdown(capacity_drilldown_html(sliced,active,component),unsafe_allow_html=True)
-    note('Colombia is counted once at regional level when at least one institution reports an in-place capacity.')
+    note('Each country is counted once; categories reproduce survey responses. Where several institutions answered, the country response is consolidated.')
 
 def operations_section(active):
     section('Hazards coordinated during the past two years',
