@@ -526,20 +526,46 @@ def capacity_response_distribution(active, indicator):
 
 
 def capacity_answer_label(answer, lang='en'):
-    """Short bilingual response label, preserving full original for hover."""
-    value=re.sub(r'^[a-zA-Z]\.\s+', '', str(answer).strip()).strip()
-    n=value.casefold()
-    if any(x in n for x in ('parcial','desarrollo','en proceso','en implementaci')):
-        return 'Parcial / desarrollo' if lang=='es' else 'Partial / developing'
-    if n=='no' or n.startswith(('no ','no,','no –','no -')):
+    """Shorten meaning safely, retaining the original answer for tooltips."""
+    import unicodedata
+    source=re.sub(r'^[a-zA-Z][.)]\s*', '', str(answer).strip()).strip()
+    normal=''.join(c for c in unicodedata.normalize('NFKD',source.casefold()) if not unicodedata.combining(c))
+    normal=' '.join(normal.split())
+    es=lang=='es'
+    if any(t in normal for t in ('parcial','en desarrollo','en proceso','under development','partially')):
+        return 'Parcial / desarrollo' if es else 'Partial / developing'
+    if normal in ('no','ninguno','ninguna') or any(t in normal for t in ('no cuenta','no existe','no dispone','no tiene','sin disponibilidad','ausente','not available','not established','not implemented')):
         return 'No'
-    for start,es,en in [('funcional','Funcional','Functional'),('consolidado','Consolidado','Consolidated'),('inicial','Inicial','Initial'),('avanzado','Avanzado','Advanced')]:
-        if n.startswith(start):
-            return es if lang=='es' else en
-    if n in ('si','sí') or n.startswith(('sí ','sí,','si ','si,','yes')):
-        return 'Sí' if lang=='es' else 'Yes'
-    import textwrap
-    return textwrap.shorten(value,width=24,placeholder='…')
+    if any(t in normal for t in ('no sabe','desconoce','no aplica','not applicable','dont know')):
+        return 'No sabe / N.A.' if es else 'Unknown / N.A.'
+    if normal in ('si','yes') or normal.startswith(('si,','si ','yes,','yes ','cuenta con','dispone de')):
+        return 'Sí' if es else 'Yes'
+    terms=[('totalmente','Totalmente','Fully'),('completamente','Completo','Complete'),
+           ('siempre','Siempre','Always'),('frecuentemente','Frecuente','Frequent'),
+           ('ocasionalmente','Ocasional','Occasional'),('nunca','Nunca','Never'),
+           ('muy alto','Muy alto','Very high'),('muy bajo','Muy bajo','Very low'),
+           ('alto','Alto','High'),('medio','Medio','Medium'),('bajo','Bajo','Low'),
+           ('formal','Formal','Formal'),('informal','Informal','Informal'),
+           ('funcional','Funcional','Functional'),('consolidado','Consolidado','Consolidated'),
+           ('inicial','Inicial','Initial'),('avanzado','Avanzado','Advanced'),
+           ('nacional','Nacional','National'),('subnacional','Subnacional','Subnational')]
+    for key,spanish,english in terms:
+        if normal.startswith(key):
+            return spanish if es else english
+    option=re.match(r'^([a-zA-Z])[.)]',str(answer).strip())
+    if option:
+        return ('Opción ' if es else 'Option ')+option.group(1).upper()
+    return 'Otra respuesta' if es else 'Other response'
+
+
+def capacity_answer_labels(answers, lang='en'):
+    """Disambiguate different source responses with the same short label."""
+    raw=[str(x) for x in answers]
+    labels=[capacity_answer_label(x,lang) for x in raw]
+    duplicates={name for name in labels if labels.count(name)>1}
+    return [name+' · '+(re.match(r'^([a-zA-Z])[.)]',raw[i].strip()).group(1).upper()
+            if re.match(r'^([a-zA-Z])[.)]',raw[i].strip()) else str(i+1))
+            if name in duplicates else name for i,name in enumerate(labels)]
 
 
 def capacity_chart(indicator, counts, chart_kind):
@@ -553,7 +579,7 @@ def capacity_chart(indicator, counts, chart_kind):
     pct=[100*v/total for v in values]
     def short_label(label,limit=36):
         return textwrap.shorten(' '.join(str(label).split()),width=limit,placeholder='…')
-    shorter=[capacity_answer_label(x,chosen_language()) for x in labels]
+    shorter=capacity_answer_labels(labels,chosen_language())
     fig=go.Figure()
     if chart_kind=='donut':
         fig.add_trace(go.Pie(
