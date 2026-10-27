@@ -130,3 +130,34 @@ def test_coverage_map_card_has_no_white_frame_padding():
     fig=countries_map(country_aggregate(load_data()[0]))
     assert fig.layout.margin.l==fig.layout.margin.r==0
     assert fig.layout.margin.t==fig.layout.margin.b==0
+
+
+def test_southern_chile_and_argentina_clear_the_lower_map_edge():
+    """Map framing must include the southern context with additional clearance."""
+    from dashboard.charts import responding_country_map_bounds
+    records,_=load_data()
+    countries=country_aggregate(records)
+    geo=load_geojson()
+    points=[]
+    def visit(coords):
+        if not isinstance(coords,(list,tuple)):
+            return
+        if len(coords)>=2 and all(isinstance(v,(int,float)) for v in coords[:2]):
+            points.append((coords[0],coords[1]))
+        else:
+            for child in coords:
+                visit(child)
+    for code in ('CHL','ARG'):
+        matched=[feature for feature in geo['features']
+                 if feature['properties'].get('ISO_CC')==code]
+        assert matched, code
+        for feature in matched:
+            visit(feature['geometry']['coordinates'])
+    assert points
+    (xmin,xmax),(ymin,ymax)=responding_country_map_bounds(geo,set(countries.iso3))
+    # The south tip is not pressed against or clipped by the frame.
+    assert min(y for _,y in points)-ymin>=2.9
+    assert ymax>=33  # Northern Mexico remains fully visible as well.
+    fig=countries_map(countries)
+    assert fig.layout.yaxis.scaleanchor=='x'
+    assert tuple(fig.layout.yaxis.range)==(ymin,ymax)
