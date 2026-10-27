@@ -1,4 +1,5 @@
 """Regional Overview treemaps: correct percentages, gap direction and layout."""
+from html import escape
 from html.parser import HTMLParser
 import math
 
@@ -65,7 +66,7 @@ def test_regional_treemaps_show_all_seven_strengths_and_five_gaps_bilingually():
                 d=int(row.denominator)
                 expected=f'{100*n/d:.0f}% ({n}/{d})'
                 assert expected in html
-                assert tr(row.capacity,lang) in html
+                assert escape(tr(row.capacity,lang)) in html
             assert ('share of valid responses' in html.lower()
                     if lang=='en' else 'proporción de respuestas válidas' in html.lower())
 
