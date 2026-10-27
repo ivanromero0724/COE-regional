@@ -152,7 +152,8 @@ jobs:
               'Treemaps should cover nine leading expertise areas and all seven modalities'
           )
           assert not any('The cooperation and network questions were completed' in x.value
-                         or 'eoc-note' in x.value for x in app.markdown), (
+                         or 'Las preguntas de cooperación y redes tienen menos respuestas' in x.value
+                         for x in app.markdown), (
               'Redundant cooperation response note should be removed'
           )
           nav = next(x for x in app.radio if x.key == 'main_view')
