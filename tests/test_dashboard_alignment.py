@@ -33,7 +33,7 @@ def test_map_height_is_proportionate_to_operations_card():
     assert fig is not None
     assert fig.layout.height == 450
     assert ".card-panel.eoc-pair-overview" in APP
-    assert "with st.container(border=True, key='eoc_coverage_map_panel')" in APP
+    assert "with st.container(border=False, key='eoc_coverage_map_panel')" in APP
     assert "with st.container(border=True, key='eoc_operations_panel')" not in APP
     assert 'card-panel eoc-pair-overview eoc-operations-card' in APP
     assert 'height:calc(450px + 2rem + 2px)' in APP
@@ -58,7 +58,7 @@ def test_cards_are_compact_and_have_relevant_accessible_icons():
 
 
 def test_map_has_matching_border_and_no_header_spacer():
-    assert "with st.container(border=True, key='eoc_coverage_map_panel')" in APP
+    assert "with st.container(border=False, key='eoc_coverage_map_panel')" in APP
     assert "width='stretch'" in APP
     assert ".eoc-pair-heading{min-height:0" in APP
 
@@ -69,3 +69,11 @@ def test_operations_no_double_border_or_white_overlay():
     assert ".card-panel.eoc-pair-overview.eoc-operations-card{" in APP
     assert "border:1px solid #DFE9F1;" in APP
     assert "overflow-x:hidden;" in APP
+
+
+def test_capacity_panels_are_equal_height_without_obsolete_notes():
+    assert ".card-panel.eoc-pair-capacities{min-height:425px;margin-bottom:0;}" in APP
+    assert ".card-panel.eoc-pair-capacities{min-height:0;}" in APP
+    assert "In development or informal is not considered fully in place." not in APP
+    assert "PRELIMINARY · Self-reported capacities" not in APP
+    assert "justify-content:space-evenly" not in APP
