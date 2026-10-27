@@ -153,7 +153,7 @@ def countries_map(countries, selection=None, lang='en'):
         legend=dict(title=None,orientation='h',y=-.08,x=0,font_size=10),
         dragmode=False,
     )
-    return style(fig,500,dict(l=0,r=0,t=0,b=48))
+    return style(fig,385,dict(l=0,r=0,t=0,b=38))
 
 
 def training_comparison(frame,lang='en'):
@@ -215,4 +215,4 @@ def country_hazards(institution,lang='en'):
     fig.update_xaxes(range=[0,4.8],tickvals=[0,1,2,3],ticktext=['0','1–2','3–5','>5'],
                      showgrid=True,gridcolor='#EAF0F4',title=None,zeroline=False)
     fig.update_yaxes(autorange='reversed',automargin=True,showgrid=False,title=None)
-    return style(fig,390,dict(l=8,r=15,t=20,b=35))
+    return style(fig,340,dict(l=8,r=15,t=14,b=30))
