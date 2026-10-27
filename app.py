@@ -18,6 +18,7 @@ from dashboard.data import (
   capacity_table, country_capacity
 )
 from dashboard import charts as viz
+from dashboard.treemap import overview_treemap_html
 from dashboard.i18n import T, tr, chosen_language
 
 st.set_page_config(page_title='EOC-NET Americas | PAHO 2026',page_icon='🌎',layout='wide',initial_sidebar_state='expanded')
@@ -146,8 +147,40 @@ def ui_style():
     .card-panel.eoc-pair-overview,.card-panel.eoc-pair-cooperation{
         min-height:0;display:block;box-sizing:border-box;
     }
-    /* Overview 03/04 are stacked and have content-driven heights;
-       eoc-capacity-full supplies their wide, aligned bar columns. */
+    /* Regional 03/04 are comparable treemaps: matching borders, equal
+       heights, and a responsive natural wrap on narrow screens. */
+    .eoc-overview-treemap-card{
+        border:1px solid #DFE9F1;background:#FFF;border-radius:12px;
+        padding:12px 13px 13px;margin:1px 0 8px;box-sizing:border-box;
+        min-width:0;
+    }
+    .eoc-overview-treemap-plot{position:relative;width:100%;height:354px;}
+    .eoc-overview-treemap-tile{position:absolute;padding:4px;box-sizing:border-box;min-width:0;}
+    .eoc-overview-treemap-face{
+        display:flex;flex-direction:column;justify-content:space-between;
+        gap:10px;width:100%;height:100%;padding:13px;
+        box-sizing:border-box;border-radius:7px;color:white;overflow:hidden;
+    }
+    .eoc-overview-treemap-label{
+        color:white;font-size:.80rem;font-weight:760;line-height:1.25;
+        overflow:hidden;overflow-wrap:anywhere;
+        display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;
+    }
+    .eoc-overview-treemap-metric{
+        color:white;font-size:1.35rem;line-height:1.05;font-weight:800;white-space:nowrap;
+    }
+    .eoc-overview-treemap-metric small{font-size:.73rem;line-height:1.2;font-weight:650;}
+    .eoc-overview-treemap-caption{
+        font-size:.71rem;color:#607B8A;line-height:1.35;
+        margin:8px 4px 0;min-height:2.1em;
+    }
+    @media(max-width:950px){
+        .eoc-overview-treemap-plot{height:325px;}
+        .eoc-overview-treemap-face{padding:8px;}
+        .eoc-overview-treemap-label{font-size:.72rem;}
+        .eoc-overview-treemap-metric{font-size:1.12rem;}
+        .eoc-overview-treemap-metric small{font-size:.64rem;}
+    }
     /* One card, same outside height as the 450px map plus its frame padding.
        Keep rows at a consistent rhythm; never stretch the inner content. */
     .card-panel.eoc-pair-overview.eoc-operations-card{
@@ -578,32 +611,38 @@ def regional_overview(country,active):
                     distribution_html(active.activation,'Activation after formal decision',times,CYAN,active,'activation')+
                     '</div>',unsafe_allow_html=True)
     st.divider()
-    # Both comparisons occupy the full content width, stacked vertically.
-    # Keep the per-bar country drilldowns and original valid-response counts.
-    section('Most widely reported capacities',
-            'Countries reporting an established or functional capacity.',
-            eyebrow='03 / REPORTED CAPACITIES')
-    ranked=capacity_table(active)
-    ranked=ranked[ranked.component.isin(CAPACITIES)]
-    ranked=ranked[ranked.denominator>0].sort_values(['in_place','capacity'],ascending=[False,True]).head(7)
-    st.markdown(capacity_rows_html(ranked,variant='full',country=active),unsafe_allow_html=True)
-    st.divider()
-    section('Priority capacity gaps',
-            'Countries with the following capacities fully in place.',
-            eyebrow='04 / COOPERATION PRIORITIES')
+    # Two compact, region-level treemaps. No country drilldowns in Overview;
+    # all detailed capacity/status exploration remains in Capacities & gaps.
+    strengths=capacity_table(active)
+    strengths=strengths[strengths.component.isin(CAPACITIES)]
+    strengths=(strengths[strengths.denominator>0]
+               .sort_values(['in_place','capacity'],ascending=[False,True]).head(7))
     priorities=[('Sustainable financing',36,('d','e')),
                 ('Formal surge staffing',77,('d','e')),
                 ('Updated surge roster',78,('a',)),
                 ('Integrated information tools',107,('d','e')),
                 ('Structured information exchange',105,('d',))]
-    figures=[]
+    gap_rows=[]
     for label,col,positive in priorities:
-        vals=[country_capacity(row,col,positive) for _,row in active.iterrows()]
-        figures.append({'capacity':label,'in_place':sum(v is True for v in vals),
-                        'denominator':sum(v is not None for v in vals),
-                        'col':col,'positive':positive})
-    st.markdown(capacity_rows_html(pd.DataFrame(figures),variant='full',country=active),unsafe_allow_html=True)
- 
+        valid=[country_capacity(row,col,positive) for _,row in active.iterrows()]
+        gap_rows.append({
+            'capacity':label,
+            'in_place':sum(value is True for value in valid),
+            'denominator':sum(value is not None for value in valid),
+        })
+    left,right=st.columns(2,gap='large')
+    with left:
+        section('Most widely reported capacities',
+                'Countries reporting an established or functional capacity.',
+                eyebrow='03 / REPORTED CAPACITIES',paired=True)
+        st.markdown(overview_treemap_html(strengths,'available',lang=chosen_language()),
+                    unsafe_allow_html=True)
+    with right:
+        section('Priority capacity gaps',
+                'Share without each fully established capacity, among valid responses.',
+                eyebrow='04 / COOPERATION PRIORITIES',paired=True)
+        st.markdown(overview_treemap_html(pd.DataFrame(gap_rows),'gap',lang=chosen_language()),
+                    unsafe_allow_html=True)
 
 
 def capacity_and_gaps(active):
