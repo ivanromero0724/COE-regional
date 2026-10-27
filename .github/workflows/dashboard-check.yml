@@ -74,12 +74,12 @@ jobs:
           )
           section.set_value('Capacities & gaps').run(timeout=90)
           assert not app.exception, [e.message for e in app.exception]
-          assert any('Distribución de respuestas' in x.value for x in app.markdown), (
-              'The categorical capacity chart gallery was not rendered'
+          assert any('Capacidades y brechas por indicador' in x.value for x in app.markdown), (
+              'The indicator-level capacity chart gallery was not rendered'
           )
-          assert any('Disponibilidad de capacidades' in x.value or 'Capacity availability' in x.value
-                     for x in app.markdown), (
-              'The regional capacity comparison chart is missing'
+          assert not any('Capacity availability' in x.value or 'Disponibilidad de capacidades' in x.value
+                         for x in app.markdown), (
+              'The redundant regional capacity availability section must not be shown'
           )
           assert not any('Information systems and surge workforce' in x.value
                          or 'Sistemas de información y personal de refuerzo' in x.value
