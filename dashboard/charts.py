@@ -211,11 +211,11 @@ def responding_country_map_center(geo, country_codes):
 
 
 def responding_country_map_bounds(geo, country_codes):
-    """Extent covering respondents, whole Mexico and whole Chile.
+    """Undistorted view of the Guatemala–Brazil response corridor.
 
-    Context countries are included in the geographic framing, not in the
-    respondent counts or status colors. Leave extra space below Patagonia
-    so Chile and Argentina do not touch the frame's lower edge.
+    Frame the northern Caribbean (Bahamas) and southern cone (Argentina,
+    Chile) in full, as well as Mexico from the original overview. Geometry
+    coverage, not chart pixel stretching, determines the map extent.
     """
     points=[]
     def visit(coords):
@@ -228,8 +228,10 @@ def responding_country_map_bounds(geo, country_codes):
         else:
             for part in coords:
                 visit(part)
-    # Whole contextual outlines count for framing, not survey results.
-    included_codes=set(country_codes)|{'MEX','CHL'}
+    # Country outlines used for framing, independent of current filters.
+    # The main visual corridor is Guatemala–Brazil, with the Bahamas and
+    # southern cone fully included; Mexico remains intact as requested.
+    included_codes=set(country_codes)|{'GTM','BRA','BHS','ARG','CHL','MEX'}
     for feature in geo['features']:
         if feature.get('properties',{}).get('ISO_CC') in included_codes:
             visit(feature.get('geometry',{}).get('coordinates',[]))
@@ -273,7 +275,8 @@ def countries_map(countries, selection=None, lang='en'):
             return coords
         return []
 
-    # Keep Mexico visible while adding breathing room below Patagonia.
+    # Focus on Guatemala–Brazil while keeping Bahamas, Mexico and the
+    # full southern cone in the non-distorted frame.
     (xmin,xmax),(ymin,ymax)=responding_country_map_bounds(
         geo,set(stats.index)
     )
@@ -326,7 +329,9 @@ def countries_map(countries, selection=None, lang='en'):
     fig.update_yaxes(range=[ymin,ymax],fixedrange=True,visible=False,
                      showgrid=False,zeroline=False,scaleanchor='x',
                      scaleratio=1,constrain='domain')
-    fig=style(fig,480,dict(l=0,r=0,t=0,b=0))
+    # Match the taller operating-mode panel on its right. The chart's
+    # 600px plus 2px border equals the shared 602px card height.
+    fig=style(fig,600,dict(l=0,r=0,t=0,b=0))
     # Apply this AFTER style(), otherwise the shared chart style
     # overwrites the map-specific vertical overlay legend.
     fig.update_layout(
