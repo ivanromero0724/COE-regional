@@ -35,7 +35,7 @@ jobs:
       - name: Check syntax, survey and cartographic layer
         run: |
           python -m py_compile app.py dashboard/data.py dashboard/charts.py dashboard/i18n.py
-          python -m pytest -q tests/test_dashboard_data.py tests/test_dashboard_layout.py tests/test_dashboard_i18n.py tests/test_dashboard_map.py
+          python -m pytest -q tests/test_dashboard_data.py tests/test_dashboard_layout.py tests/test_dashboard_i18n.py tests/test_dashboard_map.py tests/test_dashboard_alignment.py
       - name: Smoke-test bilingual pages and regional charts
         run: |
           python - <<'PYTEST'
