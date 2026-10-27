@@ -70,20 +70,43 @@ def ui_style():
     .paho-footer{font-size:.72rem;color:#718594;margin-top:25px;border-top:1px solid #DCE8F0;padding:13px 2px;}
     [data-testid="stPlotlyChart"]{background:#FFF;border-radius:10px;overflow:hidden;}
     div.stButton>button[kind="primary"]{background:#005A8B!important;border-color:#005A8B!important;}
-    .kpi-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:12px 0 22px;}
+    .kpi-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:10px 0 20px;}
     .kpi-grid.four{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:14px;}
-    .kpi{box-sizing:border-box;min-width:0;min-height:115px;background:#FFF;border:1px solid #DFE9F1;border-top:3px solid #005A8B;border-radius:12px;padding:14px 15px;display:flex;flex-direction:column;justify-content:space-between;gap:9px;}
+    /* KPI labels, icons and values form one compact, consistent visual group. */
+    .kpi{
+        box-sizing:border-box;min-width:0;min-height:117px;background:#FFF;
+        border:1px solid #DAE7F0;border-top:3px solid #005A8B;border-radius:13px;
+        padding:15px 17px 14px;display:grid;
+        grid-template-columns:minmax(0,1fr) 34px;
+        grid-template-areas:"label icon" "value icon";
+        grid-template-rows:auto auto;align-content:start;align-items:start;
+        column-gap:8px;row-gap:9px;
+        box-shadow:0 3px 12px rgba(0,75,120,.035);
+    }
     .kpi.accent{border-top-color:#F36B32;}
-    .kpi .kpi-label{color:#657A8A;font-size:.70rem;font-weight:700;text-transform:uppercase;letter-spacing:.055em;line-height:1.35;}
-    .kpi .kpi-value{color:#005A8B;font-size:1.82rem;font-weight:800;line-height:1.12;letter-spacing:-.025em;overflow-wrap:anywhere;word-break:normal;}
-    .kpi .kpi-value.long{font-size:clamp(.95rem,1.24vw,1.24rem);line-height:1.3;letter-spacing:0;}
+    .kpi .kpi-label{
+        grid-area:label;min-height:2.7em;color:#526F84;font-size:.70rem;
+        font-weight:800;text-transform:uppercase;letter-spacing:.035em;line-height:1.35;
+        overflow-wrap:anywhere;
+    }
+    .kpi .kpi-value{
+        grid-area:value;color:#005A8B;font-size:1.95rem;font-weight:800;
+        line-height:1.05;letter-spacing:-.035em;overflow-wrap:anywhere;word-break:normal;
+    }
+    .kpi .kpi-value.long{font-size:clamp(.95rem,1.15vw,1.16rem);line-height:1.22;letter-spacing:0;}
+    .kpi-icon{
+        grid-area:icon;display:flex;justify-content:center;align-items:center;
+        width:34px;height:34px;border-radius:10px;background:#EAF4FA;color:#005A8B;
+    }
+    .kpi-icon svg{width:19px;height:19px;flex-shrink:0;}
+    .kpi.accent .kpi-icon{background:#FFF1E9;color:#D95A28;}
     .country-identity{display:flex;gap:17px;align-items:center;padding:12px 0 14px;min-width:0;}
     .country-flag{font-size:3rem;line-height:1;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
     .country-identity .institution{font-size:.85rem;color:#647D8D;margin-top:5px;line-height:1.4;overflow-wrap:anywhere;}
     .card-panel{background:#FFF;border:1px solid #DFE9F1;border-radius:12px;padding:17px 18px;margin:1px 0 12px;min-width:0;}
     /* Compact comparisons: align headings without stretching cards or bar spacing.
        Different-length datasets are allowed to finish at their natural height. */
-    .eoc-pair-heading{min-height:92px;box-sizing:border-box;}
+    .eoc-pair-heading{min-height:0;margin:0 0 2px;box-sizing:border-box;}
     .card-panel.eoc-pair-overview,.card-panel.eoc-pair-capacities,.card-panel.eoc-pair-cooperation{
         min-height:0;display:block;box-sizing:border-box;
     }
@@ -120,7 +143,7 @@ def ui_style():
     .network-count{font-size:1.55rem;color:#005A8B;font-weight:800;margin:7px 0;}
     .network-meta{font-size:.73rem;line-height:1.45;color:#61798A;}
     @media(max-width:1150px){.kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr));}.kpi-grid.four{grid-template-columns:repeat(2,minmax(0,1fr));}}
-    @media(max-width:900px){.eoc-pair-heading{min-height:0;}}
+    @media(max-width:900px){.eoc-pair-heading{margin-bottom:0;}}
     @media(max-width:760px){.measure-row{grid-template-columns:minmax(0,1fr) 115px;row-gap:6px;gap:7px;}.measure-label{grid-column:1 / -1;overflow-wrap:normal;font-size:.74rem;}.measure-bar{grid-column:1;}.measure-value{grid-column:2;}.dist-row{grid-template-columns:minmax(0,1fr) 80px 112px;gap:6px;}.block-container{padding-left:1rem;padding-right:1rem;}.paho-hero{grid-template-columns:1fr;padding:17px;row-gap:14px;}.brand-set{max-width:320px;}.kpi-grid,.kpi-grid.four{grid-template-columns:repeat(2,minmax(0,1fr));}.network-grid{grid-template-columns:1fr;}.status-tile-grid{grid-template-columns:1fr;}.card-panel{padding:13px;}}
     @media(max-width:460px){.kpi-grid,.kpi-grid.four{grid-template-columns:1fr 1fr;gap:8px;}.kpi{padding:11px;min-height:103px;}.kpi .kpi-value{font-size:1.5rem;}.kpi-grid:not(.four)>.kpi:last-child:nth-child(odd){grid-column:span 2;}.country-flag{font-size:2.4rem;}}
     </style>''',unsafe_allow_html=True)
@@ -149,14 +172,30 @@ def section(title,subtitle='',eyebrow=None,paired=False):
 def note(msg):st.markdown(f'<div class="small-note">{esc(T(msg))}</div>',unsafe_allow_html=True)
 
 
+KPI_ICON_PATHS={
+    'Countries responding':'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a16 16 0 0 1 0 18M12 3a16 16 0 0 0 0 18"/>',
+    'Established EOC-S':'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/>',
+    'In implementation':'<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12h8M12 8v8"/>',
+    '24/7 operation':'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    'Activation under 2 h':'<path d="m13 2-9 12h7l-1 8 10-12h-7z"/>',
+    'EOC status':'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/>',
+    'Operating mode':'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    'Activation time':'<path d="M12 7v5l-4 2"/><circle cx="12" cy="12" r="9"/>',
+    '24/7 duty staff':'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+}
+
+
 def kpi_grid(cards,columns=5):
-    """Responsive equal-height cards; long text remains within its own cell."""
+    """Compact PAHO metric cards, with a stable label/value rhythm."""
     items=[]
+    fallback='<path d="M4 18V6M4 18h16M8 14l4-4 3 3 5-6"/>'
     for label,value in cards:
         display=str(value)
-        long=' long' if len(display)>15 or len(label)>24 else ''
+        long=' long' if len(display)>12 else ''
         tone=' accent' if label.lower().startswith(('in implementation','activation')) else ''
+        svg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+KPI_ICON_PATHS.get(label,fallback)+'</svg>'
         items.append(f'<div class="kpi{tone}"><div class="kpi-label">{esc(T(label))}</div>'
+                     f'<div class="kpi-icon" aria-hidden="true">{svg}</div>'
                      f'<div class="kpi-value{long}">{esc(T(display))}</div></div>')
     style=' four' if columns==4 else ''
     st.markdown(f'<div class="kpi-grid{style}">{"".join(items)}</div>',unsafe_allow_html=True)
@@ -243,7 +282,10 @@ def coverage_map(country,selected):
         st.error(T('The geographic layer could not be read. Check data/geografia/paises_americas.gpkg.'));return
     if fig is None:
         st.info(T('Map file not found. The Americas GeoPackage is expected in data/geografia/paises_americas.gpkg.'))
-    else:st.plotly_chart(fig,use_container_width=True,config={'displayModeBar':False})
+    else:
+        # Use the same gray outlined surface as other regional panels.
+        with st.container(border=True, key='eoc_coverage_map_panel'):
+            st.plotly_chart(fig, width='stretch', config={'displayModeBar':False})
 
 
 def regional_overview(country,active):
