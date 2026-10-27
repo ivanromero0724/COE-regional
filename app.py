@@ -309,7 +309,8 @@ def capacity_rows_html(frame,title=None,pair=None,variant=None):
                         f'<div class="measure-value">{esc(visible)}</div></div>')
     h=f'<div class="card-title">{esc(T(title))}</div>' if title else ''
     pair_class=f' eoc-pair-{pair}' if pair in ('capacities','cooperation') else ''
-    variant_class=' eoc-priority-card' if pair=='capacities' and variant=='priority' else ''
+    variant_class=(' eoc-priority-card' if pair=='capacities' and variant=='priority'
+                   else ' eoc-capacity-full' if variant=='full' else '')
     return f'<div class="card-panel{pair_class}{variant_class}">{h}{"".join(contents)}</div>'
 
 
@@ -452,12 +453,8 @@ def capacity_and_gaps(active):
                            key='capacity_component')
     sliced=caps[caps.component==component]
     # Availability gets the full dashboard width; country-level detail follows below.
-    st.markdown(
-        capacity_rows_html(sliced,'Capacity availability').replace(
-            'class="card-panel"', 'class="card-panel eoc-capacity-full"', 1
-        ),
-        unsafe_allow_html=True,
-    )
+    st.markdown(capacity_rows_html(sliced,'Capacity availability',variant='full'),
+                unsafe_allow_html=True)
     st.markdown('<div class="mini-title">'+esc(T('Countries reporting each capacity'))+'</div>',
                 unsafe_allow_html=True)
     chosen=st.selectbox(T('Choose capacity'),list(sliced.capacity),
