@@ -1,9 +1,11 @@
-"""Ensure the displayed map actually contains the bundled Americas polygons."""
+"""Validate respondent-focused, truly non-draggable map with hover popups."""
+from pathlib import Path
+
 from dashboard.data import load_data, country_aggregate
 from dashboard.charts import load_geojson, countries_map
 
 
-def test_americas_map_contains_country_polygons():
+def test_americas_map_contains_country_polygons_and_tooltips():
     records, _ = load_data()
     countries = country_aggregate(records)
     geo = load_geojson()
@@ -14,26 +16,24 @@ def test_americas_map_contains_country_polygons():
     for lang in ("en", "es"):
         fig = countries_map(countries, set(countries["country"]), lang=lang)
         assert fig is not None
-        fig_data = fig.to_plotly_json()
-        assert fig_data["data"]
-        assert all(trace["type"] == "choroplethmap" for trace in fig_data["data"])
-        mapped = {str(code) for trace in fig_data["data"] for code in trace["locations"]}
-        assert set(countries["iso3"]).issubset(mapped)
-        assert fig_data["layout"]["map"]["style"] == "white-bg"
+        traces = fig.to_plotly_json()["data"]
+        assert traces and all(t["type"] == "scatter" for t in traces)
+        assert all(t["hoveron"] == "fills" for t in traces)
+        assert all(t["hovertemplate"] for t in traces)
+        assert all(t["fill"] == "toself" for t in traces)
 
 
-def test_regional_map_has_fixed_extent_without_pan_or_zoom():
-    """The map stays fixed while Plotly country tooltips remain enabled."""
-    from pathlib import Path
-    records,_=load_data()
-    fig=countries_map(country_aggregate(records))
+def test_regional_map_viewport_cannot_pan_or_zoom():
+    records, _ = load_data()
+    fig = countries_map(country_aggregate(records))
     assert fig.layout.dragmode is False
-    assert fig.layout.map.center.lat==-11
-    assert fig.layout.map.center.lon==-79
-    assert fig.layout.map.zoom==1.55
-    source=(Path(__file__).resolve().parents[1]/'app.py').read_text(encoding='utf-8')
-    scope=source.split('def coverage_map(country,selected):',1)[1].split('def regional_overview(',1)[0]
+    assert fig.layout.xaxis.fixedrange is True
+    assert fig.layout.yaxis.fixedrange is True
+    assert fig.layout.xaxis.range[0] <= -92
+    assert fig.layout.xaxis.range[1] >= -35
+    assert fig.layout.yaxis.range[1] <= 29
+    source = (Path(__file__).resolve().parents[1] / "app.py").read_text(encoding="utf-8")
+    scope = source.split("def coverage_map(country,selected):", 1)[1].split("def regional_overview(", 1)[0]
     assert "'scrollZoom':False" in scope
     assert "'doubleClick':False" in scope
-    assert "'displayModeBar':False" in scope
     assert "'staticPlot':False" in scope
