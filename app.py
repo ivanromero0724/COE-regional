@@ -362,18 +362,19 @@ def ui_style():
     .network-card{border:1px solid #DFE9F1;border-radius:12px;background:#FFFFFF;padding:15px;min-height:120px;box-shadow:none;}
     /* Four comparable event-frequency donuts, matching the static network cards. */
     .eoc-hazard-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:12px 0 22px;}
-    .eoc-hazard-card{display:flex;flex-direction:column;align-items:stretch;min-width:0;min-height:324px;}
+    .eoc-hazard-card{display:flex;flex-direction:column;align-items:stretch;min-width:0;min-height:384px;}
     .eoc-hazard-card .network-name{min-height:2.65em;line-height:1.35;text-align:center;}
-    .eoc-hazard-donut{width:144px;height:144px;border-radius:50%;margin:12px auto 18px;position:relative;flex-shrink:0;}
+    .eoc-hazard-donut{width:148px;height:148px;border-radius:50%;margin:12px auto 16px;position:relative;flex-shrink:0;}
     .eoc-hazard-donut:before{content:'';position:absolute;inset:30px;background:#FFF;border-radius:50%;}
     .eoc-hazard-donut-center{position:absolute;inset:30px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#005A8B;}
-    .eoc-hazard-donut-center strong{font-size:1.3rem;line-height:1.06;}
-    .eoc-hazard-donut-center span{font-size:.60rem;line-height:1.2;color:#607B8A;max-width:83px;margin-top:3px;}
-    .eoc-hazard-bands{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px 10px;margin-top:auto;}
-    .eoc-hazard-band{display:flex;align-items:center;justify-content:space-between;gap:5px;font-size:.76rem;color:#435E70;}
-    .eoc-hazard-band-name{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
-    .eoc-hazard-band strong{font-size:.79rem;color:#17324D;white-space:nowrap;}
-    .eoc-hazard-dot{display:inline-block;width:9px;height:9px;flex-shrink:0;border-radius:3px;}
+    .eoc-hazard-donut-center strong{font-size:1.36rem;line-height:1.06;}
+    .eoc-hazard-donut-center span{font-size:.65rem;line-height:1.2;color:#607B8A;margin-top:3px;}
+    /* Four full-width legend rows: readable even in four dashboard columns. */
+    .eoc-hazard-bands{display:flex;flex-direction:column;gap:4px;margin-top:auto;border-top:1px solid #E7EDF3;padding-top:10px;}
+    .eoc-hazard-band{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:21px;font-size:.77rem;color:#435E70;}
+    .eoc-hazard-band-name{display:inline-flex;align-items:center;gap:8px;min-width:0;white-space:nowrap;}
+    .eoc-hazard-band strong{font-size:.83rem;color:#17324D;white-space:nowrap;}
+    .eoc-hazard-dot{display:inline-block;width:11px;height:11px;flex-shrink:0;border-radius:3px;}
     .eoc-hazard-no-data{color:#607B8A;font-size:.78rem;text-align:center;grid-column:1/-1;}
     @media(max-width:1040px){.eoc-hazard-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
     @media(max-width:560px){.eoc-hazard-grid{grid-template-columns:1fr;}.eoc-hazard-card{min-height:0;}.eoc-hazard-card .network-name{min-height:0;}}
@@ -835,14 +836,21 @@ def hazard_summary_cards(active):
                 stops.append(f'{color} {offset:.3f}% {offset+pct:.3f}%')
                 offset+=pct
         gradient=('conic-gradient('+', '.join(stops)+')') if stops else '#EDF2F5'
-        description=', '.join(f'{band}: {pct:.0f}%' for band,pct in zip(bands,percentages))
-        unit=('países con datos' if chosen_language()=='es' else 'countries with data')
+        # Spell out the frequency bands in each card so its legend makes
+        # sense independently of the heatmap (and in either language).
+        captions=[T(value) for value in
+                  ('No events','1–2 events','3–5 events','More than 5 events')]
+        description=', '.join(f'{caption}: {pct:.0f}% ({count}/{n})'
+                                for caption,pct,count in zip(captions,percentages,counts))
+        unit=T('countries')
         segments=''.join(
-            '<div class="eoc-hazard-band"><span class="eoc-hazard-band-name">'
+            '<div class="eoc-hazard-band" title="'
+            +esc(f'{caption}: {pct:.0f}% ({count}/{n})')+'">'
+            +'<span class="eoc-hazard-band-name">'
             +f'<span class="eoc-hazard-dot" style="background:{color}"></span>'
-            +esc(band)+'</span>'
+            +esc(caption)+'</span>'
             +f'<strong>{pct:.0f}%</strong></div>'
-            for band,pct,color in zip(bands,percentages,colors)
+            for caption,pct,count,color in zip(captions,percentages,counts,colors)
         ) if n else '<div class="eoc-hazard-no-data">'+esc(T('Not reported'))+'</div>'
         pieces.append(
             '<div class="network-card eoc-hazard-card">'
