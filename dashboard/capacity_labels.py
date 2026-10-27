@@ -44,7 +44,9 @@ def labels_for_question(column, responses, lang='en'):
     result=[]
     for response in responses:
         raw=str(response).strip()
-        if column in RESOURCE_COLUMNS:
+        if raw=='__MIXED__':
+            pair=('Respuestas diferentes','Different responses')
+        elif column in RESOURCE_COLUMNS:
             pair=('Disponible','Available') if raw in ('1','1.0','True','true','Sí','Si') else ('No disponible','Not available')
         elif column==67:
             pair=(f'{raw} personas',f'{raw} staff')
@@ -61,7 +63,7 @@ def labels_for_question(column, responses, lang='en'):
             else:
                 raise ValueError(f'Unrecognized Q123 answer: {raw!r}')
         else:
-            match=re.match(r'^([a-z])\\s*[.)]\\s*',raw,re.I)
+            match=re.match(r'^([a-z])\s*[.)]\s*',raw,re.I)
             if not match:
                 # Q15 stores text in the workbook but might lack a choice prefix.
                 norm=raw.casefold()
