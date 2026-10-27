@@ -77,7 +77,7 @@ def ui_style():
         background:#FFFFFF!important;
         border:1px solid #DFE9F1!important;
         border-radius:12px!important;
-        padding:16px!important;
+        padding:6px!important;
         box-sizing:border-box;
         overflow:hidden;
     }
@@ -210,7 +210,7 @@ def ui_style():
     /* One card, same outside height as the 450px map plus its frame padding.
        Keep rows at a consistent rhythm; never stretch the inner content. */
     .card-panel.eoc-pair-overview.eoc-operations-card{
-        height:calc(450px + 2rem + 2px);
+        height:calc(480px + 12px + 2px);
         min-height:0;
         margin:0;
         padding:16px 18px;
@@ -452,7 +452,9 @@ def kpi_grid(cards,columns=5):
         pretty=(f'{esc(matched.group(1))} <span class="kpi-count">({esc(matched.group(2))})</span>'
                 if matched else esc(T(display)))
         long=' long' if len(display)>12 and not matched else ''
-        tone=' accent' if label.lower().startswith(('in implementation','activation')) else ''
+        # All five regional overview cards share the same navy treatment.
+        # Any semantic highlights in other 4-card layouts remain unchanged.
+        tone=' accent' if columns!=5 and label.lower().startswith(('in implementation','activation')) else ''
         svg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+KPI_ICON_PATHS.get(label,fallback)+'</svg>'
         items.append(f'<div class="kpi{tone}"><div class="kpi-label">{esc(T(label))}</div>'
                      f'<div class="kpi-icon" aria-hidden="true">{svg}</div>'
