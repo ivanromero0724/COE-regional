@@ -577,13 +577,22 @@ def main():
             available=country if subregion=='All regions' else country[country.subregion==subregion]
             selected=st.multiselect(T('Countries (optional)'),available.country.tolist(),default=[],format_func=lambda value, _lang=chosen_language(): tr(value, _lang),key='country_filter',
                                     help=T('Leave empty to include all countries in the selected area.'))
-            tabscope=st.radio(T('Regional section'),['Overview','Capacities & gaps','Operations & hazards','Networks & cooperation'],format_func=lambda value, _lang=chosen_language(): tr(value, _lang),key='regional_section')
         st.divider()
         st.caption(f'2026 · {len(country)} {T("countries")} · {len(records)} {T("institutional responses")}')
         st.caption(T('Source: local Excel in `data/` · Updated with GitHub redeploy'))
         st.caption('UI build · 2026-10-27.2')
     header()
     if view=='Regional overview':
+        # As in the Cluster Salud VZLA v2 dashboard: main-content horizontal section navigation.
+        # Keep stable English values in session state while showing labels in the selected language.
+        tabscope=st.segmented_control(
+            T('Regional section'),
+            ['Overview','Capacities & gaps','Operations & hazards','Networks & cooperation'],
+            default='Overview',
+            selection_mode='single',
+            format_func=lambda value, _lang=chosen_language(): tr(value, _lang),
+            key='regional_section',
+        ) or 'Overview'
         active=available[available.country.isin(selected)] if selected else available
         if active.empty:
             st.info(T('Select at least one country to display regional indicators.'))

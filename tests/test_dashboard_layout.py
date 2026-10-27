@@ -70,3 +70,23 @@ def test_map_heading_and_chart_borders_consistent():
     assert "border:0!important;" in map_css
     assert "border-radius:0!important;" in map_css
     assert "border:1px solid #DFE9F1;border-top:3px solid #005A8B;" in app
+
+
+def test_regional_section_navigation_is_top_horizontal_segmented_control():
+    """Only the section switcher moves; country and area filters stay in the sidebar."""
+    app = (ROOT / 'app.py').read_text(encoding='utf-8')
+    main = app.split('def main():', 1)[1]
+    sidebar = main.split('with st.sidebar:', 1)[1].split('    header()', 1)[0]
+    assert "key='regional_section'" not in sidebar
+    assert "key='geo_area'" in sidebar
+    assert "key='country_filter'" in sidebar
+    assert "st.segmented_control(" in main
+    header_index = main.index('    header()')
+    controls_index = main.index('tabscope=st.segmented_control(')
+    content_index = main.index('active=available[available.country.isin(selected)]')
+    assert header_index < controls_index < content_index
+    assert "default='Overview'" in main
+    assert "key='regional_section'" in main
+    assert "format_func=lambda value, _lang=chosen_language(): tr(value, _lang)" in main
+    for section in ('Overview', 'Capacities & gaps', 'Operations & hazards', 'Networks & cooperation'):
+        assert section in main

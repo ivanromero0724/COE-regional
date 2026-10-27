@@ -13,6 +13,8 @@ Interactive **Streamlit** dashboard for the PAHO/WHO regional survey of Health E
 
 ## Explore
 
+Regional sections are chosen through a **horizontal segmented control immediately below the PAHO header**, following the navigation pattern from `cluster-salud-vzla-2.0`. The sidebar retains the language selector, page navigation, geographic-area filter, and optional country filter; choosing a regional section no longer requires using the sidebar.
+
 **Regional overview:** country coverage, EOC operations, activation time, most widely reported capacities and key gaps.
 
 **Capacities & gaps:** country-level counts and detailed PHEOC component matrix, including finance, SOPs, information systems, infrastructure and workforce.
