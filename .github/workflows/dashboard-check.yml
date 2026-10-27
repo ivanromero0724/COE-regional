@@ -35,7 +35,7 @@ jobs:
       - name: Check syntax, survey and cartographic layer
         run: |
           python -m py_compile app.py dashboard/data.py dashboard/charts.py dashboard/i18n.py
-          python -m pytest -q tests/test_dashboard_data.py tests/test_dashboard_layout.py tests/test_dashboard_i18n.py tests/test_dashboard_map.py tests/test_dashboard_alignment.py tests/test_dashboard_drilldowns.py
+          python -m pytest -q tests/test_dashboard_data.py tests/test_dashboard_layout.py tests/test_dashboard_i18n.py tests/test_dashboard_map.py tests/test_dashboard_alignment.py tests/test_dashboard_drilldowns.py tests/test_dashboard_network_heatmap.py
       - name: Smoke-test bilingual pages and regional charts
         run: |
           python - <<'PYTEST'
@@ -89,8 +89,17 @@ jobs:
           assert section.value == 'Operations & hazards'
           section.set_value('Networks & cooperation').run(timeout=90)
           assert not app.exception, [e.message for e in app.exception]
-          assert any('<details class="network-card">' in x.value for x in app.markdown), (
-              'Network status bars should open exact participating/interested countries'
+          assert any('<div class="network-card">' in x.value for x in app.markdown), (
+              'Static network summary cards are missing'
+          )
+          assert not any('<details class="network-card">' in x.value for x in app.markdown), (
+              'Old network card disclosures must be removed'
+          )
+          assert any('eoc-network-legend' in x.value for x in app.markdown), (
+              'Network status heatmap must show a bilingual legend'
+          )
+          assert any('Participación de los países por red' in x.value for x in app.markdown), (
+              'Country/network heatmap title must render in Spanish'
           )
           assert any('eoc-country-capacity-item' in x.value for x in app.markdown), (
               'Cooperation skill and modality bars should open country statuses'
