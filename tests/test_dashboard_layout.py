@@ -79,20 +79,34 @@ def test_map_heading_and_chart_borders_consistent():
 
 
 def test_regional_section_navigation_is_top_horizontal_segmented_control():
-    """Only the section switcher moves; country and area filters stay in the sidebar."""
+    """Regional section buttons are on top; the sidebar has no geographic filters."""
     app = (ROOT / 'app.py').read_text(encoding='utf-8')
     main = app.split('def main():', 1)[1]
     sidebar = main.split('with st.sidebar:', 1)[1].split('    header()', 1)[0]
     assert "key='regional_section'" not in sidebar
-    assert "key='geo_area'" in sidebar
-    assert "key='country_filter'" in sidebar
+    assert "key='geo_area'" not in sidebar
+    assert "key='country_filter'" not in sidebar
+    assert "key='coe_language'" in sidebar
+    assert "key='main_view'" in sidebar
     assert "st.segmented_control(" in main
     header_index = main.index('    header()')
     controls_index = main.index('tabscope=st.segmented_control(')
-    content_index = main.index('active=available[available.country.isin(selected)]')
+    content_index = main.index('active=country')
     assert header_index < controls_index < content_index
     assert "default='Overview'" in main
     assert "key='regional_section'" in main
     assert "format_func=lambda value, _lang=chosen_language(): tr(value, _lang)" in main
     for section in ('Overview', 'Capacities & gaps', 'Operations & hazards', 'Networks & cooperation'):
         assert section in main
+
+
+def test_sidebar_contains_no_technical_metadata_or_regional_filters():
+    app = (ROOT / 'app.py').read_text(encoding='utf-8')
+    main = app.split('def main():', 1)[1]
+    sidebar = main.split('with st.sidebar:', 1)[1].split('    header()', 1)[0]
+    for removed in ('Geographic area', 'Countries (optional)', 'geo_area', 'country_filter',
+                    'Source: local Excel', 'UI build · 2026-10-27.2'):
+        assert removed not in sidebar
+    assert 'active=country' in main
+    assert 'selected=st.multiselect(' not in main
+    assert 'subregion=st.selectbox(' not in main

@@ -581,16 +581,8 @@ def main():
         st.markdown('### '+T('EOC-S · Americas'))
         st.caption(T('PAHO/WHO survey 2026'))
         view=st.radio(T('Explore'), ['Regional overview','Country profiles'],format_func=lambda value, _lang=chosen_language(): tr(value, _lang),label_visibility='collapsed',key='main_view')
-        if view=='Regional overview':
-            st.divider()
-            subregion=st.selectbox(T('Geographic area'),['All regions']+sorted(country.subregion.unique()),format_func=lambda value, _lang=chosen_language(): tr(value, _lang),key='geo_area')
-            available=country if subregion=='All regions' else country[country.subregion==subregion]
-            selected=st.multiselect(T('Countries (optional)'),available.country.tolist(),default=[],format_func=lambda value, _lang=chosen_language(): tr(value, _lang),key='country_filter',
-                                    help=T('Leave empty to include all countries in the selected area.'))
         st.divider()
         st.caption(f'2026 · {len(country)} {T("countries")} · {len(records)} {T("institutional responses")}')
-        st.caption(T('Source: local Excel in `data/` · Updated with GitHub redeploy'))
-        st.caption('UI build · 2026-10-27.2')
     header()
     if view=='Regional overview':
         # As in the Cluster Salud VZLA v2 dashboard: main-content horizontal section navigation.
@@ -603,10 +595,8 @@ def main():
             format_func=lambda value, _lang=chosen_language(): tr(value, _lang),
             key='regional_section',
         ) or 'Overview'
-        active=available[available.country.isin(selected)] if selected else available
-        if active.empty:
-            st.info(T('Select at least one country to display regional indicators.'))
-            st.stop()
+        # Regional indicators always summarize all responding countries.
+        active=country
         if tabscope=='Overview':regional_overview(country,active)
         elif tabscope=='Capacities & gaps':capacity_and_gaps(active)
         elif tabscope=='Operations & hazards':operations_section(active)

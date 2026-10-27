@@ -13,7 +13,7 @@ Interactive **Streamlit** dashboard for the PAHO/WHO regional survey of Health E
 
 ## Explore
 
-Regional sections are chosen through a **horizontal segmented control immediately below the PAHO header**, following the navigation pattern from `cluster-salud-vzla-2.0`. The sidebar retains the language selector, page navigation, geographic-area filter, and optional country filter; choosing a regional section no longer requires using the sidebar.
+Regional sections are chosen through a **horizontal segmented control immediately below the PAHO header**, following the navigation pattern from `cluster-salud-vzla-2.0`. The sidebar only has the language selector, page navigation and a compact response count. Regional indicators always cover all responding countries, without geographical or optional country filters.
 
 **Regional overview:** country coverage, EOC operations, activation time, most widely reported capacities and key gaps.
 
@@ -41,7 +41,7 @@ In Streamlit Community Cloud, connect `ivanromero0724/COE-regional` (branch `mai
 GitHub Actions validates the dashboard on source changes; it no longer generates PDF fact sheets.
 ## English / Spanish interface and visible denominators
 
-The Streamlit app defaults to **English** and lets readers switch to **Español** from the sidebar. Navigation, filters, chart categories and indicators are bilingual. Open-ended institutional responses stay in their original language and are explicitly labeled as such.
+The Streamlit app defaults to **English** and lets readers switch to **Español** from the sidebar. Navigation, chart categories and indicators are bilingual. Open-ended institutional responses stay in their original language and are explicitly labeled as such.
 
 Regional proportion visuals use **percentage plus numerator / denominator**, e.g. `80% (12/15)`, with denominators restricted to valid responses for the relevant survey question. Operating-mode distributions show all response categories, including missing responses as a separate category. The cooperation section uses answered-country denominators. The regional training comparison distinguishes completed training from future priorities, each with its own valid denominator.
 

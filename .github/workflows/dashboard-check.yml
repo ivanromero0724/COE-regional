@@ -45,6 +45,8 @@ jobs:
           assert not app.exception, [e.message for e in app.exception]
           locale = next(x for x in app.radio if x.key == 'coe_language')
           assert locale.value == 'en', 'English must be the initial language'
+          assert not any(x.key == 'geo_area' for x in app.selectbox)
+          assert not any(x.key == 'country_filter' for x in app.multiselect)
 
           # Check regional charts in Spanish, then country view in Spanish.
           locale.set_value('es').run(timeout=90)
