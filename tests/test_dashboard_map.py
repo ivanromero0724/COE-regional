@@ -66,6 +66,39 @@ def test_map_uses_tight_stable_extent_and_vertical_overlay_legend():
     assert tuple(second.layout.yaxis.range)==expected_y
 
 
+def test_mexico_is_entirely_inside_the_regional_map_viewport():
+    """Context countries must not be cropped just because they did not respond."""
+    from dashboard.charts import responding_country_map_bounds
+    records,_=load_data()
+    countries=country_aggregate(records)
+    geo=load_geojson()
+    mexican_features=[f for f in geo['features']
+                      if f['properties'].get('ISO_CC')=='MEX']
+    assert mexican_features, 'Mexico must be available in the map context'
+    values=[]
+    def visit(coord):
+        if not isinstance(coord,(list,tuple)):
+            return
+        if len(coord)>=2 and all(isinstance(x,(int,float)) for x in coord[:2]):
+            values.append((coord[0],coord[1]))
+        else:
+            for nested in coord:
+                visit(nested)
+    for feature in mexican_features:
+        visit(feature['geometry']['coordinates'])
+    assert values
+    (xmin,xmax),(ymin,ymax)=responding_country_map_bounds(geo,set(countries.iso3))
+    assert min(x for x,_ in values)>xmin
+    assert max(x for x,_ in values)<xmax
+    assert min(y for _,y in values)>ymin
+    assert max(y for _,y in values)<ymax
+    # It must not require selecting Mexico or counting it as a survey respondent.
+    assert 'MEX' not in set(countries.iso3)
+    fig=countries_map(countries)
+    assert fig.layout.margin.t<=6 and fig.layout.margin.b<=6
+    assert fig.layout.legend.orientation=='v'
+
+
 def test_five_overview_kpis_share_one_navy_treatment():
     from unittest.mock import patch
     from app import kpi_grid
