@@ -525,6 +525,23 @@ def capacity_response_distribution(active, indicator):
     return pd.Series(counts,dtype=int).sort_values(ascending=False)
 
 
+def capacity_answer_label(answer, lang='en'):
+    """Short bilingual response label, preserving full original for hover."""
+    value=re.sub(r'^[a-zA-Z]\.\s+', '', str(answer).strip()).strip()
+    n=value.casefold()
+    if any(x in n for x in ('parcial','desarrollo','en proceso','en implementaci')):
+        return 'Parcial / desarrollo' if lang=='es' else 'Partial / developing'
+    if n=='no' or n.startswith(('no ','no,','no –','no -')):
+        return 'No'
+    for start,es,en in [('funcional','Funcional','Functional'),('consolidado','Consolidado','Consolidated'),('inicial','Inicial','Initial'),('avanzado','Avanzado','Advanced')]:
+        if n.startswith(start):
+            return es if lang=='es' else en
+    if n in ('si','sí') or n.startswith(('sí ','sí,','si ','si,','yes')):
+        return 'Sí' if lang=='es' else 'Yes'
+    import textwrap
+    return textwrap.shorten(value,width=24,placeholder='…')
+
+
 def capacity_chart(indicator, counts, chart_kind):
     """PAHO chart layout aligned with Cluster Salud v2: readable heights and spacing."""
     import plotly.graph_objects as go
@@ -536,7 +553,7 @@ def capacity_chart(indicator, counts, chart_kind):
     pct=[100*v/total for v in values]
     def short_label(label,limit=36):
         return textwrap.shorten(' '.join(str(label).split()),width=limit,placeholder='…')
-    shorter=[short_label(x,32) for x in labels]
+    shorter=[capacity_answer_label(x,chosen_language()) for x in labels]
     fig=go.Figure()
     if chart_kind=='donut':
         fig.add_trace(go.Pie(
@@ -553,7 +570,7 @@ def capacity_chart(indicator, counts, chart_kind):
         fig.update_layout(showlegend=True,legend=dict(
             orientation='h',yanchor='top',y=-.09,x=0,
             font=dict(size=10),itemsizing='constant'),
-            height=405,margin=dict(l=12,r=12,t=24,b=102))
+            height=430,margin=dict(l=12,r=12,t=24,b=104))
     elif chart_kind=='treemap':
         fig.add_trace(go.Treemap(
             labels=shorter,parents=['']*len(values),values=values,
@@ -564,13 +581,13 @@ def capacity_chart(indicator, counts, chart_kind):
             textposition='top left',textfont=dict(size=12),
             hovertemplate='<b>%{customdata}</b><br>%{percentRoot:.0%} (%{value}/'+str(total)+')<extra></extra>',
             pathbar=dict(visible=False),tiling=dict(pad=4)))
-        fig.update_layout(showlegend=False,height=410,
+        fig.update_layout(showlegend=False,height=430,
             margin=dict(l=10,r=10,t=14,b=14),
             uniformtext=dict(minsize=9,mode='hide'))
     else:
         order=list(reversed(range(len(values))))
         fig.add_trace(go.Bar(
-            y=[short_label(labels[i],34) for i in order],
+            y=[shorter[i] for i in order],
             x=[pct[i] for i in order],orientation='h',
             marker_color=[colors[i%len(colors)] for i in order],
             marker_line_width=0,
@@ -581,10 +598,10 @@ def capacity_chart(indicator, counts, chart_kind):
         fig.update_xaxes(range=[0,112],tickvals=[0,25,50,75,100],ticksuffix='%',
             showticklabels=True,showgrid=True,gridcolor='#E7EDF3',zeroline=False,
             fixedrange=True,tickfont=dict(size=10,color='#607B8A'))
-        fig.update_yaxes(automargin=True,fixedrange=True,
-            tickfont=dict(size=10,color='#607B8A'))
-        fig.update_layout(showlegend=False,height=max(370,115+46*len(values)),
-            margin=dict(l=12,r=40,t=24,b=52),bargap=.28)
+        fig.update_yaxes(type='category',showticklabels=True,automargin=True,fixedrange=True,
+            tickfont=dict(size=11,color='#17324D'))
+        fig.update_layout(showlegend=False,height=430,
+            margin=dict(l=118,r=40,t=24,b=52),bargap=.28)
     fig.update_layout(
         paper_bgcolor='#FFFFFF',plot_bgcolor='#FFFFFF',
         font=dict(family='"Avenir Next", Avenir, "Segoe UI", Arial, sans-serif',
@@ -622,22 +639,22 @@ def capacity_visual_dashboard(frame, active):
     st.markdown('<div class="eoc-capacity-section-title">'+
                 ('Distribución de respuestas' if chosen_language()=='es' else 'Response distribution')+
                 '</div>',unsafe_allow_html=True)
-    columns=st.columns(2,gap='medium')
-    for i,(_,indicator) in enumerate(frame.iterrows()):
-        counts=capacity_response_distribution(active,indicator)
-        with columns[i%2]:
-            title=T(indicator['capacity'])
-            st.markdown('<div class="eoc-capacity-chart-title" title="'+esc(title)+'">'+esc(title)+'</div>',
-                        unsafe_allow_html=True)
-            if counts.empty:
-                st.caption(T('No valid responses'))
-                continue
-            kind=('donut','bar','treemap')[i%3]
-            st.plotly_chart(capacity_chart(indicator,counts,kind),
-                            use_container_width=True,config={'displayModeBar':False})
-            st.markdown('<div class="eoc-capacity-chart-meta">'+str(int(counts.sum()))+' '+
-                        ('respuestas válidas' if chosen_language()=='es' else 'valid responses')+
-                        '</div>',unsafe_allow_html=True)
+    items=list(frame.iterrows())
+    for row_index in range(0,len(items),2):
+        columns=st.columns(2,gap='medium')
+        for i,(_,indicator) in enumerate(items[row_index:row_index+2]):
+            counts=capacity_response_distribution(active,indicator)
+            with columns[i]:
+                title=T(indicator['capacity'])
+                st.markdown('<div class="eoc-capacity-chart-title" title="'+esc(title)+'">'+esc(title)+'</div>',
+                            unsafe_allow_html=True)
+                if counts.empty:
+                    st.caption(T('No valid responses'))
+                    continue
+                kind=('donut','bar','treemap')[(row_index+i)%3]
+                st.plotly_chart(capacity_chart(indicator,counts,kind),
+                                use_container_width=True,config={'displayModeBar':False})
+
 
 
 def distribution_html(series,title,ordered,color,active=None,field=None):
@@ -799,7 +816,6 @@ def capacity_and_gaps(active):
     # Full categorical distributions; click each answer category to see countries.
     with st.container(border=False,key="capacity_visual_gallery"):
         capacity_visual_dashboard(sliced,active)
-    note('Each country is counted once; categories reproduce survey responses. Where several institutions answered, the country response is consolidated.')
 
 def operations_section(active):
     section('Hazards coordinated during the past two years',
