@@ -27,10 +27,6 @@ COUNTRY_LOOKUP = {
  'Paraguay':('Paraguay','PRY','South America'), 'Perú':('Peru','PER','South America'),
  'Santa Lucía':('Saint Lucia','LCA','Caribbean'),
 }
-DOMAINS = ["Governance & legal", "Operations & decisions", "Human resources",
-           "Information management", "Coordination"]
-DOMAIN_SHORT = ["Governance", "Operations", "Workforce", "Information", "Coordination"]
-LEVEL_COLORS = {"Initial":"#D75E52","Developing":"#F3A33C","Functional":"#009BDA","Advanced":"#005A8B"}
 RESOURCE_LABELS = {55:"Dedicated room",56:"Shared room",57:"Virtual coordination",58:"Communications equipment",
                    59:"Display screens",60:"Backup generator",61:"Redundant internet",62:"Furniture"}
 TRAINING_LABELS = ["EOC activation", "Incident management system", "Information management",
@@ -39,7 +35,6 @@ TRAINING_LABELS = ["EOC activation", "Incident management system", "Information 
 HAZARD_LABELS={23:"Geological / weather",24:"Biological / epidemic",25:"Social / human-caused",26:"Technological"}
 OPERATING={"a":"Not formally defined","b":"Response only","c":"Response + monitoring","d":"24/7 continuous"}
 ACTIVATION={"a":"Under 2 hours","b":"2–6 hours","c":"Over 6 hours","d":"Not defined","e":"Not defined"}
-RATING_LABELS=["Initial (<40)","Developing (40–59)","Functional (60–79)","Advanced (≥80)"]
 STATUS_LABELS={"a":"Established", "b":"Not established", "c":"In implementation"}
 NETWORK_NAMES={153:"EOC-NET",154:"EMT initiative",155:"GOARN"}
 COOPERATION_SKILLS={
@@ -115,15 +110,9 @@ def norm_network(v):
     return 'Not reported'
 
 
-def get_scoring():
-    # Source of truth: shared rubric used by automatically generated country PDFs.
-    from scripts.generate_country_profiles import scores, maturity_level
-    return scores, maturity_level
-
 
 def create_records(raw:pd.DataFrame)->tuple[pd.DataFrame,pd.DataFrame]:
     if raw.shape[1]<157:raise ValueError('Survey schema has fewer than 157 expected columns.')
-    score_fn,maturity_fn=get_scoring()
     profiles=[]; survey_rows=[]
     for ix in range(len(raw)):
         r=raw.iloc[ix]
@@ -132,7 +121,6 @@ def create_records(raw:pd.DataFrame)->tuple[pd.DataFrame,pd.DataFrame]:
         country,iso,subregion=mapping
         inst=institution(r.iloc[8],country)
         eo=STATUS_LABELS.get(code(r,14),'Not reported')
-        scored=score_fn(r.tolist())
         d={
          'record_id':f'{iso}-{ix+2:03d}', 'source_excel_row':ix+2,
          'country':country,'iso3':iso,'subregion':subregion,'institution':inst,
@@ -142,10 +130,6 @@ def create_records(raw:pd.DataFrame)->tuple[pd.DataFrame,pd.DataFrame]:
          'staff_24_7':pd.to_numeric(r.iloc[67],errors='coerce'),
          'mapped_workforce': (('actualiza periodicamente' in norm(clean(r.iloc[123]))) if clean(r.iloc[123]) else None),
         }
-        for idx,(name,score,n,all_items) in enumerate(scored):
-            d[DOMAINS[idx]]=score
-            d['N_'+DOMAINS[idx]]=n
-            d['level_'+DOMAINS[idx]]=maturity_fn(score) if score is not None else 'Not reported'
         for col,label in HAZARD_LABELS.items():
             c=code(r,col)
             d[label]=dict(a=0,b=1,c=2,d=3).get(c,np.nan)
@@ -176,10 +160,9 @@ def load_data(path:str=str(XLSX)):
 
 
 def country_aggregate(df:pd.DataFrame)->pd.DataFrame:
-    """One country = one observation. Statuses: any institution with the capacity.
+    """One country = one observation. Any institution may report an in-place capacity.
 
-    Maturity domains are mean institutional scores within country; no summing of
-    ordinal hazard event bands (only maximum reported band, clearly labelled).
+    Ordinal event bands are not summed; use the highest reported category.
     """
     out=[]
     for country,g in df.groupby('country',sort=True):
@@ -193,7 +176,6 @@ def country_aggregate(df:pd.DataFrame)->pd.DataFrame:
                            else 'Not established'),
              'operating_mode': next((v for v in ('24/7 continuous','Response + monitoring','Response only','Not formally defined') if v in set(g.operating_mode)), 'Not reported'),
              'activation':next((v for v in ('Under 2 hours','2–6 hours','Over 6 hours','Not defined') if v in set(g.activation)),'Not reported')}
-        for domain in DOMAINS: row[domain]=g[domain].mean()
         for label in HAZARD_LABELS.values():
             row[label]=g[label].max(skipna=True)
         for label in RESOURCE_LABELS.values():
@@ -231,9 +213,8 @@ def country_capacity(c:pd.Series,col:int,positive:tuple[str,...])->bool|None:
     return any(v in set(raw.split(',')) for v in positive)
 
 
-# Operational yes/in-place is strictly defined and must not be conflated with
-# a 0–100 maturity score or 'in development'. Country gets credit when either
-# reporting institution meets the criterion (as in regional overview PDF).
+# A capacity is in place only for explicitly positive / fully established answers.
+# Partial and developing states do not count. Colombia is an OR of institutions.
 CAPACITIES={
  'Legal authority & governance':[
    ('Formal legal framework',29,('d','e')),('Decision-making enabled',32,('d','e')),
@@ -285,12 +266,8 @@ def capacity_table(countries:pd.DataFrame)->pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def domain_benchmark(countries:pd.DataFrame)->pd.DataFrame:
-    return pd.DataFrame({'domain':DOMAINS,'mean':[round(countries[c].mean(),1) for c in DOMAINS],
-                         'coverage':[int(countries[c].notna().sum()) for c in DOMAINS]})
-
 
 def safe_csv(df):
     # Never include source row narrative or personal fields in downloadable tables.
-    base=['country','iso3','subregion','eoc_status','operating_mode','activation']+DOMAINS
+    base=['country','iso3','subregion','eoc_status','operating_mode','activation','institutions','staff_24_7']
     return df.loc[:,[c for c in base if c in df.columns]].to_csv(index=False).encode('utf-8-sig')

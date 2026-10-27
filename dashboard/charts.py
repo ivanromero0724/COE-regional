@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
-from dashboard.data import DOMAINS,DOMAIN_SHORT,HAZARD_LABELS,GPKG
+from dashboard.data import HAZARD_LABELS,GPKG
 
 NAVY='#005A8B'; BLUE='#236192'; CYAN='#009BDA'; ORANGE='#F36B32'
 TEXT='#17324D'; MUTED='#597083'; PALE='#EAF3F9'; GRAY='#E5EDF3'
@@ -35,16 +35,6 @@ def horizontal_bars(data,x='in_place',y='capacity',height=350,divide=False,selec
     fig.update_yaxes(showgrid=False,title=None,automargin=True)
     return style(fig,height=height,margin=dict(l=10,r=65,b=28,t=24))
 
-
-def score_chart(benchmark):
-    v=benchmark.iloc[::-1]
-    fig=go.Figure()
-    fig.add_trace(go.Bar(x=v['mean'],y=v['domain'],orientation='h',marker_color=CYAN,
-                         text=[f'{x:.1f} / 100' for x in v['mean']],textposition='outside',cliponaxis=False,
-                         hovertemplate='%{y}: %{x:.1f}/100<extra></extra>'))
-    fig.update_xaxes(range=[0,112],dtick=20,gridcolor='#EEF3F7',title=None)
-    fig.update_yaxes(automargin=True,title=None)
-    return style(fig,360,dict(l=10,r=28,b=25,t=18))
 
 
 def operating_chart(frame):
@@ -91,37 +81,6 @@ def hazard_heatmap(frame):
     fig.update_yaxes(autorange='reversed',title=None,automargin=True)
     fig.update_xaxes(title=None,side='top',tickangle=0,automargin=True)
     return style(fig,max(380,60+len(countries)*28),dict(l=20,r=8,t=15,b=32))
-
-
-def maturity_radar(country_row,reference):
-    a=[float(country_row.get(n,np.nan)) for n in DOMAINS]
-    b=[float(reference.loc[reference.domain==n,'mean'].iloc[0]) for n in DOMAINS]
-    lab=DOMAIN_SHORT+[DOMAIN_SHORT[0]]
-    fig=go.Figure()
-    fig.add_trace(go.Scatterpolar(r=b+[b[0]],theta=lab,fill='toself',name='Responding-country mean',
-       line=dict(color=ORANGE,width=2,dash='dot'),fillcolor='rgba(243,107,50,.05)'))
-    fig.add_trace(go.Scatterpolar(r=a+[a[0]],theta=lab,fill='toself',name='Selected institution',
-       line=dict(color=NAVY,width=3),fillcolor='rgba(0,90,139,.14)'))
-    fig.update_layout(polar=dict(radialaxis=dict(visible=True,range=[0,100],tickvals=[20,40,60,80,100],
-                                  gridcolor='#E6EDF2',color=MUTED),
-                        angularaxis=dict(gridcolor='#E6EDF2',tickfont=dict(size=11))),
-                      showlegend=True,legend=dict(orientation='h',x=.05,y=-.1))
-    return style(fig,430,dict(l=40,r=40,t=30,b=35))
-
-
-def maturity_country_bars(institution,reference):
-    fig=go.Figure()
-    for name,short in zip(DOMAINS,DOMAIN_SHORT):
-        val=institution.get(name,np.nan)
-        region=float(reference.loc[reference.domain==name,'mean'].iloc[0])
-        if pd.notna(val):
-            fig.add_trace(go.Bar(x=[val],y=[short],orientation='h',marker_color=NAVY,
-                                 width=.55,showlegend=False,hovertemplate=f'{name}: {val:.0f}/100<extra></extra>'))
-        fig.add_trace(go.Scatter(x=[region],y=[short],mode='markers',marker=dict(color=ORANGE,size=12,symbol='line-ns-open',line=dict(width=3)),
-                                 showlegend=False,hovertemplate=f'Responding-country mean: {region:.1f}<extra></extra>'))
-    fig.update_xaxes(range=[0,103],dtick=20,gridcolor='#EFF3F7')
-    fig.update_yaxes(autorange='reversed',automargin=True,title=None)
-    return style(fig,275,dict(l=16,r=20,t=10,b=23))
 
 
 @lru_cache(maxsize=1)

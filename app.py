@@ -13,9 +13,9 @@ import pandas as pd
 import numpy as np
 import streamlit as st
 from dashboard.data import (
-  ROOT, XLSX, DOMAINS, DOMAIN_SHORT, RESOURCE_LABELS, TRAINING_LABELS,
+  ROOT, XLSX, RESOURCE_LABELS, TRAINING_LABELS,
   HAZARD_LABELS, NETWORK_NAMES, COOPERATION_SKILLS, COOPERATION_MODES, CAPACITIES, load_data, country_aggregate,
-  capacity_table, domain_benchmark, country_capacity, safe_csv
+  capacity_table, country_capacity, safe_csv
 )
 from dashboard import charts as viz
 
@@ -143,9 +143,13 @@ def regional_overview(country,active):
     st.divider()
     cols=st.columns([1.02,1],gap='large')
     with cols[0]:
-        section('Capability maturity by pillar','Average 0–100 score across the countries in the current filter; one vote per country.',eyebrow='03 / INDICATIVE MATURITY')
-        b=domain_benchmark(active)
-        st.plotly_chart(viz.score_chart(b),use_container_width=True,config={'displayModeBar':False})
+        section('Most widely reported capacities',
+                'Number of countries explicitly reporting each established or functional capacity.',
+                eyebrow='03 / REPORTED CAPACITIES')
+        ranked=capacity_table(active)
+        ranked=ranked[ranked.component.isin(CAPACITIES)]
+        ranked=ranked[ranked.denominator>0].sort_values(['in_place','capacity'],ascending=[False,True]).head(7)
+        st.plotly_chart(viz.horizontal_bars(ranked,height=365),use_container_width=True,config={'displayModeBar':False})
     with cols[1]:
         section('Priority capacity gaps','Countries reporting these specific capacities as established / in place.',eyebrow='04 / COOPERATION PRIORITIES')
         priorities=[('Sustainable financing',36,('d','e')),
@@ -161,7 +165,7 @@ def regional_overview(country,active):
             st.markdown(f'**{label}**  ·  {number}/{denominator} countries')
             st.progress(x/100 if denominator else 0)
         note('Only fully established / explicitly positive options count as “in place”. Partial, informal and developing responses do not.')
-    st.markdown('<div class="eoc-note">PRELIMINARY · Self-reported survey. The maturity index is an indicative analytical summary, not an external PAHO assessment or country ranking. Regional means are recalculated for the active filters.</div>',unsafe_allow_html=True)
+    st.markdown('<div class="eoc-note">PRELIMINARY · Self-reported capacities from responding countries only. Reported as “in place” means a positive or fully functional answer, not partial or developing. All measures use question-specific denominators.</div>',unsafe_allow_html=True)
 
 
 def capacity_and_gaps(active):
@@ -272,19 +276,6 @@ def flag_from_iso(iso):
     return ''.join(chr(ord(k)-ord('A')+0x1F1E6) for k in alpha)
 
 
-def local_pdf_for(selected):
-    out=ROOT/'output'/'countries'
-    if not out.is_dir():return None
-    slug={'Colombia':'colombia'}.get(selected.country)
-    def key(s):
-        import unicodedata,re
-        return re.sub(r'[^a-z0-9]+','_', ''.join(c for c in unicodedata.normalize('NFKD',s.lower()) if not unicodedata.combining(c))).strip('_')
-    slug=slug or key(selected.country)
-    if selected.country=='Colombia':
-        slug+=('_national_institute_of_health' if 'INS' in selected.institution else '_ministry_of_health')
-    pdf=out/(slug+'.pdf')
-    return pdf if pdf.exists() else None
-
 
 def country_profile(records,countries):
     region=st.selectbox('Select a country',sorted(records.country.unique()),key='selected_country')
@@ -301,13 +292,21 @@ def country_profile(records,countries):
     t3.metric('Activation',r.activation)
     t4.metric('24/7 duty staff',f'{int(r.staff_24_7)}' if pd.notna(r.staff_24_7) else 'Not reported')
     st.write('')
-    section('Capability maturity snapshot','Institutional score (blue) and equal-country regional reference (orange). 24 survey questions across five pillars.',eyebrow='01 / FIVE PILLARS')
-    benchmark=domain_benchmark(countries)
-    a,b=st.columns([1,1],gap='large')
-    with a:st.plotly_chart(viz.maturity_radar(r,benchmark),use_container_width=True,config={'displayModeBar':False})
-    with b:
-        st.plotly_chart(viz.maturity_country_bars(r,benchmark),use_container_width=True,config={'displayModeBar':False})
-        st.caption('Indicative 0–100 maturity scale: Initial <40 · Developing 40–59 · Functional 60–79 · Advanced ≥80. Not a ranking.')
+    section('Reported institutional capacities',
+            'Answers from this institution, grouped by PHEOC core component.',
+            eyebrow='01 / CAPACITIES REPORTED')
+    groups=list(CAPACITIES.items())
+    tabs=st.tabs([name for name,_ in groups])
+    for tab,(group,items) in zip(tabs,groups):
+        with tab:
+            details=[]
+            for label,col,positive in items:
+                availability=country_capacity(r,col,positive)
+                details.append({'Capacity':label,'Reported status':
+                    'In place' if availability is True else 'Not in place / partial' if availability is False else 'Not reported'})
+            st.dataframe(pd.DataFrame(details),use_container_width=True,hide_index=True,
+                         height=min(525,38*(len(details)+1)+15))
+    note('Only explicit qualifying answers are marked in place. “Not reported” is different from a negative answer.')
     st.divider()
     col1,col2=st.columns([1,1],gap='large')
     with col1:
@@ -350,9 +349,6 @@ def country_profile(records,countries):
         with st.expander('Technical capabilities and contributions this institution can offer'):
             st.markdown('**Expertise:** '+(', '.join(skills) if skills else 'Not reported'))
             st.markdown('**Modalities:** '+(', '.join(modes) if modes else 'Not reported'))
-    pdf=local_pdf_for(r)
-    if pdf is not None:
-        st.download_button('Download this institution’s PDF fact sheet',data=pdf.read_bytes(),file_name=pdf.name,mime='application/pdf',type='primary')
     note('Record-specific profile: Colombia’s two institutions remain independent. Answers come from the survey, with no names, phone numbers or emails exposed.')
 
 
@@ -361,9 +357,7 @@ def methodology(records,country):
     with st.container(border=True):
         st.markdown('''**Unit of analysis.** The underlying dataset has one row per institutional response. Regional figures count each country once, so Colombia does not get additional weight because it has two submissions. Country capacities count as available if **at least one** institution reports them as fully in place. The institutional view keeps both submissions separate.
 
-**Maturity index.** Five pillars / 24 closed-answer questions, each recoded on a 1–5 scale. For each pillar, the score is `(mean(answer rating) − 1) / 4 × 100`. Missing/unrecognized answers are excluded. The original reconstructed scoring rubric explicitly treats some “don’t know / not applicable” answers as a low rating; this should be validated with the survey team.
-
-**Capacity counts.** Unlike maturity scores, in-place capacities use strict positive/functional survey response codes. Missing items reduce the denominator; developing/informal options are **not** treated as fully in place.
+**Capacity counts.** Every indicator refers to a concrete questionnaire capacity and counts countries that report it as present, formally established or functional. Missing items reduce the denominator; developing/informal options are **not** treated as fully in place. These are item-level survey indicators rather than a combined rating.
 
 **Hazards.** Frequencies are ordered categories (none, 1–2, 3–5, over 5), not continuous event counts. For the regional country view, multiple institutional frequencies show the highest reported category, not their sum.
 
@@ -371,14 +365,15 @@ def methodology(records,country):
 
 **Privacy.** This dashboard intentionally excludes respondent names, phone numbers, emails, submission IDs and raw contact exports.''')
     st.write('')
-    st.markdown('#### Coverage and score denominators')
-    m=domain_benchmark(country).rename(columns={'domain':'Pillar','mean':'Country mean / 100','coverage':'Countries with a score'})
-    st.dataframe(m,hide_index=True,use_container_width=True)
+    st.markdown('#### Indicator coverage and question-specific denominators')
+    m=capacity_table(country)[['component','capacity','in_place','denominator']].rename(
+        columns={'component':'Component','capacity':'Reported capacity','in_place':'Countries with capacity','denominator':'Countries responding'})
+    st.dataframe(m,hide_index=True,use_container_width=True,height=420)
     st.markdown('#### Download a non-personal country summary')
     st.download_button('Download safe country indicators (.csv)',data=safe_csv(country),
                        file_name='paho_eoc_country_indicators_2026.csv',mime='text/csv')
-    st.markdown('**Methodological documentation in GitHub:** `docs/capability_scoring.md` · `dashboard/data.py` · `scripts/generate_country_profiles.py`.')
-    note('Data source: PAHO/WHO 2026 survey; regional and country narrative PDFs supplied by the survey team. Not a validated operational performance assessment.')
+    st.markdown('**Methodological implementation in GitHub:** `dashboard/data.py` · `dashboard/charts.py`.')
+    note('Data source: PAHO/WHO 2026 survey; preliminary self-reported information.')
 
 
 def main():
@@ -386,7 +381,7 @@ def main():
     try:
         records,raw=load_data()
     except Exception as ex:
-        st.error(f'Unable to read the survey data or scoring module: {ex}')
+        st.error(f'Unable to read the survey data: {ex}')
         st.stop()
     country=country_aggregate(records)
     with st.sidebar:
