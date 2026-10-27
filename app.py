@@ -360,6 +360,24 @@ def ui_style():
     .status-tile-state{font-size:.72rem;color:#607B8A;}
     .network-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0;}
     .network-card{border:1px solid #DFE9F1;border-top:3px solid #009BDA;border-radius:12px;background:#fff;padding:15px;min-height:120px;}
+    /* Four comparable event-frequency donuts, matching the static network cards. */
+    .eoc-hazard-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:12px 0 22px;}
+    .eoc-hazard-card{display:flex;flex-direction:column;align-items:stretch;min-width:0;min-height:324px;}
+    .eoc-hazard-card .network-name{min-height:2.65em;line-height:1.35;text-align:center;}
+    .eoc-hazard-donut{width:144px;height:144px;border-radius:50%;margin:12px auto 18px;position:relative;flex-shrink:0;}
+    .eoc-hazard-donut:before{content:'';position:absolute;inset:26px;background:#FFF;border-radius:50%;}
+    .eoc-hazard-donut-center{position:absolute;inset:26px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#005A8B;}
+    .eoc-hazard-donut-center strong{font-size:1.65rem;line-height:1.06;}
+    .eoc-hazard-donut-center span{font-size:.60rem;line-height:1.2;color:#607B8A;max-width:83px;margin-top:3px;}
+    .eoc-hazard-bands{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px 10px;margin-top:auto;}
+    .eoc-hazard-band{display:flex;align-items:center;justify-content:space-between;gap:5px;font-size:.76rem;color:#435E70;}
+    .eoc-hazard-band-name{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
+    .eoc-hazard-band strong{font-size:.79rem;color:#17324D;white-space:nowrap;}
+    .eoc-hazard-dot{display:inline-block;width:9px;height:9px;flex-shrink:0;border-radius:3px;}
+    .eoc-hazard-no-data{color:#607B8A;font-size:.78rem;text-align:center;grid-column:1/-1;}
+    @media(max-width:1040px){.eoc-hazard-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+    @media(max-width:560px){.eoc-hazard-grid{grid-template-columns:1fr;}.eoc-hazard-card{min-height:0;}.eoc-hazard-card .network-name{min-height:0;}}
+
     .network-name{font-size:.79rem;font-weight:800;color:#005A8B;}
     .network-count{font-size:1.55rem;color:#005A8B;font-weight:800;margin:7px 0;}
     .network-meta{font-size:.73rem;line-height:1.45;color:#61798A;}
@@ -795,15 +813,79 @@ def capacity_and_gaps(active):
     with st.container(border=False,key="capacity_visual_gallery"):
         capacity_visual_dashboard(sliced,active)
 
+def hazard_summary_cards(active):
+    """Regional distribution of four observed event-frequency bands per hazard.
+
+    The denominator is the number of reporting countries for that hazard;
+    missing answers do NOT represent zero events.
+    """
+    colors=('#D8E3EB','#83BEDD','#009BDA','#005A8B')
+    bands=('0','1–2','3–5','>5')
+    pieces=[]
+    for name in HAZARD_LABELS.values():
+        series=pd.to_numeric(active[name],errors='coerce').dropna()
+        series=series[series.isin([0,1,2,3])]
+        n=len(series)
+        counts=[int((series==band).sum()) for band in range(4)]
+        percentages=[100*value/n if n else 0 for value in counts]
+        stops=[]
+        offset=0.0
+        for pct,color in zip(percentages,colors):
+            if pct>0:
+                stops.append(f'{color} {offset:.3f}% {offset+pct:.3f}%')
+                offset+=pct
+        gradient=('conic-gradient('+', '.join(stops)+')') if stops else '#EDF2F5'
+        description=', '.join(f'{band}: {pct:.0f}%' for band,pct in zip(bands,percentages))
+        unit=('países con datos' if chosen_language()=='es' else 'countries with data')
+        segments=''.join(
+            '<div class="eoc-hazard-band"><span class="eoc-hazard-band-name">'
+            +f'<span class="eoc-hazard-dot" style="background:{color}"></span>'
+            +esc(band)+'</span>'
+            +f'<strong>{pct:.0f}%</strong></div>'
+            for band,pct,color in zip(bands,percentages,colors)
+        ) if n else '<div class="eoc-hazard-no-data">'+esc(T('Not reported'))+'</div>'
+        pieces.append(
+            '<div class="network-card eoc-hazard-card">'
+            +'<div class="network-name">'+esc(T(name))+'</div>'
+            +f'<div class="eoc-hazard-donut" role="img" style="background:{gradient}" '
+            +f'aria-label="{esc(T(name)+": "+description)}">'
+            +'<div class="eoc-hazard-donut-center"><strong>'+str(n)+'</strong>'
+            +'<span>'+esc(unit)+'</span></div></div>'
+            +'<div class="eoc-hazard-bands">'+segments+'</div>'
+            +'</div>'
+        )
+    return '<div class="eoc-hazard-grid">'+''.join(pieces)+'</div>'
+
+
+def training_summary_data(active):
+    """Paired completed and prioritized proportions with separate valid denominators."""
+    rows=[]
+    for course in TRAINING_LABELS:
+        completed=active['Completed: '+course].dropna()
+        prioritized=active['Priority: '+course].dropna()
+        rows.append({
+            'area':course,
+            'done_n':int((completed==True).sum()),
+            'done_d':len(completed),
+            'priority_n':int((prioritized==True).sum()),
+            'priority_d':len(prioritized),
+        })
+    return pd.DataFrame(rows)
+
+
 def operations_section(active):
-    section('Hazards coordinated during the past two years',
-            'Categories reflect ordinal frequency bands, not exact event counts.',
+    section('Hazards reported in the past two years',
             eyebrow='01 / TYPES OF EMERGENCIES')
+    st.markdown(hazard_summary_cards(active),unsafe_allow_html=True)
+    st.markdown('<div class="mini-title">'+esc(T('Hazard frequency by country'))+'</div>',
+                unsafe_allow_html=True)
     st.plotly_chart(viz.hazard_heatmap(active.sort_values('country'),lang=chosen_language()),
-                    use_container_width=True,config={'displayModeBar':False})
+                    width='stretch',config={'displayModeBar':False})
     st.divider()
-    section('Training completed and prioritized','Each country counted once per course.',eyebrow='02 / WORKFORCE DEVELOPMENT')
-    st.markdown(training_drilldown_html(active),unsafe_allow_html=True)
+    section('Training completed and prioritized',
+            eyebrow='02 / WORKFORCE DEVELOPMENT')
+    st.plotly_chart(viz.training_comparison(training_summary_data(active),lang=chosen_language()),
+                    width='stretch',config={'displayModeBar':False})
 
 
 
@@ -1002,7 +1084,7 @@ def main():
         # Keep stable English values in session state while showing labels in the selected language.
         tabscope=st.segmented_control(
             T('Regional section'),
-            ['Overview','Capacities & gaps','Operations & hazards','Networks & cooperation'],
+            ['Overview','Capacities & gaps','Hazards & training','Networks & cooperation'],
             default='Overview',
             selection_mode='single',
             format_func=lambda value, _lang=chosen_language(): tr(value, _lang),
@@ -1012,7 +1094,7 @@ def main():
         active=country
         if tabscope=='Overview':regional_overview(country,active)
         elif tabscope=='Capacities & gaps':capacity_and_gaps(active)
-        elif tabscope=='Operations & hazards':operations_section(active)
+        elif tabscope=='Hazards & training':operations_section(active)
         else:cooperation_section(active)
     elif view=='Country profiles':country_profile(records,country)
     st.markdown('<div class="paho-footer">'+esc(T('PAHO / WHO · EOC-NET Americas · 2026  |  Self-reported information  |  Analytical dashboard for technical coordination'))+'</div>',unsafe_allow_html=True)
