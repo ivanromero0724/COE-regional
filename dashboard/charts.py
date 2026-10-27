@@ -210,6 +210,39 @@ def responding_country_map_center(geo, country_codes):
     return {'lat':(min(lats)+max(lats))/2, 'lon':(min(lons)+max(lons))/2}
 
 
+def responding_country_map_bounds(geo, country_codes):
+    """Tight, stable geographic extent across regional filters.
+
+    Include all responding country polygons (not only currently selected
+    countries) so the map never jumps as filters change. Preserve geographic
+    proportions and leave just a small breathing room around the region.
+    """
+    points=[]
+    def visit(coords):
+        if not isinstance(coords,(list,tuple)):
+            return
+        if (len(coords)>=2
+                and isinstance(coords[0],(int,float))
+                and isinstance(coords[1],(int,float))):
+            points.append((coords[0],coords[1]))
+        else:
+            for part in coords:
+                visit(part)
+    for feature in geo['features']:
+        if feature.get('properties',{}).get('ISO_CC') in country_codes:
+            visit(feature.get('geometry',{}).get('coordinates',[]))
+    if not points:
+        return (-94,-31),(-57,28)
+    lons=[point[0] for point in points]
+    lats=[point[1] for point in points]
+    # Keep the map close to the occupied region, without clipping islands
+    # or southern-country polygons at the edges.
+    xpad=max(1.1,(max(lons)-min(lons))*.018)
+    ypad=max(1.1,(max(lats)-min(lats))*.018)
+    return ((min(lons)-xpad,max(lons)+xpad),
+            (min(lats)-ypad,max(lats)+ypad))
+
+
 def countries_map(countries, selection=None, lang='en'):
     """Fixed geographic viewport, with country hover but no pan/zoom.
 
@@ -237,10 +270,11 @@ def countries_map(countries, selection=None, lang='en'):
             return coords
         return []
 
-    # Regional focus: includes all survey respondents (including Central
-    # America, Bahamas and southern South America) while avoiding the USA.
-    xmin,xmax=-95,-32
-    ymin,ymax=-60,25
+    # Fit the respondent countries, not a generous continent-wide rectangle.
+    # The viewport is independent of the active filter.
+    (xmin,xmax),(ymin,ymax)=responding_country_map_bounds(
+        geo,set(stats.index)
+    )
 
     for feature in geo['features']:
         iso=feature.get('properties',{}).get('ISO_CC')
@@ -280,16 +314,24 @@ def countries_map(countries, selection=None, lang='en'):
     fig.update_layout(
         dragmode=False,
         hovermode='closest',
-        legend=dict(title=None,orientation='h',y=1.015,x=0,
-                    yanchor='bottom',font_size=10),
+        # Overlay an opaque, three-row legend on the lower-left ocean,
+        # rather than reserving extra space above or below the map.
+        legend=dict(title=None,orientation='v',
+                    x=.018,y=.025,xanchor='left',yanchor='bottom',
+                    bgcolor='rgba(255,255,255,0.94)',
+                    bordercolor='#DFE9F1',borderwidth=1,
+                    font=dict(size=11,color=TEXT),
+                    itemsizing='constant',traceorder='normal'),
         paper_bgcolor='#FFFFFF',plot_bgcolor='#FFFFFF',
     )
     fig.update_xaxes(range=[xmin,xmax],fixedrange=True,visible=False,
-                     showgrid=False,zeroline=False)
+                     showgrid=False,zeroline=False,
+                     constrain='domain')
     fig.update_yaxes(range=[ymin,ymax],fixedrange=True,visible=False,
                      showgrid=False,zeroline=False,scaleanchor='x',
-                     scaleratio=1)
-    fig=style(fig,450,dict(l=4,r=4,t=47,b=4))
+                     scaleratio=1,constrain='domain')
+    # The map itself fills the frame vertically; the legend overlays it.
+    fig=style(fig,480,dict(l=4,r=4,t=5,b=5))
     fig.update_layout(paper_bgcolor='#FFFFFF',plot_bgcolor='#FFFFFF')
     return fig
 
