@@ -212,5 +212,5 @@ def test_infrastructure_remains_available_in_capacity_component():
     infrastructure=caps[caps.component=='Infrastructure']
     assert len(infrastructure)==len(RESOURCE_LABELS)
     assert infrastructure['denominator'].gt(0).any()
-    for _,item in infrastructure.iterrows():
-        assert item['capacity'] in CAPACITIES['Infrastructure & support'][0] or isinstance(item['capacity'],str)
+    assert set(RESOURCE_LABELS.values()).issubset(set(infrastructure.capacity))
+    assert infrastructure['denominator'].gt(0).any()
