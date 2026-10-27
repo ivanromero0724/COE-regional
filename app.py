@@ -385,7 +385,7 @@ KPI_ICON_PATHS={
     'Established EOC-S':'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/>',
     'In implementation':'<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12h8M12 8v8"/>',
     '24/7 operation':'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
-    'Activation under 2 h':'<path d="m13 2-9 12h7l-1 8 10-12h-7z"/>',
+    'Documented formal mandate':'<path d="M8 3h8l4 4v14H4V3h4z"/><path d="M16 3v5h4M8 13h8M8 17h8"/>',
     'EOC status':'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/>',
     'Operating mode':'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
     'Activation time':'<path d="M12 7v5l-4 2"/><circle cx="12" cy="12" r="9"/>',
@@ -562,14 +562,17 @@ def compact_table(headers,body,maxheight=None):
 
 
 def count_kpis(country):
-    operational=int((country.eoc_status=='Established').sum())
-    fast=int((country.activation=='Under 2 hours').sum())
+    total=len(country)
+    def share(n,denominator=total):
+        return f'{100*n/denominator:.0f}% ({n}/{denominator})' if denominator else '— (0/0)'
+    documented=country.formal_document.dropna()
+    documented_yes=int((documented==True).sum())
     kpi_grid([
-        ('Countries responding',len(country)),
-        ('Established EOC-S',operational),
-        ('In implementation',int((country.eoc_status=='In implementation').sum())),
-        ('24/7 operation',int((country.operating_mode=='24/7 continuous').sum())),
-        ('Activation under 2 h',fast)])
+        ('Countries responding',total),
+        ('Established EOC-S',share(int((country.eoc_status=='Established').sum()))),
+        ('In implementation',share(int((country.eoc_status=='In implementation').sum()))),
+        ('24/7 operation',share(int((country.operating_mode=='24/7 continuous').sum()))),
+        ('Documented formal mandate',share(documented_yes,len(documented)))])
 
 
 def country_metric_values(country):
