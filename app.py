@@ -580,11 +580,11 @@ def capacity_chart(indicator, counts, chart_kind):
             cliponaxis=False,
             hovertemplate='<b>%{customdata[0]}</b><br>%{x:.0f}% (%{customdata[1]}/'+str(total)+')<extra></extra>'))
         fig.update_xaxes(range=[0,110],tickmode='array',
-            tickvals=[0,10,20,30,40,50,60,70,80,90,100],
-            ticktext=[f'{v}%' for v in range(0,101,10)],
+            tickvals=[0,25,50,75,100],
+            ticktext=['0%','25%','50%','75%','100%'],
             showticklabels=True,showline=True,linecolor='#91A5B4',linewidth=1.3,
             ticks='outside',ticklen=5,tickcolor='#91A5B4',
-            showgrid=True,gridcolor='#E7EDF3',zeroline=False,
+            showgrid=False,zeroline=False,
             fixedrange=True,tickfont=dict(size=10,color='#607B8A'))
         fig.update_yaxes(type='category',showticklabels=True,showline=True,
             linecolor='#91A5B4',linewidth=1.3,ticks='outside',ticklen=4,
@@ -623,11 +623,11 @@ def capacity_visual_dashboard(frame, active):
             plot_bgcolor='white',font=dict(family='"Avenir Next", Avenir, "Segoe UI", Arial, sans-serif',size=11,color='#17324D'),
             hoverlabel=dict(bgcolor='white',font_size=11),bargap=.25)
         fig.update_xaxes(range=[0,105],tickmode='array',
-            tickvals=[0,10,20,30,40,50,60,70,80,90,100],
-            ticktext=[f'{v}%' for v in range(0,101,10)],
+            tickvals=[0,25,50,75,100],
+            ticktext=['0%','25%','50%','75%','100%'],
             showticklabels=True,showline=True,linecolor='#91A5B4',linewidth=1.3,
             ticks='outside',ticklen=5,tickcolor='#91A5B4',
-            showgrid=True,gridcolor='#EAF0F4',zeroline=False,
+            showgrid=False,zeroline=False,
             fixedrange=True,tickfont_size=10)
         fig.update_yaxes(showline=True,linecolor='#91A5B4',linewidth=1.3,
             ticks='outside',ticklen=4,tickcolor='#91A5B4',
