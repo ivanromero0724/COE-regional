@@ -110,3 +110,19 @@ def test_sidebar_contains_no_technical_metadata_or_regional_filters():
     assert 'active=country' in main
     assert 'selected=st.multiselect(' not in main
     assert 'subregion=st.selectbox(' not in main
+
+
+def test_capacities_and_countries_use_two_full_width_sections():
+    """No squeezed side-by-side table; full-width bars followed by country tiles."""
+    app = (ROOT / 'app.py').read_text(encoding='utf-8')
+    section = app.split('def capacity_and_gaps(active):', 1)[1].split('def operations_section(active):', 1)[0]
+    assert 'st.columns(' not in section
+    assert "capacity_rows_html(sliced,'Capacity availability',variant='full')" in section
+    assert section.index("variant='full'") < section.index("T('Countries reporting each capacity')")
+    assert "st.markdown(countries_capacity_grid(rows),unsafe_allow_html=True)" in section
+    assert "compact_table(['Country','Reported capacity'],rows" not in section
+    assert 'def countries_capacity_grid(rows):' in app
+    assert 'eoc-country-capacity-grid' in app
+    assert '.eoc-country-capacity-grid{grid-template-columns:1fr;}' in app
+    assert 'grid-template-columns:repeat(3,minmax(0,1fr));' in app
+    assert "else ' eoc-capacity-full' if variant=='full'" in app
