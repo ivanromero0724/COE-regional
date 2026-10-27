@@ -287,7 +287,7 @@ CAPACITIES={
  'Information systems & standards':[
    ('Situation room integrated',109,('a',)),('Information management & monitoring',51,('a',)),
    ('Formal SITREP process',110,('d',)),('Structured exchange',105,('d',)),
-   ('Integrated/interoperable platform',107,('d','e')),('Information gaps infrequent',108,('d',)),
+   ('Integrated/interoperable platform',107,('d','e')),('Information gaps affecting decisions',108,('d',)),
  ],
  'Infrastructure & support':[
    ('Dedicated operations room',55,()),('Shared operations room',56,()),
