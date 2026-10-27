@@ -401,7 +401,7 @@ def kpi_grid(cards,columns=5):
     fallback='<path d="M4 18V6M4 18h16M8 14l4-4 3 3 5-6"/>'
     for label,value in cards:
         display=str(value)
-        matched=re.fullmatch(r'(\\d+(?:\\.\\d+)?%) \\((\\d+/\\d+)\\)', display)
+        matched=re.fullmatch(r'(\d+(?:\.\d+)?%) \((\d+/\d+)\)', display)
         pretty=(f'{esc(matched.group(1))} <span class="kpi-count">({esc(matched.group(2))})</span>'
                 if matched else esc(T(display)))
         long=' long' if len(display)>12 and not matched else ''
