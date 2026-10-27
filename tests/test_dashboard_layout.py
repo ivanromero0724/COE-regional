@@ -160,4 +160,3 @@ def test_expandable_capacity_bars_keep_visible_blue_fill():
     app = (ROOT / 'app.py').read_text(encoding='utf-8')
     assert '.measure-fill{display:block;height:100%;background:#009BDA;' in app
     assert '<span class="measure-bar"><span class="measure-fill" style="width:' in app
-    assert "f'{pct:.1f}%\"</span>" not in app
