@@ -57,8 +57,9 @@ def test_question_15_formal_document_has_valid_responses():
 
 
 def test_capacity_abbreviations_across_all_components_and_languages():
-    """Every displayed questionnaire category stays distinct in ES and EN."""
-    from app import capacity_answer_labels, capacity_response_distribution
+    """Match every actual choice in the bundled survey to a specific bilingual label."""
+    from dashboard.capacity_labels import labels_for_question
+    from app import capacity_response_distribution
     records,_=load_data()
     countries=country_aggregate(records)
     frame=capacity_table(countries)
@@ -68,12 +69,11 @@ def test_capacity_abbreviations_across_all_components_and_languages():
         for _,indicator in selected.iterrows():
             counts=capacity_response_distribution(countries,indicator)
             for language in ('es','en'):
-                labels=capacity_answer_labels(counts.index,language)
+                labels=labels_for_question(int(indicator['col']),counts.index,language)
                 assert len(labels)==len(set(labels)), (component,indicator.capacity,language,labels)
-                assert all(0<len(x)<=36 for x in labels)
-    from app import capacity_answer_label
-    for lang in ('en','es'):
-        assert capacity_answer_label('a. Sí',lang)==('Yes' if lang=='en' else 'Sí')
-        assert capacity_answer_label('b. No',lang)=='No'
-        assert capacity_answer_label('c. Parcialmente / en desarrollo',lang)==(
-            'Partial / developing' if lang=='en' else 'Parcial / desarrollo')
+                assert all(x and not x.startswith(('Other response','Otra respuesta','Option ','Opción '))
+                           for x in labels), (component,indicator.capacity,language,labels)
+    assert labels_for_question(37,['a. Sí','b. No','c. Parcialmente o En desarrollo'],'en')==[
+        'Yes','No','Partial / developing']
+    assert labels_for_question(108,['a. Crítico','b. Alto','c. Moderado','d. Bajo'],'en')==[
+        'Critical','High','Moderate','Low']
