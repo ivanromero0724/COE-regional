@@ -347,85 +347,127 @@ def kpi_grid(cards,columns=5):
     st.markdown(f'<div class="kpi-grid{style}">{"".join(items)}</div>',unsafe_allow_html=True)
 
 
-def capacity_rows_html(frame,title=None,pair=None,variant=None):
-    """Small visual bars with explicit percentage AND numerator / denominator."""
+def country_names_grid(names):
+    """Only countries in the chosen response category; no misleading in-place labels."""
+    return '<div class="eoc-country-category-grid">'+''.join(
+        '<div class="eoc-country-category-item">'+esc(T(name))+'</div>'
+        for name in sorted(names)
+    )+'</div>'
+
+
+def countries_capacity_grid(rows):
+    """Responsive country-level status tiles including nonresponse."""
+    return '<div class="eoc-country-capacity-grid">'+''.join(
+        '<div class="eoc-country-capacity-item">'
+        +'<span class="eoc-country-capacity-name">'+esc(T(name))+'</span>'
+        +status_chip(value)+'</div>'
+        for name,value in rows
+    )+'</div>'
+
+
+def disclosure_bar(label,numerator,denominator,rows=None,color=CYAN,category=False):
+    """One keyboard-accessible clickable bar; expands correct country-level data."""
+    n=int(numerator);d=int(denominator)
+    pct=100*n/d if d else 0
+    metric=f'{pct:.0f}% ({n}/{d})' if d else T('No valid responses')
+    if rows is None:
+        # No drilldown is offered when the underlying country field is unavailable.
+        return (f'<div class="measure-row"><div class="measure-label">{esc(T(label))}</div>'
+                f'<div class="measure-bar"><span class="measure-fill" style="width:{pct:.1f}%;background:{color}"></span></div>'
+                f'<div class="measure-value">{esc(metric)}</div></div>')
+    detail=(country_names_grid(rows) if category else countries_capacity_grid(rows))
+    detail_title=T('Countries in this category') if category else T('Countries reporting each capacity')
+    return (
+        '<details class="eoc-capacity-disclosure">'
+        '<summary class="eoc-capacity-summary">'
+        '<span class="measure-label">'+esc(T(label))+'</span>'
+        '<span class="measure-bar"><span class="measure-fill" style="width:'
+        +f'{pct:.1f}%;background:{color}"></span></span>'
+        '<span class="measure-value">'+esc(metric)+'</span>'
+        '<span class="eoc-capacity-chevron" aria-hidden="true"></span>'
+        '</summary><div class="eoc-capacity-detail">'
+        '<div class="eoc-capacity-detail-title">'+esc(detail_title)+'</div>'
+        +detail+'</div></details>'
+    )
+
+
+def regional_indicator_rows(active,item):
+    """Resolve the exact country-level field used in each regional numerator."""
+    field=item.get('status_col')
+    if isinstance(field,str) and field in active.columns:
+        return [(r.country,r[field] if pd.notna(r[field]) else None)
+                for _,r in active.sort_values('country').iterrows()]
+    col=item.get('col')
+    if col is not None and pd.notna(col) and int(col)>=0:
+        col=int(col)
+        valid=item.get('positive')
+        if valid is None or not isinstance(valid,tuple):
+            valid=next((codes for items in CAPACITIES.values()
+                        for name,ix,codes in items
+                        if ix==col and name==item['capacity']),None)
+        if valid is not None:
+            return [(r.country,country_capacity(r,col,valid))
+                    for _,r in active.sort_values('country').iterrows()]
+    if item.get('component')=='Infrastructure':
+        field=item['capacity']
+    elif item.get('component')=='Training (completed)':
+        field='Completed: '+item['capacity']
+    else:
+        return None
+    if field not in active.columns:return None
+    return [(r.country,r[field] if pd.notna(r[field]) else None)
+            for _,r in active.sort_values('country').iterrows()]
+
+
+def capacity_rows_html(frame,title=None,pair=None,variant=None,country=None):
+    """Regional percentage bars: click for the source countries when available."""
     contents=[]
     for _,r in frame.iterrows():
-        numerator=int(r['in_place']); denominator=int(r['denominator'])
-        percent=100*numerator/denominator if denominator else 0
-        visible=f'{percent:.0f}% ({numerator}/{denominator})' if denominator else T('No valid responses')
-        contents.append(f'<div class="measure-row"><div class="measure-label">{esc(T(r["capacity"]))}</div>'
-                        f'<div class="measure-bar"><div class="measure-fill" style="width:{percent:.1f}%"></div></div>'
-                        f'<div class="measure-value">{esc(visible)}</div></div>')
+        rows=regional_indicator_rows(country,r) if country is not None else None
+        contents.append(disclosure_bar(r['capacity'],r['in_place'],r['denominator'],rows))
     h=f'<div class="card-title">{esc(T(title))}</div>' if title else ''
     pair_class=f' eoc-pair-{pair}' if pair in ('capacities','cooperation') else ''
     variant_class=(' eoc-priority-card' if pair=='capacities' and variant=='priority'
                    else ' eoc-capacity-full' if variant=='full' else '')
-    return f'<div class="card-panel{pair_class}{variant_class}">{h}{"".join(contents)}</div>'
+    return f'<div class="card-panel{pair_class}{variant_class}">{"".join([h]+contents)}</div>'
 
 
-def countries_capacity_grid(rows):
-    """Responsive status tiles, shown in-place when a capacity bar is opened."""
-    items=[]
-    for name,value in rows:
-        items.append(
-            '<div class="eoc-country-capacity-item">'
-            +'<span class="eoc-country-capacity-name">'+esc(T(name))+'</span>'
-            +status_chip(value)+'</div>'
-        )
-    return '<div class="eoc-country-capacity-grid">'+''.join(items)+'</div>'
-
-
-def capacity_drilldown_html(frame, active, component):
-    """Clickable capacity bars with a country breakdown immediately beneath each.
-
-    Native HTML details/summary handles clicks and keyboard activation without
-    Streamlit reruns. Each row uses the same country-level scoring as its bar.
-    """
-    definitions={label:(int(col),valid) for label,col,valid in CAPACITIES[component]}
-    sorted_countries=active.sort_values('country')
-    items=[]
-    for _,r in frame.iterrows():
-        label=r['capacity']
-        col,valid=definitions[label]
-        numerator=int(r['in_place'])
-        denominator=int(r['denominator'])
-        pct=100*numerator/denominator if denominator else 0
-        metric=f'{pct:.0f}% ({numerator}/{denominator})' if denominator else T('No valid responses')
-        rows=[(country.country,country_capacity(country,col,valid))
-              for _,country in sorted_countries.iterrows()]
-        items.append(
-            '<details class="eoc-capacity-disclosure">'
-            '<summary class="eoc-capacity-summary">'
-            '<span class="measure-label">'+esc(T(label))+'</span>'
-            '<span class="measure-bar"><span class="measure-fill" style="width:'
-            +f'{pct:.1f}%"></span></span>'
-            '<span class="measure-value">'+esc(metric)+'</span>'
-            '<span class="eoc-capacity-chevron" aria-hidden="true"></span>'
-            '</summary>'
-            '<div class="eoc-capacity-detail">'
-            '<div class="eoc-capacity-detail-title">'
-            +esc(T('Countries reporting each capacity'))+'</div>'
-            +countries_capacity_grid(rows)
-            +'</div></details>'
-        )
+def capacity_drilldown_html(frame,active,component):
+    """Clickable capacity bars with valid-response country statuses below each."""
     return ('<div class="card-panel eoc-capacity-full">'
             '<div class="card-title">'+esc(T('Capacity availability'))+'</div>'
-            +''.join(items)+'</div>')
+            +''.join(disclosure_bar(
+                r['capacity'],r['in_place'],r['denominator'],
+                regional_indicator_rows(active,r)) for _,r in frame.iterrows())
+            +'</div>')
 
 
-def distribution_html(series,title,ordered,color):
-    """Percentage uses all displayed response categories, including missing as its own group."""
+def distribution_html(series,title,ordered,color,active=None,field=None):
+    """Categorical bars open only countries with that exact response category."""
     total=int(series.isin(ordered).sum())
     entries=[]
     for label in ordered:
         n=int((series==label).sum())
         if not n:continue
-        pct=100*n/total if total else 0
-        entries.append(f'<div class="dist-row"><div class="dist-label">{esc(T(label))}</div>'
-                       f'<div class="measure-bar"><div class="measure-fill" style="width:{pct:.1f}%;background:{color}"></div></div>'
-                       f'<div class="dist-count">{pct:.0f}% ({n}/{total})</div></div>')
+        rows=(active.loc[active[field]==label,'country'].tolist()
+              if active is not None and field in active.columns else None)
+        entries.append(disclosure_bar(label,n,total,rows,color=color,category=True))
     return f'<div class="mini-title">{esc(T(title))}</div>{"".join(entries)}'
+
+
+def training_drilldown_html(active):
+    """Two separately expandable percentages per course, with their own denominators."""
+    items=[]
+    for course in TRAINING_LABELS:
+        items.append('<div class="eoc-training-group-title">'+esc(T(course))+'</div>')
+        for state,prefix,color in [('Completed','Completed: ',BLUE),
+                                    ('Prioritized','Priority: ',CYAN)]:
+            valid=active[prefix+course].dropna()
+            rows=[(r.country,r[prefix+course] if pd.notna(r[prefix+course]) else None)
+                  for _,r in active.sort_values('country').iterrows()]
+            items.append(disclosure_bar(state,sum(v is True or v==True for v in valid),
+                                        len(valid),rows,color=color))
+    return '<div class="card-panel eoc-training-bars">'+''.join(items)+'</div>'
 
 
 def status_chip(value):
