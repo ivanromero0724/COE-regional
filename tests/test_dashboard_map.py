@@ -31,7 +31,8 @@ def test_regional_map_viewport_cannot_pan_or_zoom():
     assert fig.layout.yaxis.fixedrange is True
     assert fig.layout.xaxis.range[0] <= -92
     assert fig.layout.xaxis.range[1] >= -35
-    assert fig.layout.yaxis.range[1] <= 29
+    # Mexico's northern edge must remain visible (including a small margin).
+    assert 33 <= fig.layout.yaxis.range[1] <= 38
     source = (Path(__file__).resolve().parents[1] / "app.py").read_text(encoding="utf-8")
     scope = source.split("def coverage_map(country,selected):", 1)[1].split("def regional_overview(", 1)[0]
     assert "'scrollZoom':False" in scope
