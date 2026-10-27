@@ -81,6 +81,12 @@ def ui_style():
     .country-flag{font-size:3rem;line-height:1;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
     .country-identity .institution{font-size:.85rem;color:#647D8D;margin-top:5px;line-height:1.4;overflow-wrap:anywhere;}
     .card-panel{background:#FFF;border:1px solid #DFE9F1;border-radius:12px;padding:17px 18px;margin:1px 0 12px;min-width:0;}
+    /* Keep side-by-side visual panels aligned; mobile panels return to natural height. */
+    .eoc-pair-heading{min-height:148px;box-sizing:border-box;}
+    .card-panel.eoc-pair-overview{min-height:500px;display:flex;flex-direction:column;justify-content:space-evenly;box-sizing:border-box;}
+    .card-panel.eoc-pair-capacities{min-height:435px;display:flex;flex-direction:column;justify-content:space-evenly;box-sizing:border-box;}
+    .card-panel.eoc-pair-cooperation{min-height:645px;display:flex;flex-direction:column;justify-content:space-evenly;box-sizing:border-box;}
+    .status-tile-grid.eoc-pair-infrastructure{min-height:390px;grid-template-rows:repeat(4,minmax(0,1fr));box-sizing:border-box;}
     .card-title{font-size:.85rem;font-weight:800;color:#005A8B;margin:0 0 12px;}
     .measure-row{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(65px,1fr) 116px;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #EDF2F6;min-height:38px;}
     .measure-row:last-child{border-bottom:0;}
@@ -113,6 +119,7 @@ def ui_style():
     .network-count{font-size:1.55rem;color:#005A8B;font-weight:800;margin:7px 0;}
     .network-meta{font-size:.73rem;line-height:1.45;color:#61798A;}
     @media(max-width:1150px){.kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr));}.kpi-grid.four{grid-template-columns:repeat(2,minmax(0,1fr));}}
+    @media(max-width:900px){.eoc-pair-heading,.card-panel.eoc-pair-overview,.card-panel.eoc-pair-capacities,.card-panel.eoc-pair-cooperation,.status-tile-grid.eoc-pair-infrastructure{min-height:0;}.status-tile-grid.eoc-pair-infrastructure{grid-template-rows:auto;}}
     @media(max-width:760px){.measure-row{grid-template-columns:minmax(0,1fr) 115px;row-gap:6px;gap:7px;}.measure-label{grid-column:1 / -1;overflow-wrap:normal;font-size:.74rem;}.measure-bar{grid-column:1;}.measure-value{grid-column:2;}.dist-row{grid-template-columns:minmax(0,1fr) 80px 112px;gap:6px;}.block-container{padding-left:1rem;padding-right:1rem;}.paho-hero{grid-template-columns:1fr;padding:17px;row-gap:14px;}.brand-set{max-width:320px;}.kpi-grid,.kpi-grid.four{grid-template-columns:repeat(2,minmax(0,1fr));}.network-grid{grid-template-columns:1fr;}.status-tile-grid{grid-template-columns:1fr;}.card-panel{padding:13px;}}
     @media(max-width:460px){.kpi-grid,.kpi-grid.four{grid-template-columns:1fr 1fr;gap:8px;}.kpi{padding:11px;min-height:103px;}.kpi .kpi-value{font-size:1.5rem;}.kpi-grid:not(.four)>.kpi:last-child:nth-child(odd){grid-column:span 2;}.country-flag{font-size:2.4rem;}}
     </style>''',unsafe_allow_html=True)
@@ -128,10 +135,14 @@ def header():
        <div class="brand-set">{content}</div></div></div>''',unsafe_allow_html=True)
 
 
-def section(title,subtitle='',eyebrow=None):
-    if eyebrow:st.markdown(f'<div class="section-eyebrow">{esc(T(eyebrow))}</div>',unsafe_allow_html=True)
-    st.markdown(f'<div class="section-title">{esc(T(title))}</div>',unsafe_allow_html=True)
-    if subtitle:st.markdown(f'<div class="section-desc">{esc(T(subtitle))}</div>',unsafe_allow_html=True)
+def section(title,subtitle='',eyebrow=None,paired=False):
+    """Shared heading baseline for desktop comparisons; natural height on mobile."""
+    pieces=[]
+    if eyebrow:pieces.append(f'<div class="section-eyebrow">{esc(T(eyebrow))}</div>')
+    pieces.append(f'<div class="section-title">{esc(T(title))}</div>')
+    if subtitle:pieces.append(f'<div class="section-desc">{esc(T(subtitle))}</div>')
+    cls=' class="eoc-pair-heading"' if paired else ''
+    st.markdown(f'<div{cls}>{"".join(pieces)}</div>',unsafe_allow_html=True)
 
 
 def note(msg):st.markdown(f'<div class="small-note">{esc(T(msg))}</div>',unsafe_allow_html=True)
@@ -150,7 +161,7 @@ def kpi_grid(cards,columns=5):
     st.markdown(f'<div class="kpi-grid{style}">{"".join(items)}</div>',unsafe_allow_html=True)
 
 
-def capacity_rows_html(frame,title=None):
+def capacity_rows_html(frame,title=None,pair=None):
     """Small visual bars with explicit percentage AND numerator / denominator."""
     contents=[]
     for _,r in frame.iterrows():
@@ -161,7 +172,8 @@ def capacity_rows_html(frame,title=None):
                         f'<div class="measure-bar"><div class="measure-fill" style="width:{percent:.1f}%"></div></div>'
                         f'<div class="measure-value">{esc(visible)}</div></div>')
     h=f'<div class="card-title">{esc(T(title))}</div>' if title else ''
-    return f'<div class="card-panel">{h}{"".join(contents)}</div>'
+    pair_class=f' eoc-pair-{pair}' if pair in ('capacities','cooperation') else ''
+    return f'<div class="card-panel{pair_class}">{h}{"".join(contents)}</div>'
 
 
 def distribution_html(series,title,ordered,color):
@@ -185,7 +197,7 @@ def status_chip(value):
             else f'<span class="status-chip status-no">{esc(T("Partial / absent"))}</span>')
 
 
-def status_grid_html(items):
+def status_grid_html(items,paired_infrastructure=False):
     """Scannable multi-column chips, no wide tables on country pages."""
     cards=[]
     for label,value in items:
@@ -197,7 +209,8 @@ def status_grid_html(items):
             color='#F36B32';symbol='×';state=T('Partial / absent')
         cards.append(f'<div class="status-tile"><span class="status-symbol" style="color:{color}">{symbol}</span>'
                      f'<span class="status-tile-name">{esc(T(label))}</span><span class="status-tile-state">{esc(state)}</span></div>')
-    return '<div class="status-tile-grid">'+''.join(cards)+'</div>'
+    css='status-tile-grid eoc-pair-infrastructure' if paired_infrastructure else 'status-tile-grid'
+    return '<div class="'+css+'">'+''.join(cards)+'</div>'
 
 
 def compact_table(headers,body,maxheight=None):
@@ -238,26 +251,26 @@ def regional_overview(country,active):
     with left:
         section('Where have countries responded?',
                 'Country survey coverage; countries without responses remain visible in gray.',
-                eyebrow='01 / REGIONAL COVERAGE')
+                eyebrow='01 / REGIONAL COVERAGE',paired=True)
         coverage_map(country,set(active.country))
     with right:
-        section('How the EOC-S operate','One observation per responding country.',eyebrow='02 / OPERATIONS')
+        section('How the EOC-S operate','One observation per responding country.',eyebrow='02 / OPERATIONS',paired=True)
         modes=['24/7 continuous','Response + monitoring','Response only','Not formally defined','Not reported']
         times=['Under 2 hours','2–6 hours','Over 6 hours','Not defined','Not reported']
-        st.markdown('<div class="card-panel">'+distribution_html(active.operating_mode,'Operating mode',modes,BLUE)
+        st.markdown('<div class="card-panel eoc-pair-overview">'+distribution_html(active.operating_mode,'Operating mode',modes,BLUE)
                     +distribution_html(active.activation,'Activation after formal decision',times,CYAN)
                     +'</div>',unsafe_allow_html=True)
     st.divider()
     left,right=st.columns(2,gap='large')
     with left:
         section('Most widely reported capacities',
-                'Countries reporting an established or functional capacity.',eyebrow='03 / REPORTED CAPACITIES')
+                'Countries reporting an established or functional capacity.',eyebrow='03 / REPORTED CAPACITIES',paired=True)
         ranked=capacity_table(active)
         ranked=ranked[ranked.component.isin(CAPACITIES)]
         ranked=ranked[ranked.denominator>0].sort_values(['in_place','capacity'],ascending=[False,True]).head(7)
-        st.markdown(capacity_rows_html(ranked),unsafe_allow_html=True)
+        st.markdown(capacity_rows_html(ranked,pair='capacities'),unsafe_allow_html=True)
     with right:
-        section('Priority capacity gaps','Countries with the following capacities fully in place.',eyebrow='04 / COOPERATION PRIORITIES')
+        section('Priority capacity gaps','Countries with the following capacities fully in place.',eyebrow='04 / COOPERATION PRIORITIES',paired=True)
         priorities=[('Sustainable financing',36,('d','e')),
                     ('Formal surge staffing',77,('d','e')),
                     ('Updated surge roster',78,('a',)),
@@ -268,7 +281,7 @@ def regional_overview(country,active):
             vals=[country_capacity(row,col,positive) for _,row in active.iterrows()]
             figures.append({'capacity':label,'in_place':sum(v is True for v in vals),
                             'denominator':sum(v is not None for v in vals)})
-        st.markdown(capacity_rows_html(pd.DataFrame(figures)),unsafe_allow_html=True)
+        st.markdown(capacity_rows_html(pd.DataFrame(figures),pair='capacities'),unsafe_allow_html=True)
         note('In development or informal is not considered fully in place.')
     st.markdown('<div class="eoc-note">'+esc(T('PRELIMINARY · Self-reported capacities from responding countries only. Each indicator has its own denominator, reflecting valid answers to that question.'))+'</div>',unsafe_allow_html=True)
 
@@ -365,22 +378,22 @@ def cooperation_section(active):
     a,b=st.columns(2,gap='large')
     with a:
         section('Expertise countries can share','Technical expertise reported for cooperation.',
-                eyebrow='02 / CAPACITIES OFFERED')
+                eyebrow='02 / CAPACITIES OFFERED',paired=True)
         entries=[]
         for name in COOPERATION_SKILLS.values():
             answered=active['Skill: '+name].dropna()
             entries.append({'capacity':name,'in_place':sum(bool(x) for x in answered),'denominator':len(answered)})
         ranked=pd.DataFrame(entries).sort_values('in_place',ascending=False).head(9)
-        st.markdown(capacity_rows_html(ranked),unsafe_allow_html=True)
+        st.markdown(capacity_rows_html(ranked,pair='cooperation'),unsafe_allow_html=True)
     with b:
         section('How countries can cooperate','Reported modalities of technical collaboration.',
-                eyebrow='03 / MODALITIES')
+                eyebrow='03 / MODALITIES',paired=True)
         entries=[]
         for name in COOPERATION_MODES.values():
             answered=active['Mode: '+name].dropna()
             entries.append({'capacity':name,'in_place':sum(bool(x) for x in answered),'denominator':len(answered)})
         ranked=pd.DataFrame(entries).sort_values('in_place',ascending=False)
-        st.markdown(capacity_rows_html(ranked),unsafe_allow_html=True)
+        st.markdown(capacity_rows_html(ranked,pair='cooperation'),unsafe_allow_html=True)
     st.markdown('<div class="eoc-note">'+esc(T('The cooperation and network questions were completed by fewer countries. Each indicator uses the number of valid responses to that specific question.'))+'</div>',unsafe_allow_html=True)
 
 
@@ -411,12 +424,12 @@ def country_profile(records,countries):
     st.divider()
     a,b=st.columns(2,gap='large')
     with a:
-        section('Hazards coordinated','Frequency band for the selected institution.',eyebrow='02 / LAST TWO YEARS')
+        section('Hazards coordinated','Frequency band for the selected institution.',eyebrow='02 / LAST TWO YEARS',paired=True)
         st.plotly_chart(viz.country_hazards(r,lang=chosen_language()),
                         use_container_width=True,config={'displayModeBar':False})
     with b:
-        section('Physical infrastructure','Resources the institution reports as available.',eyebrow='03 / INFRASTRUCTURE')
-        st.markdown(status_grid_html([(label,r[label] if pd.notna(r[label]) else None) for label in RESOURCE_LABELS.values()]),unsafe_allow_html=True)
+        section('Physical infrastructure','Resources the institution reports as available.',eyebrow='03 / INFRASTRUCTURE',paired=True)
+        st.markdown(status_grid_html([(label,r[label] if pd.notna(r[label]) else None) for label in RESOURCE_LABELS.values()],paired_infrastructure=True),unsafe_allow_html=True)
     st.divider()
     section('Training and preparedness','Activities completed in the last year and priorities for the next period.',
             eyebrow='04 / PEOPLE AND TRAINING')
