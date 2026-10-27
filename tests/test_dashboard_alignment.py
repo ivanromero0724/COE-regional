@@ -24,7 +24,7 @@ def test_headings_are_compact_and_translate_flexibly():
     assert ".eoc-pair-heading{min-height:0;margin:0 0 2px" in APP
     assert ".section-desc{font-size:.81rem;line-height:1.46;color:#657A8A;margin-bottom:8px;" in APP
     assert "@media(max-width:900px){.eoc-pair-heading{margin-bottom:0;}" in APP
-    assert ".st-key-eoc_operations_panel .card-panel.eoc-pair-overview{min-height:0;}" in APP
+    assert ".card-panel.eoc-pair-overview.eoc-operations-card{height:auto;overflow:visible;}" in APP
 
 
 def test_map_height_is_proportionate_to_operations_card():
@@ -34,10 +34,11 @@ def test_map_height_is_proportionate_to_operations_card():
     assert fig.layout.height == 450
     assert ".card-panel.eoc-pair-overview" in APP
     assert "with st.container(border=True, key='eoc_coverage_map_panel')" in APP
-    assert "with st.container(border=True, key='eoc_operations_panel')" in APP
-    assert "min-height:450px;margin:0;border:0;padding:0" in APP
+    assert "with st.container(border=True, key='eoc_operations_panel')" not in APP
+    assert 'card-panel eoc-pair-overview eoc-operations-card' in APP
+    assert 'height:calc(450px + 2rem + 2px)' in APP
+    assert "overflow-y:auto;" in APP
     assert "st-key-eoc_coverage_map_panel" in APP
-    assert "st-key-eoc_operations_panel" in APP
     assert fig.layout.paper_bgcolor == '#FFFFFF'
 
 
@@ -60,3 +61,11 @@ def test_map_has_matching_border_and_no_header_spacer():
     assert "with st.container(border=True, key='eoc_coverage_map_panel')" in APP
     assert "width='stretch'" in APP
     assert ".eoc-pair-heading{min-height:0" in APP
+
+
+def test_operations_no_double_border_or_white_overlay():
+    assert ".st-key-eoc_operations_panel" not in APP
+    assert "with st.container(border=True, key='eoc_operations_panel')" not in APP
+    assert ".card-panel.eoc-pair-overview.eoc-operations-card{" in APP
+    assert "border:1px solid #DFE9F1;" in APP
+    assert "overflow-x:hidden;" in APP
