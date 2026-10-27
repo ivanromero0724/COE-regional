@@ -142,8 +142,18 @@ jobs:
           )
           assert any(x.value.count('class="eoc-network-legend-symbol"')==4
                      for x in app.markdown), 'Legend must display the same four status icons'
-          assert any('eoc-country-capacity-item' in x.value for x in app.markdown), (
-              'Cooperation skill and modality bars should open country statuses'
+          coop_treemaps=[x.value for x in app.markdown
+                         if 'eoc-cooperation-treemap-card' in x.value]
+          assert len(coop_treemaps)==2, (
+              'Cooperation expertise and modalities should render as two treemaps'
+          )
+          assert sum(x.count('class="eoc-overview-treemap-tile eoc-cooperation-tile"')
+                     for x in coop_treemaps)==16, (
+              'Treemaps should cover nine leading expertise areas and all seven modalities'
+          )
+          assert not any('The cooperation and network questions were completed' in x.value
+                         or 'eoc-note' in x.value for x in app.markdown), (
+              'Redundant cooperation response note should be removed'
           )
           nav = next(x for x in app.radio if x.key == 'main_view')
           nav.set_value('Country profiles').run(timeout=90)
