@@ -58,3 +58,35 @@ def test_map_presence_title_translates_in_both_languages():
     assert 'sin respuesta' in tr(
         'Established or in implementation; countries without survey responses remain gray.', 'es'
     )
+
+
+def test_institutional_narratives_are_reviewed_bilingually_without_editing_excel():
+    from dashboard.narratives import REVIEWED,narrative_for_display
+    from dashboard.data import load_data
+    records,_=load_data()
+    by_id=records.set_index('record_id')
+    assert len(REVIEWED)>=18
+    for (record_id,kind),(prefix,spanish,english) in REVIEWED.items():
+        assert record_id in by_id.index
+        column=('Reported strengths (original language)' if kind=='strengths'
+                else 'Improvement areas (original language)')
+        original=by_id.loc[record_id,column]
+        assert original.casefold().startswith(prefix.casefold()), (record_id,kind)
+        assert narrative_for_display(record_id,kind,original,'es')==spanish
+        assert narrative_for_display(record_id,kind,original,'en')==english
+        assert spanish!=english
+        assert len(spanish)>20 and len(english)>20
+        # Updated survey input must never receive a stale translation.
+        assert narrative_for_display(record_id,kind,'UPDATED ANSWER','en')=='UPDATED ANSWER'
+    # No invented text for missing responses.
+    assert narrative_for_display('COL-008','strengths','','es')=='No se proporcionó respuesta narrativa.'
+
+
+def test_country_profile_hides_excel_rows_and_the_colombia_explanatory_note():
+    from pathlib import Path
+    source=(Path(__file__).resolve().parents[1]/'app.py').read_text(encoding='utf-8')
+    scope=source.split('def country_profile(records,countries):',1)[1].split('def main():',1)[0]
+    assert 'Excel row' not in scope
+    assert 'source_excel_row' not in scope
+    assert 'Each institution has its own response.' not in scope
+    assert 'narrative_for_display(r.record_id,kind,r[source],chosen_language())' in scope
