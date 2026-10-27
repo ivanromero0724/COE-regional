@@ -96,7 +96,7 @@ def test_regional_section_navigation_is_top_horizontal_segmented_control():
     assert "default='Overview'" in main
     assert "key='regional_section'" in main
     assert "format_func=lambda value, _lang=chosen_language(): tr(value, _lang)" in main
-    for section in ('Overview', 'Capacities & gaps', 'Operations & hazards', 'Networks & cooperation'):
+    for section in ('Overview', 'Capacities & gaps', 'Hazards & training', 'Networks & cooperation'):
         assert section in main
 
 
@@ -206,7 +206,7 @@ def test_regional_capacity_component_is_the_only_regional_capacity_explorer():
     assert "section('Physical infrastructure'" not in operations
     assert "RESOURCE_LABELS.values()" not in operations
     assert "capacity_rows_html(pd.DataFrame(cards)" not in operations
-    assert "section('Hazards coordinated during the past two years'" in operations
+    assert "section('Hazards reported in the past two years'" in operations
     assert "section('Training completed and prioritized'" in operations
     assert "eyebrow='02 / WORKFORCE DEVELOPMENT'" in operations
     # The national institution detail is not removed by this regional simplification.
@@ -226,3 +226,38 @@ def test_infrastructure_remains_available_in_capacity_component():
     assert infrastructure['denominator'].gt(0).any()
     assert set(RESOURCE_LABELS.values()).issubset(set(infrastructure.capacity))
     assert infrastructure['denominator'].gt(0).any()
+
+
+def test_regional_hazards_are_four_donuts_above_country_heatmap():
+    from dashboard.data import load_data,country_aggregate,HAZARD_LABELS
+    from app import hazard_summary_cards,training_summary_data
+    records,_=load_data()
+    active=country_aggregate(records)
+    html=hazard_summary_cards(active)
+    assert html.count('class="network-card eoc-hazard-card"')==len(HAZARD_LABELS)==4
+    assert html.count('class="eoc-hazard-donut"')==4
+    assert html.count('class="eoc-hazard-band"')==16
+    assert 'conic-gradient(' in html
+    assert all(name in html for name in HAZARD_LABELS.values())
+    summary=training_summary_data(active)
+    from dashboard.data import TRAINING_LABELS
+    assert len(summary)==len(TRAINING_LABELS)
+    for _,row in summary.iterrows():
+        assert 0<=row.done_n<=row.done_d<=len(active)
+        assert 0<=row.priority_n<=row.priority_d<=len(active)
+    fig=charts.training_comparison(summary,lang='en')
+    assert len(fig.data)==2
+    assert fig.layout.barmode=='group'
+    assert set(trace.name for trace in fig.data)=={'Completed','Prioritized'}
+
+
+def test_hazard_and_training_nav_has_one_non_expandable_comparison():
+    app=(ROOT/'app.py').read_text(encoding='utf-8')
+    main=app.split('def main():',1)[1]
+    assert "'Hazards & training'" in main
+    assert "'Operations & hazards'" not in main
+    operations=app.split('def operations_section(active):',1)[1].split('NETWORK_STATUS_SYMBOLS=',1)[0]
+    assert operations.index('hazard_summary_cards(active)')<operations.index('viz.hazard_heatmap(')
+    assert operations.index('viz.hazard_heatmap(')<operations.index('viz.training_comparison(')
+    assert 'training_drilldown_html(active)' not in operations
+    assert operations.count('st.plotly_chart(')==2
