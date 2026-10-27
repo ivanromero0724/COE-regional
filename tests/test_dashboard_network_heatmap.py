@@ -95,10 +95,10 @@ def test_streamlit_network_matrix_renders_all_countries_and_statuses_without_plo
                 self.headers.append(info)
 
     countries=survey_countries()
+    from unittest.mock import patch
     for lang in ('en','es'):
-        from dashboard.i18n import set_language
-        set_language(lang)
-        html=ui.network_heatmap_html(countries)
+        with patch('dashboard.i18n.chosen_language',return_value=lang):
+            html=ui.network_heatmap_html(countries)
         parsed=Extract()
         parsed.feed(html)
         assert html.count('<tr>')==len(countries)+1
