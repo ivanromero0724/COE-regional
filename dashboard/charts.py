@@ -65,22 +65,31 @@ def activation_chart(frame):
 
 
 def hazard_heatmap(frame):
+    """Four short, readable headers; contrasting text for dark and light cells."""
     cats=list(HAZARD_LABELS.values())
     if frame.empty:return go.Figure()
-    vals=frame[cats].fillna(-1).to_numpy(dtype=float)
+    vals=frame[cats].to_numpy(dtype=float)
     countries=list(frame['country'])
-    # Ordinal frequencies must never be presented as exact event counts.
-    cmap=[[0,'#EFF3F6'],[.001,'#EFF3F6'],[.249,'#EAF3F9'],[.25,'#97CCEA'],
-          [.499,'#97CCEA'],[.5,CYAN],[.749,CYAN],[.75,NAVY],[1,NAVY]]
-    z=np.where(vals==-1,0,vals+1)
-    fig=go.Figure(go.Heatmap(z=z,x=cats,y=countries,zmin=0,zmax=4,colorscale=cmap,
-                      showscale=False,text=[['Not reported' if p<0 else ['None','1–2','3–5','>5'][int(p)] for p in row] for row in vals],
-                      texttemplate='%{text}',textfont=dict(size=10),
-                      hovertemplate='%{y} · %{x}<br>Reported events: %{text}<extra></extra>',
-                      xgap=4,ygap=4))
-    fig.update_yaxes(autorange='reversed',title=None,automargin=True)
-    fig.update_xaxes(title=None,side='top',tickangle=0,automargin=True)
-    return style(fig,max(380,60+len(countries)*28),dict(l=20,r=8,t=15,b=32))
+    short=['Geo / weather','Biological','Social','Technological']
+    text=[['Not reported' if pd.isna(v) else ['None','1–2','3–5','>5'][int(v)] for v in row]
+          for row in vals]
+    z=np.where(np.isnan(vals),0,vals+1)
+    cmap=[[0,'#F0F4F7'],[.249,'#F0F4F7'],[.25,'#E8F4FA'],[.499,'#E8F4FA'],
+          [.5,'#91CAE8'],[.749,'#91CAE8'],[.75,CYAN],[.999,CYAN],[1,NAVY]]
+    fig=go.Figure(go.Heatmap(z=z,x=short,y=countries,zmin=0,zmax=4,
+                  colorscale=cmap,showscale=False,customdata=text,
+                  hovertemplate='<b>%{y} · %{x}</b><br>Frequency: %{customdata}<extra></extra>',
+                  xgap=4,ygap=4))
+    for i,name in enumerate(countries):
+        for j,label in enumerate(text[i]):
+            color='white' if z[i,j]>=3 else TEXT
+            fig.add_annotation(x=short[j],y=name,text=label,showarrow=False,
+                               font=dict(family='Arial,sans-serif',size=10,color=color))
+    fig.update_yaxes(autorange='reversed',title=None,automargin=True,
+                     tickfont=dict(size=11,color=TEXT),showgrid=False)
+    fig.update_xaxes(title=None,side='top',automargin=True,tickangle=0,
+                     tickfont=dict(size=11,color=TEXT),showgrid=False)
+    return style(fig,max(410,100+len(countries)*30),dict(l=12,r=12,t=54,b=30))
 
 
 @lru_cache(maxsize=1)

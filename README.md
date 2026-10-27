@@ -23,8 +23,6 @@ Interactive **Streamlit** dashboard for the PAHO/WHO regional survey of Health E
 
 **Country profiles:** separate reporting institutions, qualitative answers, component-level capacity status and hazard / training details. This dashboard does **not** generate or distribute country PDF fact sheets; the survey team produces its own reports independently.
 
-**Methods & data:** explicit source rules, denominators, caveats and a non-personal country-level CSV export.
-
 ## Data methods
 
 - The current source has **16 institutional responses from 15 countries**; the application recalculates counts after updates. Colombia has independent entries for the Ministry of Health and Social Protection and the National Institute of Health.
