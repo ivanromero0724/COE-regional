@@ -61,7 +61,13 @@ def ui_style():
     [data-testid="stMainBlockContainer"], .block-container {width:min(100%,1280px)!important;max-width:1280px!important;margin-left:auto!important;margin-right:auto!important;padding:3.25rem 1.35rem 2.6rem;box-sizing:border-box;}
     h1,h2,h3,h4{color:#005A8B;font-weight:800;letter-spacing:-.025em;}
     h2{font-size:1.42rem!important;}h3{font-size:1.06rem!important;}
-    [data-testid="stVerticalBlockBorderWrapper"] > div {border-color:#DFE9F1!important;background:#FFF;border-radius:14px!important;}
+    /* Shared one-pixel PAHO border for Streamlit native and HTML chart surfaces. */
+    [data-testid="stVerticalBlockBorderWrapper"],
+    [data-testid="stVerticalBlockBorderWrapper"] > div{
+        border-color:#DFE9F1!important;
+        border-radius:12px!important;
+        background:#FFFFFF!important;
+    }
     /* The map's Streamlit frame is white; operations uses a single HTML card,
        avoiding the nested white block that previously covered its lower border. */
     .st-key-eoc_coverage_map_panel,
@@ -70,7 +76,7 @@ def ui_style():
     .st-key-eoc_coverage_map_panel [data-testid="stPlotlyChart"]{
         background-color:#FFFFFF!important;
     }
-    [data-testid="stMetric"] {background:#FFF;border:1px solid #E1EAF1;border-radius:13px;padding:14px;min-height:112px;}
+    [data-testid="stMetric"] {background:#FFF;border:1px solid #DFE9F1;border-radius:12px;padding:14px;min-height:112px;}
     [data-testid="stMetricValue"] {color:#005A8B;font-size:1.5rem!important;font-weight:800;overflow-wrap:anywhere;}
     [data-testid="stMetricLabel"] {font-size:.75rem!important;color:#597184;}
     .paho-strip{height:7px;background:linear-gradient(90deg,#005A8B 0%,#005A8B 75%,#F36B32 75%,#F36B32 100%);}
@@ -89,14 +95,18 @@ def ui_style():
     .bigcountry{font-size:2rem;line-height:1.12;color:#005A8B;font-weight:800;overflow-wrap:anywhere;}
     .subtle-label{font-size:.68rem;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:#678197;}
     .paho-footer{font-size:.72rem;color:#718594;margin-top:25px;border-top:1px solid #DCE8F0;padding:13px 2px;}
-    [data-testid="stPlotlyChart"]{background:#FFF;border-radius:10px;overflow:hidden;}
+    /* Standalone Plotly charts receive the same frame as HTML capacity cards. */
+    [data-testid="stPlotlyChart"]{
+        background:#FFFFFF;border:1px solid #DFE9F1;
+        border-radius:12px;overflow:hidden;box-sizing:border-box;
+    }
     div.stButton>button[kind="primary"]{background:#005A8B!important;border-color:#005A8B!important;}
     .kpi-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:10px 0 20px;}
     .kpi-grid.four{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:14px;}
     /* KPI labels, icons and values form one compact, consistent visual group. */
     .kpi{
         box-sizing:border-box;min-width:0;min-height:117px;background:#FFF;
-        border:1px solid #DAE7F0;border-top:3px solid #005A8B;border-radius:13px;
+        border:1px solid #DFE9F1;border-top:3px solid #005A8B;border-radius:13px;
         padding:15px 17px 14px;display:grid;
         grid-template-columns:minmax(0,1fr) 34px;
         grid-template-areas:"label icon" "value icon";
@@ -147,7 +157,10 @@ def ui_style():
     }
     .eoc-operations-card .dist-row{min-height:46px;padding:8px 0;}
     .eoc-operations-card .mini-title{margin:10px 0 7px;}
-    .st-key-eoc_coverage_map_panel [data-testid="stPlotlyChart"]{border-radius:0;}
+    /* The map is framed only once by its outer Streamlit container. */
+    .st-key-eoc_coverage_map_panel [data-testid="stPlotlyChart"]{
+        border:0!important;border-radius:0!important;
+    }
     .status-tile-grid.eoc-pair-infrastructure{min-height:0;margin:0;grid-template-rows:auto;box-sizing:border-box;}
     .card-title{font-size:.85rem;font-weight:800;color:#005A8B;margin:0 0 12px;}
     .measure-row{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(65px,1fr) 116px;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #EDF2F6;min-height:38px;}
@@ -176,7 +189,7 @@ def ui_style():
     .status-tile-name{font-size:.79rem;font-weight:700;color:#29485F;overflow-wrap:anywhere;}
     .status-tile-state{font-size:.72rem;color:#607B8A;}
     .network-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0;}
-    .network-card{border:1px solid #DFE9F1;border-top:3px solid #009BDA;border-radius:11px;background:#fff;padding:15px;min-height:120px;}
+    .network-card{border:1px solid #DFE9F1;border-top:3px solid #009BDA;border-radius:12px;background:#fff;padding:15px;min-height:120px;}
     .network-name{font-size:.79rem;font-weight:800;color:#005A8B;}
     .network-count{font-size:1.55rem;color:#005A8B;font-weight:800;margin:7px 0;}
     .network-meta{font-size:.73rem;line-height:1.45;color:#61798A;}
@@ -331,9 +344,9 @@ def regional_overview(country,active):
     count_kpis(active)
     left,right=st.columns([1.20,1],gap='large')
     with left:
-        section('Where have countries responded?',
-                'Country survey coverage; countries without responses remain visible in gray.',
-                eyebrow='01 / REGIONAL COVERAGE',paired=True)
+        section('Which countries have EOC-S?',
+                'Established or in implementation; countries without survey responses remain gray.',
+                eyebrow='01 / EOC-S STATUS',paired=True)
         coverage_map(country,set(active.country))
     with right:
         section('How the EOC-S operate','One observation per responding country.',eyebrow='02 / OPERATIONS',paired=True)
