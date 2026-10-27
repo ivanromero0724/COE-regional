@@ -148,6 +148,18 @@ def test_capacity_charts_cover_component_questions():
                 chart=dashboard_app.capacity_chart(item,counts,kind)
                 assert len(chart.data)>=1
                 assert chart.layout.dragmode is False
+                assert chart.layout.height==430
+                if kind=='donut':
+                    # The donut and the center annotation must share a center,
+                    # at approximately half the entire Plotly chart height.
+                    ymin,ymax=chart.data[0].domain.y
+                    assert chart.layout.annotations[0].y==(ymin+ymax)/2
+                    top=chart.layout.margin.t
+                    bottom=chart.layout.margin.b
+                    plot_height=chart.layout.height-top-bottom
+                    visual_center=top+(1-(ymin+ymax)/2)*plot_height
+                    assert abs(visual_center-chart.layout.height/2)<12
+                    assert chart.layout.legend.orientation=='h'
 
 
 
