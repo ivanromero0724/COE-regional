@@ -105,3 +105,55 @@ def test_disagreement_between_institutions_uses_real_categories():
     other_dist=capacity_response_distribution(other,pd.Series({'col':32}))
     assert abs(col32[code_a]-other_dist.get(code_a,0)-0.5)<1e-8
     assert abs(col32[code_e]-other_dist.get(code_e,0)-0.5)<1e-8
+
+
+def test_country_profile_reuses_actual_bilingual_capacity_answer_labels():
+    """Chips must say Initial / Developing / Consolidated etc., not collapse
+    all non-qualifying questionnaire answers into Partial / absent.
+    """
+    from app import country_answer_caption, status_grid_html
+    from dashboard.capacity_labels import labels_for_question
+    from html import escape
+    records,_=load_data()
+    for _,r in records.iterrows():
+        for component,entries in CAPACITIES.items():
+            for title,col,positive in entries:
+                status=country_capacity(r,col,positive)
+                for lang in ('en','es'):
+                    actual=country_answer_caption(r,col,lang)
+                    raw=r.get(f'ANSWER_{col}')
+                    if raw is None or pd.isna(raw) or not str(raw).strip():
+                        expected='Sin información' if lang=='es' else 'Not reported'
+                    else:
+                        expected=labels_for_question(col,[str(raw)],lang)[0]
+                    assert actual==expected, (r.record_id,component,title,col,lang)
+                    html=status_grid_html([(title,status,actual)])
+                    assert escape(actual) in html
+                    # Keep qualitative assessments separate from exact answers.
+                    if status is False and actual!=expected:
+                        raise AssertionError((title,actual,expected))
+        for col,title in RESOURCE_LABELS.items():
+            raw=r.get(f'ANSWER_{col}')
+            for lang in ('en','es'):
+                displayed=country_answer_caption(r,col,lang)
+                if raw is None or pd.isna(raw) or not str(raw).strip():
+                    assert displayed==('Sin información' if lang=='es' else 'Not reported')
+                else:
+                    assert displayed==labels_for_question(col,[str(raw)],lang)[0]
+                html=status_grid_html([(title,r[title],displayed)],paired_infrastructure=True)
+                assert escape(displayed) in html
+
+
+def test_country_choice_abbreviations_keep_distinct_levels():
+    from app import country_answer_caption
+    records,_=load_data()
+    # Existing data contains multiple valid maturity levels and original
+    # single-choice answers must not be reduced to the same status string.
+    seen=set()
+    for _,r in records.iterrows():
+        col=29
+        response=r.get('ANSWER_29')
+        if response is not None and not pd.isna(response):
+            seen.add(country_answer_caption(r,col,'en'))
+    assert len(seen)>=2
+    assert 'Partial / absent' not in seen
