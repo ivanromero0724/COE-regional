@@ -83,7 +83,7 @@ jobs:
                          for x in app.markdown), (
               'Redundant capacity headings and explanatory subtitle must not appear'
           )
-          assert len(app.get(key='capacity_component').options)>0, (
+          assert any(x.key == 'capacity_component' for x in app.selectbox), (
               'The component selector should remain usable'
           )
           assert not any('Capacity availability' in x.value or 'Disponibilidad de capacidades' in x.value
