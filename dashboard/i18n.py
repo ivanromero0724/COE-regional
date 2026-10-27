@@ -27,7 +27,7 @@ ES = {
     # Main overview
     'Countries responding':'Países que respondieron','Established EOC-S':'COE-S establecidos',
     'In implementation':'En implementación', '24/7 operation':'Operación 24/7',
-    'Activation under 2 h':'Activación en menos de 2 h',
+    'Documented formal mandate':'Mandato formal documentado',
     'Which countries have EOC-S?':'¿Qué países tienen COE-S?',
     'Established or in implementation; countries without survey responses remain gray.':'Establecidos o en implementación; los países sin respuesta se muestran en gris.',
     '01 / EOC-S STATUS':'01 / ESTADO DE LOS COE-S',
