@@ -518,7 +518,7 @@ def capacity_response_distribution(active, indicator):
         return pd.Series(dtype=int)
     counts={}
     for response in active[field].dropna():
-        label=re.sub(r'^[a-zA-Z]\.\s+', '', str(response).strip()).strip()
+        label=str(response).strip()  # Retain Excel option code for exact question-specific translation
         if not label:
             continue
         # Preserve exact response text rather than collapsing intermediate states.
