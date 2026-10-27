@@ -37,7 +37,7 @@ def test_map_height_is_proportionate_to_operations_card():
     assert "with st.container(border=False, key='eoc_coverage_map_panel')" in APP
     assert "with st.container(border=True, key='eoc_operations_panel')" not in APP
     assert 'card-panel eoc-pair-overview eoc-operations-card' in APP
-    assert 'height:calc(450px + 2rem + 2px)' in APP
+    assert 'height:calc(480px + 12px + 2px)' in APP
     assert "overflow-y:auto;" in APP
     assert "st-key-eoc_coverage_map_panel" in APP
     assert fig.layout.paper_bgcolor == '#FFFFFF'
