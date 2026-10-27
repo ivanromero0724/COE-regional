@@ -320,16 +320,14 @@ def countries_map(countries, selection=None, lang='en'):
         dragmode=False,hovermode='closest',
         paper_bgcolor='#FFFFFF',plot_bgcolor='#FFFFFF',
     )
-    # Keep the lon/lat viewport locked but avoid Plotly's scaleanchor/domain
-    # letterboxing: that leaves broad unused white bands inside a responsive
-    # Streamlit card when the container and region have different ratios.
-    # Both map axes now use the full chart plot domain; only screen rendering
-    # is affected, never geometry data or country inclusion.
+    # Preserve the earlier undistorted geographic proportions. The
+    # previous full-domain axes stretched longitudes differently from
+    # latitudes; geographic aspect must take precedence over fill.
     fig.update_xaxes(range=[xmin,xmax],fixedrange=True,visible=False,
-                     showgrid=False,zeroline=False,domain=[0,1])
+                     showgrid=False,zeroline=False,constrain='domain')
     fig.update_yaxes(range=[ymin,ymax],fixedrange=True,visible=False,
-                     showgrid=False,zeroline=False,domain=[0,1])
-    # Full-bleed plot; no internal top/bottom whitespace is reserved.
+                     showgrid=False,zeroline=False,scaleanchor='x',
+                     scaleratio=1,constrain='domain')
     fig=style(fig,480,dict(l=0,r=0,t=0,b=0))
     # Apply this AFTER style(), otherwise the shared chart style
     # overwrites the map-specific vertical overlay legend.
