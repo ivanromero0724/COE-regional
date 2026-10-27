@@ -186,7 +186,7 @@ def ui_style():
     .eoc-overview-treemap-face{
         display:flex;flex-direction:column;justify-content:space-between;
         gap:10px;width:100%;height:100%;padding:13px;
-        box-sizing:border-box;border-radius:7px;color:white;overflow:hidden;
+        box-sizing:border-box;border-radius:0;color:white;overflow:hidden;
     }
     .eoc-overview-treemap-label{
         color:inherit;font-size:.80rem;font-weight:760;line-height:1.25;
@@ -238,7 +238,9 @@ def ui_style():
     .st-key-eoc_coverage_map_panel [data-testid="stPlotlyChart"]{
         border:0!important;border-radius:0!important;
     }
-    .status-tile-grid.eoc-pair-infrastructure{min-height:0;margin:0;grid-template-rows:auto;box-sizing:border-box;}
+    .status-tile-grid.eoc-pair-infrastructure{min-height:0;margin:0;grid-template-rows:auto;box-sizing:border-box;gap:7px;width:100%;}
+    .eoc-country-infrastructure-panel{height:340px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;padding:12px;border:1px solid #DFE9F1;border-radius:12px;background:#FFFFFF;overflow:auto;}
+    .eoc-country-infrastructure-panel .status-tile{padding:8px;}
     .card-title{font-size:.85rem;font-weight:800;color:#005A8B;margin:0 0 12px;}
     .measure-row{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(65px,1fr) 116px;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #EDF2F6;min-height:38px;}
     .measure-row:last-child{border-bottom:0;}
@@ -384,6 +386,12 @@ def ui_style():
     .status-symbol{font-size:1.2rem;font-weight:900;grid-row:span 2;}
     .status-tile-name{font-size:.79rem;font-weight:700;color:#29485F;overflow-wrap:anywhere;}
     .status-tile-state{font-size:.72rem;color:#607B8A;}
+    /* Matched-height narrative cards without cutting off longer survey answers. */
+    .eoc-country-experience-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:stretch;margin:6px 0 12px;}
+    .eoc-country-experience-card{box-sizing:border-box;min-width:0;background:#FFFFFF;border:1px solid #DFE9F1;border-radius:12px;padding:16px 18px;height:100%;}
+    .eoc-country-experience-title{font-size:.85rem;font-weight:800;color:#17324D;margin-bottom:12px;}
+    .eoc-country-experience-content{font-size:.85rem;line-height:1.6;color:#29485F;white-space:pre-line;overflow-wrap:anywhere;}
+    @media(max-width:760px){.eoc-country-experience-grid{grid-template-columns:1fr;gap:12px;}.eoc-country-infrastructure-panel{height:auto;min-height:340px;}}
     .network-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0;}
     .network-card{border:1px solid #DFE9F1;border-radius:12px;background:#FFFFFF;padding:15px;min-height:120px;box-shadow:none;}
     /* Four comparable event-frequency donuts, matching the static network cards. */
@@ -1079,7 +1087,8 @@ def country_profile(records,countries):
                         use_container_width=True,config={'displayModeBar':False})
     with b:
         section('Physical infrastructure','Resources the institution reports as available.',eyebrow='03 / INFRASTRUCTURE',paired=True)
-        st.markdown(status_grid_html([(label,r[label] if pd.notna(r[label]) else None) for label in RESOURCE_LABELS.values()],paired_infrastructure=True),unsafe_allow_html=True)
+        infrastructure=status_grid_html([(label,r[label] if pd.notna(r[label]) else None) for label in RESOURCE_LABELS.values()],paired_infrastructure=True)
+        st.markdown('<div class="eoc-country-infrastructure-panel">'+infrastructure+'</div>',unsafe_allow_html=True)
     st.divider()
     section('Training and preparedness','Activities completed in the last year and priorities for the next period.',
             eyebrow='04 / PEOPLE AND TRAINING')
@@ -1087,15 +1096,23 @@ def country_profile(records,countries):
                     use_container_width=True,config={'displayModeBar':False})
     st.divider()
     section('Reported experience',eyebrow='05 / INSTITUTIONAL NOTES')
-    a,b=st.columns(2,gap='large')
-    for col,source,kind,title in (
-        (a,'Reported strengths (original language)','strengths','Reported strengths'),
-        (b,'Improvement areas (original language)','improve','Areas for improvement')
+    # One CSS grid ensures strengths and improvement cards share the exact
+    # same height, even when one institution submits a much longer response.
+    narrative_cards=[]
+    for source,kind,title in (
+        ('Reported strengths (original language)','strengths','Reported strengths'),
+        ('Improvement areas (original language)','improve','Areas for improvement')
     ):
-        with col:
-            with st.container(border=True):
-                st.markdown('**'+T(title)+'**')
-                st.write(narrative_for_display(r.record_id,kind,r[source],chosen_language()))
+        value=narrative_for_display(r.record_id,kind,r[source],chosen_language())
+        safe_body=re.sub(r'\\*\\*(.+?)\\*\\*',r'<strong>\\1</strong>',esc(value),flags=re.S)
+        narrative_cards.append(
+            '<div class="eoc-country-experience-card">'
+            +'<div class="eoc-country-experience-title">'+esc(T(title))+'</div>'
+            +'<div class="eoc-country-experience-content">'+safe_body+'</div>'
+            +'</div>'
+        )
+    st.markdown('<div class="eoc-country-experience-grid">'+''.join(narrative_cards)+'</div>',
+                unsafe_allow_html=True)
     if r['Recent activations (original language)']:
         with st.expander(T('Recent events / activations')):
             st.write(r['Recent activations (original language)'])
