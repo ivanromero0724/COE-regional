@@ -278,14 +278,14 @@ def capacity_and_gaps(active):
             'Country counts reflect only recognized answers to each survey item.',
             eyebrow='01 / CAPACITY PROFILES')
     caps=capacity_table(active)
-    component=st.selectbox(T('Explore a component'),list(CAPACITIES.keys()),format_func=T,key='capacity_component')
+    component=st.selectbox(T('Explore a component'),list(CAPACITIES.keys()),format_func=lambda value, _lang=chosen_language(): tr(value, _lang),key='capacity_component')
     sliced=caps[caps.component==component]
     a,b=st.columns([1.04,1],gap='large')
     with a:
         st.markdown(capacity_rows_html(sliced,'Capacity availability'),unsafe_allow_html=True)
     with b:
         st.markdown('<div class="mini-title">'+esc(T('Countries reporting each capacity'))+'</div>',unsafe_allow_html=True)
-        chosen=st.selectbox(T('Choose capacity'),list(sliced.capacity),format_func=T,key='capacity_country_view')
+        chosen=st.selectbox(T('Choose capacity'),list(sliced.capacity),format_func=lambda value, _lang=chosen_language(): tr(value, _lang),key='capacity_country_view')
         item=sliced[sliced.capacity==chosen].iloc[0]
         positive=next((valid for lab,col,valid in CAPACITIES[component] if lab==chosen),())
         rows=[]
@@ -392,7 +392,7 @@ def flag_from_iso(iso):
 
 
 def country_profile(records,countries):
-    region=st.selectbox(T('Select a country'),sorted(records.country.unique()),format_func=T,key='selected_country')
+    region=st.selectbox(T('Select a country'),sorted(records.country.unique()),format_func=lambda value, _lang=chosen_language(): tr(value, _lang),key='selected_country')
     options=records[records.country==region].sort_values('institution')
     rows={f'{T(x.institution)} · {T("Excel row")} {x.source_excel_row}':int(i) for i,x in options.iterrows()}
     selected=st.selectbox(T('Reporting institution'),list(rows.keys()),key='selected_institution')
@@ -405,7 +405,7 @@ def country_profile(records,countries):
               ('Activation time',r.activation),('24/7 duty staff',staff)],columns=4)
     section('Reported institutional capacities','Answers from this institution grouped by PHEOC core component.',
             eyebrow='01 / REPORTED CAPACITIES')
-    component=st.selectbox(T('Explore a component'),list(CAPACITIES.keys()),format_func=T,key='country_component')
+    component=st.selectbox(T('Explore a component'),list(CAPACITIES.keys()),format_func=lambda value, _lang=chosen_language(): tr(value, _lang),key='country_component')
     st.markdown(status_grid_html([(label,country_capacity(r,col,positive)) for label,col,positive in CAPACITIES[component]]),unsafe_allow_html=True)
     note('Only fully qualifying responses are classified as in place. Missing answers remain separate.')
     st.divider()
@@ -460,14 +460,14 @@ def main():
         st.markdown(f'<div class="section-eyebrow">{esc(T("REGIONAL MONITORING"))}</div>',unsafe_allow_html=True)
         st.markdown('### '+T('EOC-S · Americas'))
         st.caption(T('PAHO/WHO survey 2026'))
-        view=st.radio(T('Explore'), ['Regional overview','Country profiles'],format_func=T,label_visibility='collapsed',key='main_view')
+        view=st.radio(T('Explore'), ['Regional overview','Country profiles'],format_func=lambda value, _lang=chosen_language(): tr(value, _lang),label_visibility='collapsed',key='main_view')
         if view=='Regional overview':
             st.divider()
-            subregion=st.selectbox(T('Geographic area'),['All regions']+sorted(country.subregion.unique()),format_func=T,key='geo_area')
+            subregion=st.selectbox(T('Geographic area'),['All regions']+sorted(country.subregion.unique()),format_func=lambda value, _lang=chosen_language(): tr(value, _lang),key='geo_area')
             available=country if subregion=='All regions' else country[country.subregion==subregion]
-            selected=st.multiselect(T('Countries (optional)'),available.country.tolist(),default=[],format_func=T,key='country_filter',
+            selected=st.multiselect(T('Countries (optional)'),available.country.tolist(),default=[],format_func=lambda value, _lang=chosen_language(): tr(value, _lang),key='country_filter',
                                     help=T('Leave empty to include all countries in the selected area.'))
-            tabscope=st.radio(T('Regional section'),['Overview','Capacities & gaps','Operations & hazards','Networks & cooperation'],format_func=T,key='regional_section')
+            tabscope=st.radio(T('Regional section'),['Overview','Capacities & gaps','Operations & hazards','Networks & cooperation'],format_func=lambda value, _lang=chosen_language(): tr(value, _lang),key='regional_section')
         st.divider()
         st.caption(f'2026 · {len(country)} {T("countries")} · {len(records)} {T("institutional responses")}')
         st.caption(T('Source: local Excel in `data/` · Updated with GitHub redeploy'))
