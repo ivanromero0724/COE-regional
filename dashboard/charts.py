@@ -225,7 +225,7 @@ def countries_map(countries, selection=None, lang='en'):
     # Regional focus: includes all survey respondents (including Central
     # America, Bahamas and southern South America) while avoiding the USA.
     xmin,xmax=-95,-32
-    ymin,ymax=-57,28
+    ymin,ymax=-60,25
 
     for feature in geo['features']:
         iso=feature.get('properties',{}).get('ISO_CC')
@@ -255,11 +255,10 @@ def countries_map(countries, selection=None, lang='en'):
             name=tr(status,lang),
             legendgroup=status,showlegend=status not in shown,
             hoveron='fills',
-            hovertemplate=(
-                '<b>'+name+'</b><br>ISO: '+str(iso)+'<br>'+
-                ('Estado' if lang=='es' else 'Status')+
-                ': '+tr(status,lang)+'<extra></extra>'
-            ),
+            hoverinfo='text',
+            text=('<b>'+name+'</b><br>ISO: '+str(iso)+'<br>'+
+                  ('Estado' if lang=='es' else 'Status')+': '+tr(status,lang)),
+            hovertemplate='%{text}<extra></extra>',
         ))
         shown.add(status)
 
