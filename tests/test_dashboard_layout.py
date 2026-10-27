@@ -44,3 +44,11 @@ def test_banner_clears_fixed_streamlit_toolbar():
     assert 'padding:3.25rem 1.35rem 2.6rem;' in app
     assert 'padding-top:2.75rem;' in app
     assert 'background:#F7FAFC!important;' in app
+
+
+def test_paho_and_eoc_logos_are_enlarged_and_responsive():
+    app = (ROOT / "app.py").read_text(encoding="utf-8")
+    assert "minmax(290px,395px)" in app
+    assert ".brand-set img{display:block;width:100%;height:96px;" in app
+    assert ".brand-set{max-width:360px;}" in app
+    assert "object-fit:contain" in app
