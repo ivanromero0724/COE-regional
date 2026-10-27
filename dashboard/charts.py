@@ -101,7 +101,8 @@ def hazard_heatmap(frame,lang='en'):
                   xgap=4,ygap=4))
     for i,name in enumerate(countries):
         for j,label in enumerate(text[i]):
-            color='white' if z[i,j]>=4 else TEXT
+            # White on PAHO navy; dark text on orange, cyan and the neutral band.
+            color='white' if z[i,j]==3 else TEXT
             fig.add_annotation(x=short[j],y=name,text=label,showarrow=False,
                                font=dict(family=FONT_FAMILY,size=10,color=color))
     fig.update_yaxes(autorange='reversed',title=None,automargin=True,
