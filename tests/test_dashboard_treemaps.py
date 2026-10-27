@@ -228,3 +228,29 @@ def test_all_treemap_tile_faces_have_square_corners():
                         for v in COOPERATION_MODES.values()])
     coop=cooperation_treemap_html(frame,kind='modalities')
     assert 'class="eoc-overview-treemap-face eoc-cooperation-tile-face"' in coop
+
+
+def test_treemaps_use_narrow_white_gutters_across_all_sections():
+    """Small consistent spacing, without changing tile geometry or data."""
+    from pathlib import Path
+    from app import capacity_chart
+    source=(Path(__file__).resolve().parents[1]/'app.py').read_text(encoding='utf-8')
+    tile_rule=source.split('.eoc-overview-treemap-tile{',1)[1].split('}',1)[0]
+    assert 'padding:2.5px;' in tile_rule
+    # This shared class styles both overview and cooperation HTML treemaps.
+    overview=overview_treemap_html(_data()[0],'available')
+    assert 'class="eoc-overview-treemap-tile"' in overview
+    assert 'eoc-overview-treemap-tile eoc-cooperation-tile' in source or (
+        'eoc-overview-treemap-tile eoc-cooperation-tile'
+        in cooperation_treemap_html(pd.DataFrame([
+            {'capacity':'Example','in_place':3,'denominator':5}
+        ]),kind='modalities')
+    )
+    # Plotly treemaps in Capacities & gaps use a smaller intertile pad and stroke.
+    from dashboard.data import load_data,country_aggregate,capacity_table
+    records,_=load_data()
+    table=capacity_table(country_aggregate(records))
+    chart=capacity_chart(table.iloc[0],pd.Series({'a':2,'b':3}),'treemap')
+    trace=chart.data[0]
+    assert trace.tiling.pad==2
+    assert trace.marker.line.width==1
