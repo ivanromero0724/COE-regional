@@ -187,14 +187,14 @@ def ui_style():
     .eoc-overview-treemap-metric small{font-size:.73rem;line-height:1.2;font-weight:650;}
     /* Cooperation uses the same treemap identity as Overview, with extra
        vertical space for nine expertise labels. No accordion/country breakdown. */
-    .eoc-cooperation-treemap-plot{height:450px;}
+    .eoc-overview-treemap-plot.eoc-cooperation-treemap-plot{height:450px;}
     .eoc-cooperation-tile-face{padding:10px;gap:4px;}
     .eoc-cooperation-tile-face .eoc-overview-treemap-label{
         font-size:.76rem;line-height:1.24;-webkit-line-clamp:4;
     }
     .eoc-cooperation-tile-face .eoc-overview-treemap-metric{font-size:1.16rem;}
     @media(max-width:950px){
-        .eoc-cooperation-treemap-plot{height:410px;}
+        .eoc-overview-treemap-plot.eoc-cooperation-treemap-plot{height:410px;}
         .eoc-cooperation-tile-face{padding:7px;}
         .eoc-cooperation-tile-face .eoc-overview-treemap-label{font-size:.69rem;}
         .eoc-cooperation-tile-face .eoc-overview-treemap-metric{font-size:1rem;}
