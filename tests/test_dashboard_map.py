@@ -54,7 +54,7 @@ def test_map_uses_tight_stable_extent_and_vertical_overlay_legend():
     assert fig.layout.yaxis.constrain=='domain'
     assert fig.layout.yaxis.scaleanchor=='x'
     assert fig.layout.yaxis.scaleratio==1
-    assert fig.layout.height==480
+    assert fig.layout.height==600
     assert fig.layout.margin.t==0 and fig.layout.margin.b==0
     assert fig.layout.legend.orientation=='v'
     assert fig.layout.legend.xanchor=='left'
@@ -67,6 +67,38 @@ def test_map_uses_tight_stable_extent_and_vertical_overlay_legend():
     second=countries_map(countries,selection={other})
     assert tuple(second.layout.xaxis.range)==expected_x
     assert tuple(second.layout.yaxis.range)==expected_y
+
+
+def test_guatemala_brazil_focus_still_includes_bahamas_argentina_chile():
+    """Important northern, central and southern survey countries stay visible."""
+    from dashboard.charts import responding_country_map_bounds
+    records,_=load_data()
+    countries=country_aggregate(records)
+    geo=load_geojson()
+    (xmin,xmax),(ymin,ymax)=responding_country_map_bounds(
+        geo,set(countries.iso3)
+    )
+    for code in ('GTM','BRA','BHS','ARG','CHL','MEX'):
+        hits=[f for f in geo['features']
+              if f['properties'].get('ISO_CC')==code]
+        assert hits, code
+        coords=[]
+        def visit(value):
+            if not isinstance(value,(list,tuple)):
+                return
+            if len(value)>=2 and all(isinstance(x,(int,float)) for x in value[:2]):
+                coords.append(value)
+            else:
+                for node in value:
+                    visit(node)
+        for feature in hits:
+            visit(feature['geometry'].get('coordinates',[]))
+        assert coords, code
+        assert all(xmin < p[0] < xmax and ymin < p[1] < ymax for p in coords),code
+    fig=countries_map(countries)
+    assert fig.layout.yaxis.scaleanchor=='x'
+    assert fig.layout.yaxis.scaleratio==1
+    assert fig.layout.height==600
 
 
 def test_mexico_is_entirely_inside_the_regional_map_viewport():
