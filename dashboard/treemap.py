@@ -10,8 +10,11 @@ import math
 
 from dashboard.i18n import tr
 
-BLUE_SHADES=('#005A8B','#0872A5','#0E8CBE','#159DD0')
-ORANGE_SHADES=('#A43D20','#B94A26','#CC592B','#DC703A')
+from dashboard.visual_style import NAVY, CYAN, LIGHT_BLUE, SLATE, ORANGE, TEXT
+
+# Reuse Capacities & gaps tones. Orange remains reserved for gaps.
+BLUE_SHADES=(NAVY,CYAN,LIGHT_BLUE,SLATE)
+ORANGE_SHADES=(ORANGE,'#DA6134','#C2522C','#A8492A')
 
 
 def _split_tiles(items,x=0.0,y=0.0,w=100.0,h=100.0):
@@ -85,11 +88,13 @@ def overview_treemap_html(frame,mode='available',lang='en'):
         rate=f"{n}/{d}"
         tooltip=escape(f'{label} · {kind}: {pct} ({rate})',quote=True)
         color=_tile_color(tile['pct'],mode)
+        # Keep labels legible on the lighter blues, just like the chart gallery.
+        foreground=TEXT if color in (LIGHT_BLUE,SLATE) else '#FFFFFF'
         elements.append(
             '<div class="eoc-overview-treemap-tile" style="'
             f'left:{x:.5f}%;top:{y:.5f}%;width:{w:.5f}%;height:{h:.5f}%">'
             '<div class="eoc-overview-treemap-face" style="background:'+color+
-            '" title="'+tooltip+'" role="img" aria-label="'+tooltip+'">'
+            ';color:'+foreground+'" title="'+tooltip+'" role="img" aria-label="'+tooltip+'">'
             '<span class="eoc-overview-treemap-label">'+escape(str(label))+'</span>'
             '<span class="eoc-overview-treemap-metric">'
             +pct+' <small>('+rate+')</small></span></div></div>'
