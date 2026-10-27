@@ -45,10 +45,6 @@ ES = {
     'Updated surge roster':'Lista actualizada de personal de refuerzo',
     'Integrated information tools':'Herramientas de información integradas',
     'Structured information exchange':'Intercambio estructurado de información',
-    'In development or informal is not considered fully in place.':
-      'Las capacidades en desarrollo o informales no se contabilizan como plenamente establecidas.',
-    'PRELIMINARY · Self-reported capacities from responding countries only. Each indicator has its own denominator, reflecting valid answers to that question.':
-      'PRELIMINAR · Capacidades autodeclaradas por los países participantes. Cada indicador utiliza el denominador de respuestas válidas a la pregunta.',
     'Reported countries':'Países con respuesta',
     # Capacity components
     'Core capacities reported as in place':'Capacidades esenciales reportadas como disponibles',
@@ -216,8 +212,8 @@ ES = {
       'No fue posible leer la capa geográfica. Revise data/geografia/paises_americas.gpkg.',
     'Map file not found. The Americas GeoPackage is expected in data/geografia/paises_americas.gpkg.':
       'No se encontró el mapa. Se espera el GeoPackage de las Américas en data/geografia/paises_americas.gpkg.',
-    'PAHO / WHO · EOC-NET Americas · 2026  |  Preliminary, self-reported information  |  Analytical dashboard for technical coordination':
-      'OPS / OMS · EOC-NET Américas · 2026  |  Información preliminar y autodeclarada  |  Tablero para la coordinación técnica',
+    'PAHO / WHO · EOC-NET Americas · 2026  |  Self-reported information  |  Analytical dashboard for technical coordination':
+      'OPS / OMS · EOC-NET Américas · 2026  |  Información autodeclarada  |  Tablero para la coordinación técnica',
     'Unable to read the survey data:':'No fue posible leer la encuesta:',
     # Misc
     'Brazil':'Brasil','Panama':'Panamá','Peru':'Perú','Saint Lucia':'Santa Lucía',
