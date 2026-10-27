@@ -32,7 +32,7 @@ def test_map_height_is_proportionate_to_operations_card():
     records, _ = load_data()
     fig = charts.countries_map(country_aggregate(records))
     assert fig is not None
-    assert fig.layout.height == 450
+    assert fig.layout.height == 480
     assert ".card-panel.eoc-pair-overview" in APP
     assert "with st.container(border=False, key='eoc_coverage_map_panel')" in APP
     assert "with st.container(border=True, key='eoc_operations_panel')" not in APP
