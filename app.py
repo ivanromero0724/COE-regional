@@ -252,6 +252,45 @@ def ui_style():
     .eoc-network-legend-item{display:inline-flex;gap:7px;align-items:center;}
     .eoc-network-swatch{display:inline-block;width:13px;height:13px;
         border-radius:3px;flex-shrink:0;border:1px solid rgba(35,70,95,.07);}
+    /* Network matrix is a semantic HTML heatmap, avoiding Plotly/Streamlit
+       serialization failures observed on Community Cloud. */
+    .eoc-network-matrix-wrap{
+        border:1px solid #DFE9F1;border-radius:12px;background:#FFFFFF;
+        padding:14px 16px;overflow-x:auto;box-sizing:border-box;
+    }
+    .eoc-network-matrix{width:100%;border-collapse:separate;
+        border-spacing:4px;min-width:580px;table-layout:fixed;}
+    .eoc-network-matrix th{
+        padding:10px 8px;color:#005A8B;font-size:.81rem;
+        text-align:center;font-weight:800;background:#F1F7FA;
+        border-radius:5px;
+    }
+    .eoc-network-matrix th:first-child{text-align:left;width:27%;}
+    .eoc-network-matrix td{padding:0;vertical-align:middle;}
+    .eoc-network-matrix .eoc-network-country{
+        font-size:.82rem;font-weight:700;color:#29485F;
+        padding:8px 11px;background:#F7FAFC;border-radius:5px;
+    }
+    .eoc-network-heat-cell{
+        display:flex;align-items:center;justify-content:center;gap:8px;
+        min-height:32px;min-width:0;padding:6px 7px;
+        border-radius:5px;font-size:.77rem;font-weight:700;
+        white-space:nowrap;
+    }
+    .eoc-network-heat-cell[data-status="Participating"]{
+        color:white;background:#005A8B;
+    }
+    .eoc-network-heat-cell[data-status="Interested"]{
+        color:white;background:#009BDA;
+    }
+    .eoc-network-heat-cell[data-status="Not participating"]{
+        color:white;background:#F36B32;
+    }
+    .eoc-network-heat-cell[data-status="Not reported"]{
+        color:#5C7384;background:#E7EDF2;
+    }
+    .eoc-network-heat-cell:focus-visible{outline:2px solid #005A8B;outline-offset:2px;}
+    .eoc-network-heat-symbol{font-size:1.05rem;line-height:1;}
     .mini-title{font-size:.85rem;font-weight:800;color:#005A8B;margin:14px 0 6px;}
     .dist-row{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(70px,1fr) 115px;gap:10px;align-items:center;padding:6px 0;}
     .dist-label{font-size:.77rem;color:#29485F;overflow-wrap:anywhere;}
@@ -602,6 +641,39 @@ def operations_section(active):
 
 
 
+def network_heatmap_html(active):
+    """Stable categorical network matrix for all responding countries.
+
+    Native HTML avoids Plotly chart-marshalling errors in Streamlit Cloud and
+    keeps each self-reported response, including missing answers, explicit.
+    """
+    allowed={'Participating':'✓','Interested':'◐',
+             'Not participating':'×','Not reported':'—'}
+    names=list(NETWORK_NAMES.values())
+    head='<thead><tr><th scope="col">'+esc(T('Country'))+'</th>'+''.join(
+        '<th scope="col">'+esc(T(name))+'</th>' for name in names
+    )+'</tr></thead>'
+    rows=[]
+    for _,record in active.sort_values('country').iterrows():
+        name=str(record['country'])
+        cells=[]
+        for network in names:
+            raw=record[network]
+            status=raw if isinstance(raw,str) and raw in allowed else 'Not reported'
+            tooltip=esc(T(name)+' · '+T(network)+': '+T(status))
+            cells.append(
+                '<td><span class="eoc-network-heat-cell" data-status="'
+                +esc(status)+'" title="'+tooltip+'" tabindex="0" aria-label="'
+                +tooltip+'"><span class="eoc-network-heat-symbol">'
+                +allowed[status]+'</span>'+esc(T(status))+'</span></td>'
+            )
+        rows.append('<tr><th scope="row" class="eoc-network-country">'
+                    +esc(T(name))+'</th>'+''.join(cells)+'</tr>')
+    return ('<div class="eoc-network-matrix-wrap">'
+            '<table class="eoc-network-matrix">'+head+
+            '<tbody>'+''.join(rows)+'</tbody></table></div>')
+
+
 def cooperation_section(active):
     section('Regional and global networks',
             'Membership and interest among countries that answered these later survey questions.',
@@ -647,8 +719,7 @@ def cooperation_section(active):
     )
     st.markdown('<div class="eoc-network-legend">'+legend+'</div>',
                 unsafe_allow_html=True)
-    st.plotly_chart(viz.network_participation_heatmap(active,lang=chosen_language()),
-                    width='stretch',config={'displayModeBar':False})
+    st.markdown(network_heatmap_html(active),unsafe_allow_html=True)
     st.divider()
     a,b=st.columns(2,gap='large')
     with a:
