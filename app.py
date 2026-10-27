@@ -44,7 +44,7 @@ def ui_style():
     [data-testid="stHeader"] {background:rgba(247,250,252,.93);}
     [data-testid="stSidebar"] {background:#FFFFFF;border-right:1px solid #E1EAF1;}
     [data-testid="stSidebar"] [data-testid="stImage"] {margin-bottom:8px;}
-    .block-container {padding:1.1rem 2rem 2.6rem;max-width:1540px;}
+    .block-container {padding:1.1rem 1.7rem 2.6rem;max-width:1140px!important;margin-left:auto;margin-right:auto;}
     h1,h2,h3,h4{color:#005A8B;font-weight:800;letter-spacing:-.025em;}
     h2{font-size:1.42rem!important;}h3{font-size:1.06rem!important;}
     [data-testid="stVerticalBlockBorderWrapper"] > div {border-color:#DFE9F1!important;background:#FFF;border-radius:14px!important;}
