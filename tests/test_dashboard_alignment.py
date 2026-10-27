@@ -92,6 +92,6 @@ def test_priority_capacity_rows_fill_card_without_stretching_other_sections():
     assert ".card-panel.eoc-pair-capacities.eoc-priority-card{" in APP
     assert ".eoc-priority-card .measure-row{padding:9px 0;}" in APP
     assert "' eoc-priority-card' if pair=='capacities' and variant=='priority'" in APP
-    assert "capacity_rows_html(pd.DataFrame(figures),pair='capacities',variant='priority')" in APP
-    assert "capacity_rows_html(ranked,pair='capacities')" in APP
+    assert "capacity_rows_html(pd.DataFrame(figures),pair='capacities',variant='priority',country=active)" in APP
+    assert "capacity_rows_html(ranked,pair='capacities',country=active)" in APP
     assert "min-height:305px" in APP
