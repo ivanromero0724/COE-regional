@@ -42,7 +42,19 @@ def ui_style():
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
     html,body,[class*="css"],.stApp {font-family:'DM Sans',Arial,sans-serif;}
     .stApp {background:#F7FAFC; color:#17324D;}
-    [data-testid="stHeader"] {background:rgba(247,250,252,.93);}
+    /* The native Streamlit toolbar stays fixed and fully opaque on scroll. */
+    [data-testid="stHeader"]{
+        position:fixed!important;
+        top:0!important;
+        z-index:999990!important;
+        background:#F7FAFC!important;
+        background-image:none!important;
+        opacity:1!important;
+        backdrop-filter:none!important;
+        -webkit-backdrop-filter:none!important;
+        border-bottom:1px solid #E1EAF1;
+        box-shadow:0 2px 8px rgba(0,65,115,.035);
+    }
     [data-testid="stSidebar"] {background:#FFFFFF;border-right:1px solid #E1EAF1;}
     [data-testid="stSidebar"] [data-testid="stImage"] {margin-bottom:8px;}
     [data-testid="stMainBlockContainer"], .block-container {width:min(100%,1280px)!important;max-width:1280px!important;margin-left:auto!important;margin-right:auto!important;padding:1.1rem 1.35rem 2.6rem;box-sizing:border-box;}
