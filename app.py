@@ -553,19 +553,22 @@ def capacity_chart(indicator, counts, chart_kind):
     if chart_kind=='donut':
         fig.add_trace(go.Pie(
             labels=shorter,values=values,customdata=labels,hole=.58,sort=False,
+            # Center the ring vertically in the full 430px chart frame,
+            # keeping a small dedicated gap before the legend below.
+            domain=dict(x=[0,1],y=[.03,.87]),
             marker=dict(colors=[colors[i%len(colors)] for i in range(len(values))],
                         line=dict(color='white',width=2)),
             textinfo='percent',textposition='inside',
             textfont=dict(size=12,color='white'),
             hovertemplate='<b>%{customdata}</b><br>%{percent} (%{value:.1f}/'+str(total)+' '+unit+')<extra></extra>'))
-        fig.add_annotation(x=.5,y=.5,
+        fig.add_annotation(x=.5,y=.45,
             text='<b>'+str(total)+'</b><br><span style="font-size:11px">'+
                  ('respuestas' if chosen_language()=='es' else 'responses')+'</span>',
             font=dict(size=17,color='#005A8B'),showarrow=False)
         fig.update_layout(showlegend=True,legend=dict(
-            orientation='h',yanchor='top',y=-.09,x=0,
+            orientation='h',yanchor='top',y=-.02,x=0,
             font=dict(size=10),itemsizing='constant'),
-            height=430,margin=dict(l=12,r=12,t=24,b=104))
+            height=430,margin=dict(l=12,r=12,t=44,b=78))
     elif chart_kind=='treemap':
         fig.add_trace(go.Treemap(
             labels=shorter,parents=['']*len(values),values=values,
