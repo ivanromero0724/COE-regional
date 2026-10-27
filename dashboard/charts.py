@@ -196,49 +196,86 @@ def responding_country_map_center(geo, country_codes):
 
 
 def countries_map(countries, selection=None, lang='en'):
-    """Render the bundled GeoPackage without Plotly Geo's external topojson fetch.
+    """Fixed geographic viewport, with country hover but no pan/zoom.
 
-    Plotly's MapLibre-backed choroplethmap renders the GeoJSON polygons directly
-    on a token-free white background. No remote base tiles or API key are needed.
+    Cartesian polygon traces deliberately replace MapLibre: Plotly's map
+    engine can still pan even with layout.dragmode=False. Fixed-range
+    Cartesian axes reliably prevent dragging while preserving hover.
     """
     geo=load_geojson()
-    if geo is None:return None
-    geo_codes={ft['properties']['ISO_CC'] for ft in geo['features']}
+    if geo is None:
+        return None
     stats=countries.set_index('iso3')
-    center=responding_country_map_center(geo,set(stats.index))
-    listrows=[]
-    for code in sorted(geo_codes):
-        if code in stats.index:
-            row=stats.loc[code]
-            country=row['country'];status=row['eoc_status']
-            if selection is not None and country not in selection:status='Outside filter'
-        else:
-            country='No survey response';status='No survey response'
-        listrows.append({'iso3':code,'country':tr(country,lang),'status':tr(status,lang)})
-    data=pd.DataFrame(listrows)
-    status_order=['Established','In implementation','Not established','Outside filter','No survey response']
+    statuses=['Established','In implementation','Not established',
+              'Outside filter','No survey response']
     palette=['#005A8B','#009BDA','#D75E52','#D5E0E9','#EFF2F4']
-    fig=px.choropleth_map(
-        data,geojson=geo,locations='iso3',featureidkey='properties.ISO_CC',
-        color='status',hover_name='country',custom_data=['iso3'],
-        category_orders={'status':[tr(x,lang) for x in status_order]},
-        color_discrete_map={tr(s,lang):c for s,c in zip(status_order,palette)},
-        map_style='white-bg',
-        center=center,zoom=1.55,opacity=0.94,
-    )
-    fig.update_traces(
-        marker_line_color='white',marker_line_width=0.65,
-        hovertemplate='<b>%{hovertext}</b><br>ISO: %{customdata[0]}<br>'+
-                      ('Estado' if lang=='es' else 'Status')+
-                      ': %{fullData.name}<extra></extra>'
-    )
+    colors=dict(zip(statuses,palette))
+    fig=go.Figure()
+    shown=set()
+
+    def rings(geometry):
+        typ=geometry.get('type')
+        coords=geometry.get('coordinates',[])
+        if typ=='Polygon':
+            return [coords]
+        if typ=='MultiPolygon':
+            return coords
+        return []
+
+    # Regional focus: includes all survey respondents (including Central
+    # America, Bahamas and southern South America) while avoiding the USA.
+    xmin,xmax=-95,-32
+    ymin,ymax=-57,28
+
+    for feature in geo['features']:
+        iso=feature.get('properties',{}).get('ISO_CC')
+        if iso in stats.index:
+            record=stats.loc[iso]
+            name=tr(record['country'],lang)
+            status=record['eoc_status']
+            if selection is not None and record['country'] not in selection:
+                status='Outside filter'
+        else:
+            name=tr('No survey response',lang)
+            status='No survey response'
+        xs,ys=[],[]
+        for polygon in rings(feature.get('geometry',{})):
+            # Exterior only; holes are rare and have negligible visual effect
+            # at this scale. Break disconnected polygons with None.
+            if polygon:
+                for xy in polygon[0]:
+                    xs.append(xy[0]);ys.append(xy[1])
+                xs.append(None);ys.append(None)
+        if not xs:
+            continue
+        fig.add_trace(go.Scatter(
+            x=xs,y=ys,mode='lines',fill='toself',
+            fillcolor=colors[status],
+            line=dict(color='white',width=.65),
+            name=tr(status,lang),
+            legendgroup=status,showlegend=status not in shown,
+            hoveron='fills',
+            hovertemplate=(
+                '<b>'+name+'</b><br>ISO: '+str(iso)+'<br>'+
+                ('Estado' if lang=='es' else 'Status')+
+                ': '+tr(status,lang)+'<extra></extra>'
+            ),
+        ))
+        shown.add(status)
+
     fig.update_layout(
-        map=dict(style='white-bg',center=center,zoom=1.55),
-        legend=dict(title=None,orientation='h',y=-.08,x=0,font_size=10),
         dragmode=False,
+        hovermode='closest',
+        legend=dict(title=None,orientation='h',y=1.015,x=0,
+                    yanchor='bottom',font_size=10),
+        paper_bgcolor='#FFFFFF',plot_bgcolor='#FFFFFF',
     )
-    # Opaque white plot canvas fills the complete gray-bordered dashboard card.
-    fig=style(fig,450,dict(l=0,r=0,t=0,b=38))
+    fig.update_xaxes(range=[xmin,xmax],fixedrange=True,visible=False,
+                     showgrid=False,zeroline=False)
+    fig.update_yaxes(range=[ymin,ymax],fixedrange=True,visible=False,
+                     showgrid=False,zeroline=False,scaleanchor='x',
+                     scaleratio=1)
+    fig=style(fig,450,dict(l=4,r=4,t=47,b=4))
     fig.update_layout(paper_bgcolor='#FFFFFF',plot_bgcolor='#FFFFFF')
     return fig
 
