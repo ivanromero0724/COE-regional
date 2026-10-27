@@ -239,10 +239,10 @@ def responding_country_map_bounds(geo, country_codes):
         return (-94,-31),(-57,28)
     lons=[point[0] for point in points]
     lats=[point[1] for point in points]
-    # Keep the map close to the occupied region, without clipping islands
-    # or southern-country polygons at the edges.
-    xpad=max(1.1,(max(lons)-min(lons))*.018)
-    ypad=max(1.1,(max(lats)-min(lats))*.018)
+    # Tight padding makes the respondent-rich region larger while ensuring
+    # Mexico and every reporting country remain entirely inside the view.
+    xpad=max(0.45,(max(lons)-min(lons))*.008)
+    ypad=max(0.45,(max(lats)-min(lats))*.008)
     return ((min(lons)-xpad,max(lons)+xpad),
             (min(lats)-ypad,max(lats)+ypad))
 
@@ -320,14 +320,17 @@ def countries_map(countries, selection=None, lang='en'):
         dragmode=False,hovermode='closest',
         paper_bgcolor='#FFFFFF',plot_bgcolor='#FFFFFF',
     )
+    # Keep the lon/lat viewport locked but avoid Plotly's scaleanchor/domain
+    # letterboxing: that leaves broad unused white bands inside a responsive
+    # Streamlit card when the container and region have different ratios.
+    # Both map axes now use the full chart plot domain; only screen rendering
+    # is affected, never geometry data or country inclusion.
     fig.update_xaxes(range=[xmin,xmax],fixedrange=True,visible=False,
-                     showgrid=False,zeroline=False,
-                     constrain='domain')
+                     showgrid=False,zeroline=False,domain=[0,1])
     fig.update_yaxes(range=[ymin,ymax],fixedrange=True,visible=False,
-                     showgrid=False,zeroline=False,scaleanchor='x',
-                     scaleratio=1,constrain='domain')
-    # The map itself fills the frame vertically; the legend overlays it.
-    fig=style(fig,480,dict(l=4,r=4,t=5,b=5))
+                     showgrid=False,zeroline=False,domain=[0,1])
+    # Full-bleed plot; no internal top/bottom whitespace is reserved.
+    fig=style(fig,480,dict(l=0,r=0,t=0,b=0))
     # Apply this AFTER style(), otherwise the shared chart style
     # overwrites the map-specific vertical overlay legend.
     fig.update_layout(
