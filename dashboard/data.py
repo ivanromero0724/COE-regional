@@ -42,6 +42,19 @@ ACTIVATION={"a":"Under 2 hours","b":"2–6 hours","c":"Over 6 hours","d":"Not de
 RATING_LABELS=["Initial (<40)","Developing (40–59)","Functional (60–79)","Advanced (≥80)"]
 STATUS_LABELS={"a":"Established", "b":"Not established", "c":"In implementation"}
 NETWORK_NAMES={153:"EOC-NET",154:"EMT initiative",155:"GOARN"}
+COOPERATION_SKILLS={
+126:'Strategic leadership',127:'EOC strengthening',128:'Incident management & coordination',
+129:'Surveillance & outbreak investigation',130:'Laboratory',131:'Emergency Medical Teams',
+132:'Infection prevention & control',133:'Risk communication',134:'Information & geospatial analysis',
+135:'Logistics & supplies',136:'Water, sanitation & hygiene',137:'Mental health & psychosocial support',
+138:'Training & response evaluation'
+}
+COOPERATION_MODES={
+144:'Exchange of experience',145:'Remote technical assistance',146:'Facilitators / instructors',
+147:'National expert mobilization',148:'Deployments to other countries',149:'Mentoring',
+150:'Availability requires assessment'
+}
+
 
 
 def norm(value):
@@ -140,6 +153,8 @@ def create_records(raw:pd.DataFrame)->tuple[pd.DataFrame,pd.DataFrame]:
         for a,label in enumerate(TRAINING_LABELS):
             d['Completed: '+label]=binary(r.iloc[83+a]); d['Priority: '+label]=binary(r.iloc[94+a])
         for col,name in NETWORK_NAMES.items():d[name]=norm_network(r.iloc[col])
+        for col,name in COOPERATION_SKILLS.items():d['Skill: '+name]=binary(r.iloc[col])
+        for col,name in COOPERATION_MODES.items():d['Mode: '+name]=binary(r.iloc[col])
         for col in (29,32,33,36,37,40,41,42,43,46,47,49,50,51,66,68,77,78,80,81,105,107,108,109,110):
             d[f'Q_{col}']=code(r,col)
         # Only nonpersonal narrative fields; never names/telephone/email (9–12).
@@ -186,6 +201,11 @@ def country_aggregate(df:pd.DataFrame)->pd.DataFrame:
         for label in TRAINING_LABELS:
             for t in ('Completed: ','Priority: '):
                 a=g[t+label].dropna().tolist();row[t+label]=(any(bool(x) for x in a) if a else None)
+        for name in list(COOPERATION_SKILLS.values())+list(COOPERATION_MODES.values()):
+            prefix='Skill: ' if name in COOPERATION_SKILLS.values() else 'Mode: '
+            col=prefix+name
+            v=g[col].dropna().tolist()
+            row[col]=(any(bool(q) for q in v) if v else None)
         for network in NETWORK_NAMES.values():
             x=g[network].tolist()
             row[network]='Participating' if 'Participating' in x else 'Interested' if 'Interested' in x else 'Not participating' if 'Not participating' in x else 'Not reported'
