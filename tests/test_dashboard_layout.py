@@ -244,9 +244,8 @@ def test_regional_hazards_are_four_donuts_above_country_heatmap():
     from dashboard.visual_style import HAZARD_COLORS, NAVY, CYAN, ORANGE
     assert HAZARD_COLORS[1:]==(CYAN,NAVY,ORANGE)
     assert all(color in html for color in HAZARD_COLORS)
-    from dashboard import i18n
     from unittest.mock import patch
-    with patch('app.chosen_language',return_value='es'):
+    with patch('dashboard.i18n.chosen_language',return_value='es'):
         html_es=hazard_summary_cards(active)
     assert all(label in html_es for label in
                ('Ningún evento','1–2 eventos','3–5 eventos','Más de 5 eventos'))
