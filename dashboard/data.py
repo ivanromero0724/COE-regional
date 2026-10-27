@@ -83,7 +83,7 @@ def formal_document_answer(value):
     choice=letter(value)
     if choice in ('a','b'):
         # Question 15 has yes/no alternatives; distinguish via explicit wording.
-        rest=re.sub(r'^[a-z]\\.\\s*','',v).strip()
+        rest=re.sub(r'^[a-z]\.\s*','',v).strip()
         if rest.startswith(('no ', 'no,', 'no.', 'no cuenta', 'no dispone')):
             return False
         if rest.startswith(('si ', 'si,', 'si.', 'si cuenta', 'si dispone')):
