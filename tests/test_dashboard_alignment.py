@@ -72,7 +72,9 @@ def test_operations_no_double_border_or_white_overlay():
 
 
 def test_capacity_panels_are_equal_height_without_obsolete_notes():
-    assert ".card-panel.eoc-pair-capacities{min-height:425px;margin-bottom:0;}" in APP
+    assert ".card-panel.eoc-pair-capacities{min-height:305px;margin-bottom:0;padding:13px 16px;}" in APP
+    assert ".card-panel.eoc-pair-capacities .measure-row{padding:6px 0;min-height:35px;}" in APP
+    assert "min-height:425px" not in APP
     assert ".card-panel.eoc-pair-capacities{min-height:0;}" in APP
     assert "In development or informal is not considered fully in place." not in APP
     assert "PRELIMINARY · Self-reported capacities" not in APP
