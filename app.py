@@ -515,7 +515,7 @@ def capacity_drilldown_html(frame, active, component):
                 continue
             # Keep exact questionnaire option, minus the alphabetic choice prefix.
             raw=str(value).strip()
-            label=re.sub(r'^[a-zA-Z]\\.\\s+', '', raw).strip() or raw
+            label=re.sub(r'^[a-zA-Z]\.\s+', '', raw).strip() or raw
             categories.setdefault(label,[]).append(str(country['country']))
         total=sum(len(names) for names in categories.values())
         result.append('<div style="margin:20px 0 24px">')
