@@ -275,6 +275,8 @@ def ui_style():
     .status-chip{display:inline-block;white-space:nowrap;border-radius:6px;font-size:.70rem;font-weight:800;padding:5px 9px;}
     .status-yes{background:#E6F5EF;color:#18795E;}
     .status-no{background:#FFF0E8;color:#A84C2F;}
+    .status-interest{background:#E5F5FD;color:#006C9A;}
+    .eoc-network-detail-grid{display:grid;gap:8px;}
     .status-unknown{background:#EFF3F6;color:#687C8B;}
     .status-tile-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:8px 0 18px;}
     .status-tile{border:1px solid #DFE9F1;border-radius:10px;background:white;padding:12px;display:grid;grid-template-columns:24px minmax(0,1fr);gap:4px 8px;align-items:center;}
@@ -477,6 +479,14 @@ def status_chip(value):
             else f'<span class="status-chip status-no">{esc(T("Partial / absent"))}</span>')
 
 
+def network_status_chip(value):
+    """Show network answers verbatim, not as an in-place capacity judgement."""
+    style={'Participating':'status-yes','Interested':'status-interest',
+           'Not participating':'status-no','Not reported':'status-unknown'}
+    return ('<span class="status-chip '+style.get(value,'status-unknown')+'">'
+            +esc(T(value))+'</span>')
+
+
 def status_grid_html(items,paired_infrastructure=False):
     """Scannable multi-column chips, no wide tables on country pages."""
     cards=[]
@@ -630,19 +640,26 @@ def cooperation_section(active):
               +part_html(interested,'#009BDA','Interested')
               +part_html(inactive,'#CFDDE6','Not participating')+'</div>')
         primary_pct=100*participating/answered if answered else 0
-        cards.append(f'<div class="network-card"><div class="network-name">{esc(T(name))}</div>'
-                     f'<div class="network-count">{primary_pct:.0f}% '
-                     f'<span style="font-size:.82rem;color:#688193">({participating}/{answered})</span></div>'
-                     +bar+
-                     f'<div class="network-meta">{esc(T("Participating"))} {participating}/{answered} · '
-                     f'{esc(T("Interested"))} {interested}/{answered} · '
-                     f'{esc(T("Not participating"))} {inactive}/{answered}</div></div>')
+        countries=''.join(
+            '<div class="eoc-country-capacity-item"><span class="eoc-country-capacity-name">'
+            +esc(T(row.country))+'</span>'+network_status_chip(row[name])+'</div>'
+            for _,row in active.sort_values('country').iterrows()
+        )
+        cards.append(
+            f'<details class="network-card"><summary>'
+            f'<div class="network-name">{esc(T(name))}</div>'
+            f'<span class="eoc-capacity-chevron" aria-hidden="true"></span>'
+            f'<div class="network-count">{primary_pct:.0f}% '
+            f'<span style="font-size:.82rem;color:#688193">({participating}/{answered})</span></div>'
+            +bar+
+            f'<div class="network-meta">{esc(T("Participating"))} {participating}/{answered} · '
+            f'{esc(T("Interested"))} {interested}/{answered} · '
+            f'{esc(T("Not participating"))} {inactive}/{answered}</div>'
+            '</summary><div class="eoc-capacity-detail">'
+            '<div class="eoc-capacity-detail-title">'+esc(T('Reported status by country'))+'</div>'
+            '<div class="eoc-network-detail-grid">'+countries+'</div></div></details>'
+        )
     st.markdown('<div class="network-grid">'+''.join(cards)+'</div>',unsafe_allow_html=True)
-    with st.expander(T('See country-level network participation')):
-        rows=[]
-        for _,r in active.sort_values('country').iterrows():
-            rows.append(tuple([esc(T(r.country))]+[esc(T(r[name])) for name in NETWORK_NAMES.values()]))
-        compact_table(['Country']+list(NETWORK_NAMES.values()),rows,maxheight=450)
     st.divider()
     a,b=st.columns(2,gap='large')
     with a:
