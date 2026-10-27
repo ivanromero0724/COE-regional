@@ -21,6 +21,7 @@ from dashboard.data import (
 from dashboard import charts as viz
 from dashboard.capacity_labels import labels_for_question
 from dashboard.treemap import overview_treemap_html, cooperation_treemap_html
+from dashboard.visual_style import TREEMAP_COLORS, treemap_text_color
 from dashboard.i18n import T, tr, chosen_language
 
 st.set_page_config(page_title='EOC-NET Americas | PAHO 2026',page_icon='🌎',layout='wide',initial_sidebar_state='expanded')
@@ -603,13 +604,15 @@ def capacity_chart(indicator, counts, chart_kind):
             font=dict(size=10),itemsizing='constant'),
             height=430,margin=dict(l=12,r=12,t=44,b=78))
     elif chart_kind=='treemap':
+        tile_colors=[TREEMAP_COLORS[i%len(TREEMAP_COLORS)] for i in range(len(values))]
         fig.add_trace(go.Treemap(
             labels=shorter,parents=['']*len(values),values=values,
             customdata=labels,
-            marker=dict(colors=[colors[i%len(colors)] for i in range(len(values))],
+            marker=dict(colors=tile_colors,
                         line=dict(color='white',width=2)),
             texttemplate='<b>%{label}</b><br>%{percentRoot:.0%}',
-            textposition='top left',textfont=dict(size=12),
+            textposition='top left',
+            textfont=dict(size=12,color=[treemap_text_color(c) for c in tile_colors]),
             hovertemplate='<b>%{customdata}</b><br>%{percentRoot:.0%} (%{value:.1f}/'+str(total)+' '+unit+')<extra></extra>',
             pathbar=dict(visible=False),tiling=dict(pad=4)))
         fig.update_layout(showlegend=False,height=430,
@@ -1011,7 +1014,7 @@ def cooperation_section(active):
         st.markdown(cooperation_treemap_html(ranked,lang=chosen_language(),kind='expertise'),
                     unsafe_allow_html=True)
     with b:
-        section('How countries can cooperate',
+        section('How can countries cooperate?',
                 eyebrow='03 / MODALITIES',paired=True)
         entries=[]
         for name in COOPERATION_MODES.values():
