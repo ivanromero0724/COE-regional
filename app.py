@@ -599,7 +599,7 @@ def coverage_map(country,selected):
             st.plotly_chart(
                 fig, width='stretch',
                 config={'displayModeBar':False, 'scrollZoom':False,
-                        'doubleClick':False, 'staticPlot':True},
+                        'doubleClick':False, 'staticPlot':False},
             )
 
 
