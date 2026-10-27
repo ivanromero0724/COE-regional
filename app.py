@@ -187,12 +187,37 @@ def ui_style():
     .measure-bar{width:100%;height:9px;border-radius:999px;background:#E7F0F6;overflow:hidden;}
     .measure-fill{height:100%;background:#009BDA;border-radius:999px;}
     .measure-value{font-size:.77rem;font-weight:800;color:#005A8B;text-align:right;white-space:nowrap;}
-    /* Full-width capacity analysis: broad horizontal bars rather than squeezed two-column cards. */
-    .eoc-capacity-full .measure-row{
-        grid-template-columns:minmax(0,1fr) minmax(160px,1.9fr) 128px;
-        gap:20px;min-height:45px;padding:9px 0;
+    /* The entire capacity bar is a keyboard-accessible native disclosure.
+       Details open directly under the clicked row, without a sidebar or dropdown. */
+    .eoc-capacity-full .eoc-capacity-disclosure{
+        border-bottom:1px solid #EDF2F6;
     }
-    .eoc-capacity-full .measure-label{font-size:.82rem;}
+    .eoc-capacity-full .eoc-capacity-disclosure:last-child{border-bottom:0;}
+    .eoc-capacity-full .eoc-capacity-summary{
+        display:grid;
+        grid-template-columns:minmax(0,1fr) minmax(160px,1.9fr) 128px 20px;
+        gap:16px;min-height:45px;padding:9px 5px;
+        align-items:center;cursor:pointer;list-style:none;border-radius:7px;
+    }
+    .eoc-capacity-summary::-webkit-details-marker{display:none;}
+    .eoc-capacity-full .eoc-capacity-summary:hover{background:#F0F7FB;}
+    .eoc-capacity-full .eoc-capacity-summary:focus-visible{
+        outline:2px solid #009BDA;outline-offset:2px;
+    }
+    .eoc-capacity-full .eoc-capacity-summary .measure-label{font-size:.82rem;}
+    .eoc-capacity-chevron{
+        display:inline-block;width:8px;height:8px;
+        border-right:2px solid #005A8B;border-bottom:2px solid #005A8B;
+        transform:rotate(45deg);transition:transform .15s ease;justify-self:center;
+    }
+    .eoc-capacity-disclosure[open] .eoc-capacity-chevron{transform:rotate(225deg);}
+    .eoc-capacity-detail{
+        background:#F8FBFD;border:1px solid #E2ECF3;border-radius:10px;
+        padding:14px 15px;margin:2px 0 12px;
+    }
+    .eoc-capacity-detail-title{
+        color:#005A8B;font-size:.79rem;font-weight:800;margin:0 0 12px;
+    }
     /* Country status grid fits all responding countries without an inner scrollbar. */
     .eoc-country-capacity-panel{
         border:1px solid #DFE9F1;border-radius:12px;
@@ -240,7 +265,7 @@ def ui_style():
     @media(max-width:900px){.eoc-pair-heading{margin-bottom:0;}
         .card-panel.eoc-pair-overview.eoc-operations-card{height:auto;overflow:visible;}
         .card-panel.eoc-pair-capacities{min-height:0;}}
-    @media(max-width:760px){.eoc-country-capacity-grid{grid-template-columns:1fr;}.eoc-capacity-full .measure-row{grid-template-columns:minmax(0,1fr) 115px;gap:7px;}.eoc-capacity-full .measure-label{grid-column:1/-1;}.eoc-capacity-full .measure-bar{grid-column:1;}.eoc-capacity-full .measure-value{grid-column:2;}[data-testid="stMainBlockContainer"],.block-container{padding-top:2.75rem;}.measure-row{grid-template-columns:minmax(0,1fr) 115px;row-gap:6px;gap:7px;}.measure-label{grid-column:1 / -1;overflow-wrap:normal;font-size:.74rem;}.measure-bar{grid-column:1;}.measure-value{grid-column:2;}.dist-row{grid-template-columns:minmax(0,1fr) 80px 112px;gap:6px;}.block-container{padding-left:1rem;padding-right:1rem;}.paho-hero{grid-template-columns:1fr;padding:17px;row-gap:14px;}.brand-set{max-width:360px;}.kpi-grid,.kpi-grid.four{grid-template-columns:repeat(2,minmax(0,1fr));}.network-grid{grid-template-columns:1fr;}.status-tile-grid{grid-template-columns:1fr;}.card-panel{padding:13px;}}
+    @media(max-width:760px){.eoc-country-capacity-grid{grid-template-columns:1fr;}.eoc-capacity-full .eoc-capacity-summary{grid-template-columns:minmax(0,1fr) 105px 16px;gap:7px;}.eoc-capacity-full .eoc-capacity-summary .measure-label{grid-column:1/-1;}.eoc-capacity-full .eoc-capacity-summary .measure-bar{grid-column:1;}.eoc-capacity-full .eoc-capacity-summary .measure-value{grid-column:2;}.eoc-capacity-full .eoc-capacity-summary .eoc-capacity-chevron{grid-column:3;}[data-testid="stMainBlockContainer"],.block-container{padding-top:2.75rem;}.measure-row{grid-template-columns:minmax(0,1fr) 115px;row-gap:6px;gap:7px;}.measure-label{grid-column:1 / -1;overflow-wrap:normal;font-size:.74rem;}.measure-bar{grid-column:1;}.measure-value{grid-column:2;}.dist-row{grid-template-columns:minmax(0,1fr) 80px 112px;gap:6px;}.block-container{padding-left:1rem;padding-right:1rem;}.paho-hero{grid-template-columns:1fr;padding:17px;row-gap:14px;}.brand-set{max-width:360px;}.kpi-grid,.kpi-grid.four{grid-template-columns:repeat(2,minmax(0,1fr));}.network-grid{grid-template-columns:1fr;}.status-tile-grid{grid-template-columns:1fr;}.card-panel{padding:13px;}}
     @media(max-width:460px){.kpi-grid,.kpi-grid.four{grid-template-columns:1fr 1fr;gap:8px;}.kpi{padding:11px;min-height:103px;}.kpi .kpi-value{font-size:1.5rem;}.kpi-grid:not(.four)>.kpi:last-child:nth-child(odd){grid-column:span 2;}.country-flag{font-size:2.4rem;}}
     </style>''',unsafe_allow_html=True)
 
@@ -315,7 +340,7 @@ def capacity_rows_html(frame,title=None,pair=None,variant=None):
 
 
 def countries_capacity_grid(rows):
-    """Compact full-width, responsive status tiles for one selected capacity."""
+    """Responsive status tiles, shown in-place when a capacity bar is opened."""
     items=[]
     for name,value in rows:
         items.append(
@@ -323,10 +348,45 @@ def countries_capacity_grid(rows):
             +'<span class="eoc-country-capacity-name">'+esc(T(name))+'</span>'
             +status_chip(value)+'</div>'
         )
-    return (
-        '<div class="eoc-country-capacity-panel">'
-        '<div class="eoc-country-capacity-grid">'+''.join(items)+'</div></div>'
-    )
+    return '<div class="eoc-country-capacity-grid">'+''.join(items)+'</div>'
+
+
+def capacity_drilldown_html(frame, active, component):
+    """Clickable capacity bars with a country breakdown immediately beneath each.
+
+    Native HTML details/summary handles clicks and keyboard activation without
+    Streamlit reruns. Each row uses the same country-level scoring as its bar.
+    """
+    definitions={label:(int(col),valid) for label,col,valid in CAPACITIES[component]}
+    sorted_countries=active.sort_values('country')
+    items=[]
+    for _,r in frame.iterrows():
+        label=r['capacity']
+        col,valid=definitions[label]
+        numerator=int(r['in_place'])
+        denominator=int(r['denominator'])
+        pct=100*numerator/denominator if denominator else 0
+        metric=f'{pct:.0f}% ({numerator}/{denominator})' if denominator else T('No valid responses')
+        rows=[(country.country,country_capacity(country,col,valid))
+              for _,country in sorted_countries.iterrows()]
+        items.append(
+            '<details class="eoc-capacity-disclosure">'
+            '<summary class="eoc-capacity-summary">'
+            '<span class="measure-label">'+esc(T(label))+'</span>'
+            '<span class="measure-bar"><span class="measure-fill" style="width:'
+            +f'{pct:.1f}%"></span></span>'
+            '<span class="measure-value">'+esc(metric)+'</span>'
+            '<span class="eoc-capacity-chevron" aria-hidden="true"></span>'
+            '</summary>'
+            '<div class="eoc-capacity-detail">'
+            '<div class="eoc-capacity-detail-title">'
+            +esc(T('Countries reporting each capacity'))+'</div>'
+            +countries_capacity_grid(rows)
+            +'</div></details>'
+        )
+    return ('<div class="card-panel eoc-capacity-full">'
+            '<div class="card-title">'+esc(T('Capacity availability'))+'</div>'
+            +''.join(items)+'</div>')
 
 
 def distribution_html(series,title,ordered,color):
@@ -452,20 +512,8 @@ def capacity_and_gaps(active):
                            format_func=lambda value, _lang=chosen_language(): tr(value, _lang),
                            key='capacity_component')
     sliced=caps[caps.component==component]
-    # Availability gets the full dashboard width; country-level detail follows below.
-    st.markdown(capacity_rows_html(sliced,'Capacity availability',variant='full'),
-                unsafe_allow_html=True)
-    st.markdown('<div class="mini-title">'+esc(T('Countries reporting each capacity'))+'</div>',
-                unsafe_allow_html=True)
-    chosen=st.selectbox(T('Choose capacity'),list(sliced.capacity),
-                        format_func=lambda value, _lang=chosen_language(): tr(value, _lang),
-                        key='capacity_country_view')
-    item=sliced[sliced.capacity==chosen].iloc[0]
-    positive=next((valid for label,col,valid in CAPACITIES[component] if label==chosen),())
-    rows=[]
-    for _,r in active.sort_values('country').iterrows():
-        rows.append((r.country,country_capacity(r,int(item['col']),positive)))
-    st.markdown(countries_capacity_grid(rows),unsafe_allow_html=True)
+    # Each full-width bar expands its country breakdown in place when clicked.
+    st.markdown(capacity_drilldown_html(sliced,active,component),unsafe_allow_html=True)
     note('Colombia is counted once at regional level when at least one institution reports an in-place capacity.')
     st.divider()
     section('Information systems and surge workforce','Key capacities for technical cooperation.')
