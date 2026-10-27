@@ -126,7 +126,7 @@ ES = {
     'Expertise countries can share':'Capacidades que los países pueden compartir',
     'Technical expertise reported for cooperation.':'Capacidades técnicas reportadas para cooperación.',
     '02 / CAPACITIES OFFERED':'02 / CAPACIDADES OFRECIDAS',
-    'How countries can cooperate':'Modalidades de cooperación entre países',
+    'How can countries cooperate?':'¿Cómo pueden cooperar los países?',
     'Reported modalities of technical collaboration.':'Modalidades reportadas de colaboración técnica.',
     '03 / MODALITIES':'03 / MODALIDADES',
     'The cooperation and network questions were completed by fewer countries. Each indicator uses the number of valid responses to that specific question.':
