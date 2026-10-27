@@ -569,11 +569,11 @@ def capacity_chart(indicator, counts, chart_kind):
             customdata=[[labels[i],values[i]] for i in order],
             text=[f'{pct[i]:.0f}%' for i in order],textposition='outside',
             hovertemplate='<b>%{customdata[0]}</b><br>%{x:.0f}% (%{customdata[1]}/'+str(total)+')<extra></extra>'))
-        fig.update_xaxes(range=[0,115],visible=False,fixedrange=True)
+        fig.update_xaxes(range=[0,110],tickvals=[0,25,50,75,100],ticksuffix='%',showticklabels=True,showgrid=True,gridcolor='#EAF0F4',zeroline=False,fixedrange=True,tickfont_size=10)
         fig.update_yaxes(automargin=True,fixedrange=True,tickfont_size=10)
         fig.update_layout(showlegend=False)
     fig.update_layout(
-        height=250,margin=dict(l=8,r=12,t=14,b=50 if chart_kind=='donut' else 12),
+        height=250,margin=dict(l=8,r=12,t=14,b=50 if chart_kind=='donut' else 33),
         paper_bgcolor='white',plot_bgcolor='white',
         font=dict(family='Arial, sans-serif',color='#17324D',size=11),
         hoverlabel=dict(bgcolor='white',font_size=11),
@@ -599,10 +599,10 @@ def capacity_visual_dashboard(frame, active):
             hovertemplate='<b>%{customdata[0]}</b><br>%{x:.0f}% (%{customdata[1]}/%{customdata[2]})<extra></extra>'))
         fig.update_layout(
             height=max(275,len(valid)*35+50),
-            margin=dict(l=10,r=44,t=14,b=12),paper_bgcolor='white',
+            margin=dict(l=10,r=44,t=14,b=36),paper_bgcolor='white',
             plot_bgcolor='white',font=dict(family='Arial, sans-serif',size=11,color='#17324D'),
             hoverlabel=dict(bgcolor='white',font_size=11))
-        fig.update_xaxes(range=[0,110],visible=False,fixedrange=True)
+        fig.update_xaxes(range=[0,105],tickvals=[0,25,50,75,100],ticksuffix='%',showticklabels=True,showgrid=True,gridcolor='#EAF0F4',zeroline=False,fixedrange=True,tickfont_size=10)
         fig.update_yaxes(automargin=True,fixedrange=True,tickfont_size=10)
         st.markdown('<div class="eoc-capacity-section-title">'+T('Capacity availability')+'</div>',unsafe_allow_html=True)
         st.plotly_chart(fig,use_container_width=True,config={'displayModeBar':False})
