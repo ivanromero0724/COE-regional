@@ -116,3 +116,42 @@ def test_overview_has_two_aligned_regional_treemaps():
     assert ".eoc-overview-treemap-card{" in APP
     assert ".card-panel.eoc-pair-capacities.eoc-priority-card" not in APP
     assert "PRELIMINARY · Self-reported capacities" not in APP
+
+
+def test_full_bleed_map_wrapper_and_evenly_spaced_operating_groups():
+    """No nested Streamlit padding; the right-hand summary uses all card height."""
+    from app import distribution_html
+    records,_=load_data()
+    countries=country_aggregate(records)
+    source=APP
+    frame=source.split('.st-key-eoc_coverage_map_panel{',1)[1].split('}',1)[0]
+    assert 'height:602px;' in frame
+    assert 'border:1px solid #DFE9F1!important;' in frame
+    for wrapper in ('stVerticalBlockBorderWrapper','stVerticalBlock',
+                    'stElementContainer','stPlotlyChart'):
+        assert '[data-testid="'+wrapper+'"]' in source.split(
+            '/* Full-bleed map:',1
+        )[1].split('[data-testid="stMetric"]',1)[0]
+    block=source.split('/* Full-bleed map:',1)[1].split(
+        '[data-testid="stMetric"]',1
+    )[0]
+    assert 'padding:0!important;' in block
+    assert 'margin:0!important;' in block
+    assert 'gap:0!important;' in block
+
+    card=source.split('.card-panel.eoc-pair-overview.eoc-operations-card{',1)[1].split('}',1)[0]
+    assert 'height:602px;' in card
+    assert 'display:grid;' in card
+    assert 'grid-template-rows:minmax(0,1fr) minmax(0,1fr);' in card
+    assert '.eoc-operations-rows{display:flex;flex-direction:column;justify-content:space-around;flex:1;' in source
+    assert '.eoc-operations-card:has(.eoc-capacity-disclosure[open]){display:block;}' in source
+
+    modes=['24/7 continuous','Response + monitoring',
+           'Response only','Not formally defined','Not reported']
+    section=distribution_html(countries.operating_mode,'Operating mode',
+                              modes,'#005A8B',countries,'operating_mode')
+    assert section.count('class="eoc-operations-group"')==1
+    assert section.count('class="eoc-operations-rows"')==1
+    assert section.count('class="eoc-capacity-disclosure"')==4
+    assert '40% (6/15)' in section
+    assert '33% (5/15)' in section
