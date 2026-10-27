@@ -280,8 +280,8 @@ def ui_style():
     .eoc-network-matrix th:first-child{text-align:left;width:28%;}
     .eoc-network-matrix td{padding:0;vertical-align:middle;
         border-bottom:1px solid #EBF0F4;}
-    .eoc-network-matrix tbody tr:last-child td,
-    .eoc-network-matrix tbody tr:last-child th{border-bottom:0;}
+    /* Keep the bottom separator on the final country (Saint Lucia),
+       matching every other matrix row. */
     .eoc-network-matrix .eoc-network-country{
         font-size:.81rem;font-weight:700;color:#29485F;
         padding:8px 10px;background:#FFFFFF;text-align:left;

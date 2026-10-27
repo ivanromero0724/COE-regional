@@ -166,3 +166,18 @@ def test_network_heatmap_icon_legend_matches_cells_and_no_heavy_status_fills():
                 status='Not reported'
             assert parsed.cells[index*len(NETWORK_NAMES)+j]==(status,symbols[status])
     assert all('background:' not in piece for piece in re.findall(r'<span class="eoc-network-heat-cell"[^>]*>',html))
+
+
+def test_network_matrix_keeps_bottom_border_after_last_country():
+    """The last country row must keep the same subtle divider as the other rows."""
+    app=(ROOT/'app.py').read_text(encoding='utf-8')
+    styles=app.split('.eoc-network-matrix{',1)[1].split('.eoc-network-heat-cell{',1)[0]
+    assert '.eoc-network-matrix td{padding:0;vertical-align:middle;' in styles
+    assert 'border-bottom:1px solid #EBF0F4;' in styles
+    assert '.eoc-network-matrix .eoc-network-country{' in styles
+    assert 'tr:last-child td' not in styles
+    assert 'tr:last-child th' not in styles
+    countries=survey_countries()
+    html=ui.network_heatmap_html(countries)
+    assert 'Saint Lucia' in html
+    assert html.count('class="eoc-network-country"')==len(countries)
