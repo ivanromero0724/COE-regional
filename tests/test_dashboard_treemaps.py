@@ -150,7 +150,7 @@ def test_capacity_plotly_treemap_uses_same_palette_and_contrasting_text():
             continue
         fig=capacity_chart(item,counts,'treemap')
         colors=list(fig.data[0].marker.colors)
-        assert colors==list(TREEMAP_COLORS[:len(colors)])
+        assert colors==[TREEMAP_COLORS[i%len(TREEMAP_COLORS)] for i in range(len(colors))]
         assert list(fig.data[0].textfont.color)==[
             treemap_text_color(color) for color in colors
         ]
