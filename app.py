@@ -1104,7 +1104,7 @@ def country_profile(records,countries):
         ('Improvement areas (original language)','improve','Areas for improvement')
     ):
         value=narrative_for_display(r.record_id,kind,r[source],chosen_language())
-        safe_body=re.sub(r'\\*\\*(.+?)\\*\\*',r'<strong>\\1</strong>',esc(value),flags=re.S)
+        safe_body=re.sub(r'\*\*(.+?)\*\*',r'<strong>\1</strong>',esc(value),flags=re.S)
         narrative_cards.append(
             '<div class="eoc-country-experience-card">'
             +'<div class="eoc-country-experience-title">'+esc(T(title))+'</div>'
