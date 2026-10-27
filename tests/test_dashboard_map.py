@@ -20,3 +20,20 @@ def test_americas_map_contains_country_polygons():
         mapped = {str(code) for trace in fig_data["data"] for code in trace["locations"]}
         assert set(countries["iso3"]).issubset(mapped)
         assert fig_data["layout"]["map"]["style"] == "white-bg"
+
+
+def test_regional_map_has_fixed_extent_without_pan_or_zoom():
+    """The map stays fixed while Plotly country tooltips remain enabled."""
+    from pathlib import Path
+    records,_=load_data()
+    fig=countries_map(country_aggregate(records))
+    assert fig.layout.dragmode is False
+    assert fig.layout.map.center.lat==-11
+    assert fig.layout.map.center.lon==-79
+    assert fig.layout.map.zoom==1.55
+    source=(Path(__file__).resolve().parents[1]/'app.py').read_text(encoding='utf-8')
+    scope=source.split('def coverage_map(country,selected):',1)[1].split('def regional_overview(',1)[0]
+    assert "'scrollZoom':False" in scope
+    assert "'doubleClick':False" in scope
+    assert "'displayModeBar':False" in scope
+    assert "'staticPlot':False" in scope

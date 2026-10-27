@@ -94,11 +94,6 @@ def overview_treemap_html(frame,mode='available',lang='en'):
             '<span class="eoc-overview-treemap-metric">'
             +pct+' <small>('+rate+')</small></span></div></div>'
         )
-    caption=('Tile area reflects the share of valid responses reporting a capacity in place.'
-             if mode=='available'
-             else 'Tile area reflects the share of valid responses without a fully established capacity.')
     return ('<div class="eoc-overview-treemap-card">'
             '<div class="eoc-overview-treemap-plot" role="group" aria-label="'
-            +escape(kind,quote=True)+'">'+''.join(elements)+'</div>'
-            '<div class="eoc-overview-treemap-caption">'+escape(tr(caption,lang))+
-            '</div></div>')
+            +escape(kind,quote=True)+'">'+''.join(elements)+'</div></div>')

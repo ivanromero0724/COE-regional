@@ -170,10 +170,6 @@ def ui_style():
         color:white;font-size:1.35rem;line-height:1.05;font-weight:800;white-space:nowrap;
     }
     .eoc-overview-treemap-metric small{font-size:.73rem;line-height:1.2;font-weight:650;}
-    .eoc-overview-treemap-caption{
-        font-size:.71rem;color:#607B8A;line-height:1.35;
-        margin:8px 4px 0;min-height:2.1em;
-    }
     @media(max-width:950px){
         .eoc-overview-treemap-plot{height:325px;}
         .eoc-overview-treemap-face{padding:8px;}
@@ -590,7 +586,13 @@ def coverage_map(country,selected):
     else:
         # The card's CSS controls its own outline (no extra Streamlit border).
         with st.container(border=False, key='eoc_coverage_map_panel'):
-            st.plotly_chart(fig, width='stretch', config={'displayModeBar':False})
+            # Keep the Americas at the designed extent: no drag, wheel zoom or
+            # double-click zoom. Country hover labels remain available.
+            st.plotly_chart(
+                fig, width='stretch',
+                config={'displayModeBar':False, 'scrollZoom':False,
+                        'doubleClick':False, 'staticPlot':False},
+            )
 
 
 def regional_overview(country,active):
@@ -639,7 +641,7 @@ def regional_overview(country,active):
                     unsafe_allow_html=True)
     with right:
         section('Priority capacity gaps',
-                'Share without each fully established capacity, among valid responses.',
+                'Countries where each capacity is not yet fully established.',
                 eyebrow='04 / COOPERATION PRIORITIES',paired=True)
         st.markdown(overview_treemap_html(pd.DataFrame(gap_rows),'gap',lang=chosen_language()),
                     unsafe_allow_html=True)

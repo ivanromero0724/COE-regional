@@ -65,6 +65,13 @@ jobs:
           assert all('eoc-country-capacity-item' not in x for x in treemaps), (
               'Overview must summarize regional percentages without country drilldowns'
           )
+          assert all('eoc-overview-treemap-caption' not in x for x in treemaps), (
+              'The two treemap captions must be removed'
+          )
+          assert any('Países donde cada capacidad aún no está plenamente establecida.' in x.value
+                     for x in app.markdown), (
+              'The Spanish overview gaps description should be easy to understand'
+          )
           section.set_value('Capacities & gaps').run(timeout=90)
           assert not app.exception, [e.message for e in app.exception]
           html = next(

@@ -37,14 +37,10 @@ ES = {
     'Activation after formal decision':'Tiempo de activación tras la decisión formal',
     'Most widely reported capacities':'Capacidades más reportadas',
     'Countries reporting an established or functional capacity.':'Países con capacidades establecidas o funcionales.',
-    'Share without each fully established capacity, among valid responses.':
-        'Proporción sin cada capacidad plenamente establecida, entre respuestas válidas.',
+    'Countries where each capacity is not yet fully established.':
+        'Países donde cada capacidad aún no está plenamente establecida.',
     'Available among valid responses':'Disponible entre respuestas válidas',
     'Not fully in place among valid responses':'No plenamente establecida entre respuestas válidas',
-    'Tile area reflects the share of valid responses reporting a capacity in place.':
-        'El área de cada bloque representa la proporción de respuestas válidas que reporta la capacidad disponible.',
-    'Tile area reflects the share of valid responses without a fully established capacity.':
-        'El área de cada bloque representa la proporción de respuestas válidas sin la capacidad plenamente establecida.',
     '03 / REPORTED CAPACITIES':'03 / CAPACIDADES REPORTADAS',
     'Priority capacity gaps':'Brechas prioritarias de capacidad',
     'Countries with the following capacities fully in place.':'Países que cuentan plenamente con estas capacidades.',

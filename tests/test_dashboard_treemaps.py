@@ -67,8 +67,9 @@ def test_regional_treemaps_show_all_seven_strengths_and_five_gaps_bilingually():
                 expected=f'{100*n/d:.0f}% ({n}/{d})'
                 assert expected in html
                 assert escape(tr(row.capacity,lang)) in html
-            assert ('share of valid responses' in html.lower()
-                    if lang=='en' else 'proporción de respuestas válidas' in html.lower())
+            assert 'eoc-overview-treemap-caption' not in html
+            assert 'Tile area reflects' not in html
+            assert 'El área de cada bloque' not in html
 
 
 def test_gap_percentage_is_inverse_of_implementation_percentage():
@@ -123,3 +124,14 @@ def test_invalid_counts_are_rejected_instead_of_misrepresented():
         layout_treemap([{'label':'Invalid','numerator':7,'denominator':4}])
     with pytest.raises(ValueError):
         overview_treemap_html(pd.DataFrame([{'capacity':'A','in_place':1,'denominator':2}]),'other')
+
+
+def test_regional_gap_description_is_clear_in_both_languages():
+    from pathlib import Path
+    app=(Path(__file__).resolve().parents[1]/'app.py').read_text(encoding='utf-8')
+    assert "'Countries where each capacity is not yet fully established.'" in app
+    assert "Share without each fully established capacity, among valid responses." not in app
+    assert tr('Countries where each capacity is not yet fully established.','es') == (
+        'Países donde cada capacidad aún no está plenamente establecida.'
+    )
+    assert '.eoc-overview-treemap-caption{' not in app
