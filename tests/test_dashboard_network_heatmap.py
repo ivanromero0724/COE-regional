@@ -64,8 +64,9 @@ def test_network_cards_are_static_and_country_status_is_separate_heatmap():
     assert 'eoc-network-legend' in network
     for status in NETWORK_STATUS_CODES:
         assert status in network
-    # Other capacity indicators retain their own disclosures.
-    assert "capacity_rows_html(ranked,pair='cooperation',country=active)" in network
+    # Expertise and modalities are regional treemaps, not country drilldowns.
+    assert network.count('cooperation_treemap_html(ranked,lang=chosen_language()')==2
+    assert "capacity_rows_html(ranked,pair='cooperation',country=active)" not in network
 
 
 def test_heatmap_legend_statuses_are_translated():
