@@ -460,7 +460,7 @@ def logo_header(c):
 def header(c, country, row, page_idx, total, response_number, responses_in_country):
     logo_header(c)
     # Draw the emoji national flag directly, with NO surrounding grey frame.
-    c.drawImage(flag(country), 40, PAGE_H-104-33, width=55, height=33,
+    c.drawImage(flag(country), 40, PAGE_H-99-32, width=55, height=32,
                 mask='auto')
     text(c, country, 107, 95, 24.5, BLUE, True)
     if responses_in_country > 1:
@@ -476,82 +476,122 @@ def header(c, country, row, page_idx, total, response_number, responses_in_count
 
 
 def metric(c, x, top, w, primary, label):
-    """Compact, consistently spaced KPI tiles with a gentle pill-like style."""
-    rect(c, x, top, w, 49, '#F7FBFD', r=8, stroke='#CFDFE8', lw=.7)
-    rect(c, x+9, top+10, 5, 5, BRIGHT, r=2.5)
-    text(c, label.upper(), x+20, top+8, 5.35, MUTED, True)
-    if len(primary) <= 5:
-        font_size=11.0
-    elif len(primary) <= 15:
-        font_size=8.8
-    else:
-        font_size=7.15
-    paragraph(c, primary, x+9, top+23, w-17, size=font_size,
-              color=BLUE, bold=True, maxheight=23)
+    """Restore the original understated top KPI cards preferred for the report."""
+    rect(c, x, top, w, 45, PALE2, r=5)
+    rect(c, x, top, 3, 45, BRIGHT, r=1)
+    paragraph(c, primary, x+9, top+7, w-16,
+              size=9.2 if len(primary)<22 else 7.1, bold=True, maxheight=21)
+    paragraph(c, label, x+9, top+29, w-13,
+              size=5.55, color=MUTED, leading=7, maxheight=13)
 
-def badge(c,s,x,top,width,active):
-    rect(c,x,top,width,17,PALE if active else '#F3F5F6',r=7)
-    label=('● ' if active else '○ ')+s
-    paragraph(c,label,x+6,top+4,width-11,size=6.0,color=BLUE if active else '#8297A7',maxheight=10)
 
-def cap_bars(c,row,x,top,width):
-    heading(c,'Capability snapshot',x,top,width)
-    right(c,'0–100  ·  SURVEY-DERIVED',x+width,top,5.2,MUTED)
-    yy=top+22
+def section_panel(c, x, top, width, height, title):
+    """Same border, padding and heading grid for all five capability panels."""
+    rect(c, x, top, width, height, '#FBFDFE', r=8, stroke='#D4E4EE', lw=.8)
+    heading(c, title, x+10, top+10, width-20)
+
+
+def badge(c, s, x, top, width, active):
+    rect(c, x, top, width, 16, PALE if active else '#F1F4F6', r=7)
+    mark='●' if active else '○'
+    text(c, mark, x+5, top+4, 5.5, BLUE if active else '#8C9DAC')
+    paragraph(c,s,x+14,top+3,width-18,size=5.15,
+              color=BLUE if active else '#8496A4',maxheight=10)
+
+
+def cap_bars(c, row, x, top, width):
+    section_panel(c, x, top, width, 141, 'Capability snapshot')
+    yy=top+31
     for lab,v,n,total in scores(row):
-        text(c,lab,x,yy+2,7,MUTED)
-        trackx=x+171;trackw=width-198
-        rect(c,trackx,yy,trackw,10,'#E5EEF4',r=5)
+        text(c,lab,x+10,yy+1,6.45,MUTED)
+        track_x=x+176
+        track_w=width-207
+        rect(c,track_x,yy,track_w,9,'#E5EEF4',r=4.5)
         if v is not None:
-            rect(c,trackx,yy,max(2,trackw*v/100),10,BLUE if v>=70 else BRIGHT if v>=45 else ORANGE,r=5)
-            right(c,str(v),x+width,yy,7.6,BLUE,True)
-        else:right(c,'—',x+width,yy,7.6,MUTED)
-        yy+=23
-    return yy
+            rect(c,track_x,yy,max(2,track_w*v/100),9,
+                 BLUE if v>=70 else BRIGHT if v>=45 else ORANGE,r=4.5)
+            right(c,str(v),x+width-10,yy,7.8,BLUE,True)
+        else:
+            right(c,'—',x+width-10,yy,7.8,MUTED)
+        yy+=20
+    text(c,'Mean of available scored responses · 0–100 · indicative',
+         x+10,top+128,5.15,MUTED)
+    return top+141
 
-def attribute_table(c,row,x,top,width):
-    heading(c,'Institutional & operational attributes',x,top,width)
+
+def attribute_table(c, row, x, top, width):
+    section_panel(c, x, top, width, 213, 'Institutional & operational attributes')
     pairs=row_items(row)
-    gap=11; w=(width-gap)/2; y0=top+21
-    # Two columns x 10 rows with one consistent 17px row height.
+    gap=12
+    inner=width-20
+    w=(inner-gap)/2
+    y0=top+32
+    # Dense 20-item grid: the attribute and its response occupy DIFFERENT
+    # text lines so neither can collide, even for long response categories.
     for i,(label,value) in enumerate(pairs):
         column=i//10; line=i%10
-        xx=x+column*(w+gap);yy=y0+line*17
-        rule(c,xx,xx+w,yy+15)
+        xx=x+10+column*(w+gap)
+        yy=y0+line*17
+        text(c,label,xx,yy,5.45,MUTED)
         if value in ('No','None','Not used','Health sector only'):
             color=ORANGE
-        elif value in ('Yes','Formal','Systematic','Used','Integrated','Updated','Consolidated','Functional','Formal & regular','High','Interoperable'):
+        elif value in ('Yes','Formal','Systematic','Used','Integrated',
+                       'Updated','Consolidated','Functional',
+                       'Formal & regular','High','Interoperable'):
             color=BLUE
-        else:color=MUTED
-        text(c,label,xx,yy+1,5.45,MUTED)
-        right(c,value[:26],xx+w,yy+1,5.35,color,True)
-    return y0+10*17
+        else:
+            color=MUTED
+        text(c,value[:30],xx,yy+7,5.65,color,True)
+        rule(c,xx,xx+w,yy+16,LINE,.45)
+    return top+213
 
-def side(c,row,x,top,width):
-    heading(c,'Hazards coordinated',x,top,width)
-    yy=top+21
+
+def side(c, row, x, top, width):
+    # Three deliberately separate blocks on the right. The last card ends
+    # exactly level with the two-column institutional attributes on the left.
+    section_panel(c,x,top,width,106,'Hazards coordinated')
+    yy=top+32
     for label,ans in hazards(row):
-        text(c,label,x,yy,6.25,MUTED)
-        right(c,ans,x+width,yy,6.2,BLUE if ans not in ('None','Not reported') else MUTED,True)
+        text(c,label,x+10,yy,5.95,MUTED)
+        right(c,ans,x+width-10,yy,5.75,
+              BLUE if ans not in ('None','Not reported') else MUTED,True)
         yy+=16
-    yy+=5
-    heading(c,'Operational resources',x,yy,width)
-    yy+=22
+
+    resource_top=top+116
+    section_panel(c,x,resource_top,width,112,'Operational resources')
+    resource_labels={
+        'Virtual coordination':'Virtual platform',
+        'Communications':'Comms equipment',
+        'Redundant internet':'Backup internet',
+        'Team workstations':'Workstations',
+    }
+    avail_width=width-20
+    chip_gap=7
+    chip_width=(avail_width-chip_gap)/2
     for j,(label,idx) in enumerate(RESOURCES):
-        c0=j%2; r0=j//2;w=(width-7)/2
-        badge(c,label,x+(w+7)*c0,yy+r0*21,w,selected(row,idx) is True)
-    yy+=93
-    heading(c,'Training',x,yy,width)
-    yy+=22
-    text(c,'Completed  /  priority marked *',x,yy,6,MUTED)
-    yy+=13
-    for label,a,b in TRAININGS:
-        done=selected(row,a);pri=selected(row,b)
-        marker=('●' if done else '○')+('  ★' if pri else '')
-        text(c,marker,x,yy,6.4,ORANGE if pri else BLUE if done else MUTED)
-        text(c,label,x+28,yy,6.25,INK if done or pri else MUTED)
-        yy+=15
-    return yy
+        c0=j%2
+        r0=j//2
+        xx=x+10+c0*(chip_width+chip_gap)
+        yy=resource_top+34+r0*19
+        badge(c,resource_labels.get(label,label),xx,yy,chip_width,
+              selected(row,idx) is True)
+
+    training_top=top+238
+    section_panel(c,x,training_top,width,124,'Training')
+    text(c,'● completed    ★ priority for strengthening',
+         x+10,training_top+28,5.4,MUTED)
+    for j,(label,a,b) in enumerate(TRAININGS):
+        yy=training_top+43+j*9.8
+        done=selected(row,a)
+        priority=selected(row,b)
+        text(c,'●' if done else '○',x+11,yy,6.0,
+             BLUE if done else '#9AADB9')
+        if priority:
+            text(c,'★',x+24,yy,5.9,ORANGE)
+        text(c,label,x+38,yy,5.95,
+             INK if done or priority else MUTED)
+    return training_top+124
+
 
 def draw_bullets(c,arr,x,top,width,color,max_h=76):
     y=top
@@ -565,7 +605,7 @@ def footer(c,country,source_row):
     rule(c,40,572,742,LINE)
     text(c,'SOURCE  PAHO/WHO Regional Survey on Health Emergency Operations Centres (2026)',40,752,6.1,BLUE,True)
     text(c,f'{country} · Source Excel row {source_row} · Self-reported information · Not independently verified',40,763,5.5,MUTED)
-    text(c,'Indicative scores summarize selected survey answers; not an official PAHO assessment or country ranking.',40,774,5.0,MUTED)
+    text(c,'Indicative scores: arithmetic means of item-specific 0–100 rubrics; not an official PAHO assessment or ranking.',40,774,5.0,MUTED)
     right(c,'paho.org',572,753,7,BRIGHT,True)
 
 
@@ -579,8 +619,8 @@ def core_single(c,country,row):
     xs=[40,148,256,364,472]
     for (k,v),x in zip(metrics,xs):metric(c,x,188,100,k,v)
     cap_bars(c,row,40,250,323)
-    attribute_table(c,row,40,405,323)
-    side(c,row,383,250,189)
+    attribute_table(c,row,40,399,323)
+    side(c,row,375,250,197)
     rect(c,40,626,260,102,PALE2,r=7)
     rect(c,312,626,260,102,'#FFF5F0',r=7)
     text(c,'REPORTED STRENGTHS',52,637,7,BLUE,True)
