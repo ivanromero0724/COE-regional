@@ -152,6 +152,7 @@ def create_records(raw:pd.DataFrame)->tuple[pd.DataFrame,pd.DataFrame]:
     if raw.shape[1]<157:raise ValueError('Survey schema has fewer than 157 expected columns.')
     q15_index=question_15_column(raw)
     profiles=[]; survey_rows=[]
+    categorical_cols={c for items in CAPACITIES.values() for _,c,_ in items if c>=0}
     for ix in range(len(raw)):
         r=raw.iloc[ix]
         native=clean(r.iloc[7]); mapping=COUNTRY_LOOKUP.get(native)
@@ -170,6 +171,9 @@ def create_records(raw:pd.DataFrame)->tuple[pd.DataFrame,pd.DataFrame]:
          'staff_24_7':pd.to_numeric(r.iloc[67],errors='coerce'),
          'mapped_workforce': (('actualiza periodicamente' in norm(clean(r.iloc[123]))) if clean(r.iloc[123]) else None),
         }
+        for col in categorical_cols:
+            d[f'ANSWER_{col}']=clean(r.iloc[col])[:350] or None
+        d['ANSWER_-2']=clean(r.iloc[q15_index])[:350] or None
         for col,label in HAZARD_LABELS.items():
             c=code(r,col)
             d[label]=dict(a=0,b=1,c=2,d=3).get(c,np.nan)
@@ -217,6 +221,9 @@ def country_aggregate(df:pd.DataFrame)->pd.DataFrame:
              'operating_mode': next((v for v in ('24/7 continuous','Response + monitoring','Response only','Not formally defined') if v in set(g.operating_mode)), 'Not reported'),
              'activation':next((v for v in ('Under 2 hours','2–6 hours','Over 6 hours','Not defined') if v in set(g.activation)),'Not reported'),
              'formal_document': (any(v == True for v in g.formal_document) if g.formal_document.notna().any() else None)}
+        for col in {c for items in CAPACITIES.values() for _,c,_ in items}:
+            values=[str(v) for v in g[f'ANSWER_{col}'].dropna().unique() if str(v).strip()]
+            row[f'ANSWER_{col}']=' / '.join(values) if values else None
         for label in HAZARD_LABELS.values():
             row[label]=g[label].max(skipna=True)
         for label in RESOURCE_LABELS.values():
@@ -241,6 +248,9 @@ def country_aggregate(df:pd.DataFrame)->pd.DataFrame:
 
 def country_capacity(c:pd.Series,col:int,positive:tuple[str,...])->bool|None:
     """Strict attainment: OR of qualifying institution choices, not score >= 60."""
+    if col==-2:
+        v=c.get('formal_document')
+        return None if pd.isna(v) else bool(v)
     if col in RESOURCE_LABELS:
         v=c.get(RESOURCE_LABELS[col]);return None if pd.isna(v) else bool(v)
     if col==67:
@@ -258,6 +268,7 @@ def country_capacity(c:pd.Series,col:int,positive:tuple[str,...])->bool|None:
 # Partial and developing states do not count. Colombia is an OR of institutions.
 CAPACITIES={
  'Legal authority & governance':[
+   ('Documented formal mandate',-2,('yes',)),
    ('Formal legal framework',29,('d','e')),('Decision-making enabled',32,('d','e')),
    ('Strategic committee established',46,('a',)),('Formal intersectoral coordination',41,('c',)),
    ('High DRM integration',42,('d',)),('Institutionally allocated finance',36,('d','e')),
@@ -274,8 +285,10 @@ CAPACITIES={
    ('Integrated/interoperable platform',107,('d','e')),('Information gaps infrequent',108,('d',)),
  ],
  'Infrastructure & support':[
-   ('Dedicated operations room',55,()),('Virtual coordination space',57,()),
-   ('Backup power generator',60,()),('Redundant internet connection',61,()),
+   ('Dedicated operations room',55,()),('Shared operations room',56,()),
+   ('Virtual coordination space',57,()),('Communications equipment',58,()),
+   ('Display screens',59,()),('Backup power generator',60,()),
+   ('Redundant internet connection',61,()),('Furniture',62,()),
    ('Operational capacity to implement decisions',50,('d','e')),
  ],
  'Human resources & surge':[
