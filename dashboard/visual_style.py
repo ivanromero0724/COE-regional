@@ -22,5 +22,6 @@ WHITE='#FFFFFF'
 # Exact categorical palette already established in Capacities & gaps.
 CAPACITY_COLORS=(NAVY,CYAN,ORANGE,LIGHT_BLUE,GREEN,SLATE,PURPLE)
 
-# Frequency increases from no events (neutral) to >5 events (dark navy).
-HAZARD_COLORS=(SLATE,LIGHT_BLUE,CYAN,NAVY)
+# PAHO frequency scale: no events (neutral), 1–2 (cyan), 3–5 (navy), >5 (orange).
+# Use the same four colors for the donut cards and the country heatmap.
+HAZARD_COLORS=(SLATE,CYAN,NAVY,ORANGE)
