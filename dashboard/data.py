@@ -178,7 +178,7 @@ def country_aggregate(df:pd.DataFrame)->pd.DataFrame:
                            else 'Not established'),
              'operating_mode': next((v for v in ('24/7 continuous','Response + monitoring','Response only','Not formally defined') if v in set(g.operating_mode)), 'Not reported'),
              'activation':next((v for v in ('Under 2 hours','2–6 hours','Over 6 hours','Not defined') if v in set(g.activation)),'Not reported'),
-             'formal_document': (any(v is True for v in g.formal_document) if g.formal_document.notna().any() else None)}
+             'formal_document': (any(v == True for v in g.formal_document) if g.formal_document.notna().any() else None)}
         for label in HAZARD_LABELS.values():
             row[label]=g[label].max(skipna=True)
         for label in RESOURCE_LABELS.values():
