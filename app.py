@@ -86,17 +86,28 @@ def ui_style():
         box-sizing:border-box;
         overflow:hidden;
     }
-    /* Remove Streamlit's extra chart wrapper spacing so the map fills
-       the card right up to its single outline. */
+    /* Full-bleed map: Streamlit can add padding and a gap on nested wrappers
+       even when Plotly itself has zero margins. Remove those IN THE MAP ONLY;
+       keep the single 1px outer border and 12px corner clipping. */
+    .st-key-eoc_coverage_map_panel [data-testid="stVerticalBlockBorderWrapper"],
+    .st-key-eoc_coverage_map_panel [data-testid="stVerticalBlockBorderWrapper"] > div,
+    .st-key-eoc_coverage_map_panel [data-testid="stVerticalBlock"],
+    .st-key-eoc_coverage_map_panel [data-testid="stElementContainer"],
     .st-key-eoc_coverage_map_panel [data-testid="stPlotlyChart"]{
         padding:0!important;
         margin:0!important;
         border:0!important;
         border-radius:0!important;
-    }
-    .st-key-eoc_coverage_map_panel [data-testid="stVerticalBlock"],
-    .st-key-eoc_coverage_map_panel [data-testid="stPlotlyChart"]{
         background:#FFFFFF!important;
+    }
+    .st-key-eoc_coverage_map_panel [data-testid="stVerticalBlock"]{
+        gap:0!important;
+    }
+    .st-key-eoc_coverage_map_panel .js-plotly-plot,
+    .st-key-eoc_coverage_map_panel .plot-container,
+    .st-key-eoc_coverage_map_panel .svg-container{
+        margin:0!important;
+        padding:0!important;
     }
     [data-testid="stMetric"] {background:#FFF;border:1px solid #DFE9F1;border-radius:12px;padding:14px;min-height:112px;}
     [data-testid="stMetricValue"] {color:#005A8B;font-size:1.5rem!important;font-weight:800;overflow-wrap:anywhere;}
@@ -235,9 +246,17 @@ def ui_style():
         background:#FFFFFF;
         overflow-y:auto;
         overflow-x:hidden;
+        display:grid;
+        grid-template-rows:minmax(0,1fr) minmax(0,1fr);
+        gap:14px;
     }
+    /* Give each operational indicator its own share of the card instead of
+       clustering all bars at the top. Expanded country lists stay scrollable. */
+    .eoc-operations-group{display:flex;flex-direction:column;min-width:0;min-height:0;}
+    .eoc-operations-group .mini-title{margin:4px 0 8px;flex-shrink:0;}
+    .eoc-operations-rows{display:flex;flex-direction:column;justify-content:space-around;flex:1;min-height:0;}
+    .eoc-operations-rows>.eoc-capacity-disclosure{flex-shrink:0;}
     .eoc-operations-card .dist-row{min-height:46px;padding:8px 0;}
-    .eoc-operations-card .mini-title{margin:10px 0 7px;}
     /* The map is framed only once by its outer Streamlit container. */
     .st-key-eoc_coverage_map_panel [data-testid="stPlotlyChart"]{
         border:0!important;border-radius:0!important;
@@ -707,7 +726,10 @@ def distribution_html(series,title,ordered,color,active=None,field=None):
         rows=(active.loc[active[field]==label,'country'].tolist()
               if active is not None and field in active.columns else None)
         entries.append(disclosure_bar(label,n,total,rows,color=color,category=True))
-    return f'<div class="mini-title">{esc(T(title))}</div>{"".join(entries)}'
+    return ('<div class="eoc-operations-group">'
+            +f'<div class="mini-title">{esc(T(title))}</div>'
+            +'<div class="eoc-operations-rows">'+''.join(entries)+'</div>'
+            +'</div>')
 
 
 def training_drilldown_html(active):
