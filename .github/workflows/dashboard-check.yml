@@ -101,6 +101,14 @@ jobs:
           assert any('Participación de los países por red' in x.value for x in app.markdown), (
               'Country/network heatmap title must render in Spanish'
           )
+          heatmaps=[x.value for x in app.markdown if 'class="eoc-network-matrix"' in x.value]
+          assert len(heatmaps)==1, 'A full-width HTML heatmap must render without Plotly'
+          assert heatmaps[0].count('class="eoc-network-country"')==15, (
+              'Heatmap must include all fifteen country responses'
+          )
+          assert heatmaps[0].count('class="eoc-network-heat-cell"')==45, (
+              'Heatmap must have three network cells per country'
+          )
           assert any('eoc-country-capacity-item' in x.value for x in app.markdown), (
               'Cooperation skill and modality bars should open country statuses'
           )
