@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
-from dashboard.data import HAZARD_LABELS,TRAINING_LABELS,GPKG
+from dashboard.data import HAZARD_LABELS,TRAINING_LABELS,NETWORK_NAMES,GPKG
 from dashboard.i18n import tr
 
 NAVY='#005A8B'; BLUE='#236192'; CYAN='#009BDA'; ORANGE='#F36B32'
@@ -95,6 +95,66 @@ def hazard_heatmap(frame,lang='en'):
     fig.update_xaxes(title=None,side='top',automargin=True,tickangle=0,
                      tickfont=dict(size=11,color=TEXT),showgrid=False)
     return style(fig,max(410,100+len(countries)*30),dict(l=12,r=12,t=54,b=30))
+
+
+
+NETWORK_STATUS_CODES={'Not reported':0,'Not participating':1,'Interested':2,'Participating':3}
+NETWORK_STATUS_COLORS={
+    'Participating':NAVY,
+    'Interested':CYAN,
+    'Not participating':ORANGE,
+    'Not reported':'#E7EDF2',
+}
+
+
+def network_participation_heatmap(frame,lang='en'):
+    """Country x network status matrix; categorical (not a numerical score).
+
+    Include every responding country, even when none of its network questions
+    have a valid response. Cells show a symbol as well as a color and hover text.
+    """
+    names=list(NETWORK_NAMES.values())
+    missing=[name for name in ['country']+names if name not in frame.columns]
+    if missing:
+        raise ValueError(f'Missing network matrix columns: {missing}')
+    ordered=frame.sort_values('country').reset_index(drop=True)
+    if ordered.empty:
+        return go.Figure()
+    countries=[tr(name,lang) for name in ordered.country]
+    columns=[tr(name,lang) for name in names]
+    raw=ordered[names].fillna('Not reported')
+    statuses=raw.apply(lambda col: col.map(
+        lambda x: x if x in NETWORK_STATUS_CODES else 'Not reported'))
+    z=statuses.replace(NETWORK_STATUS_CODES).to_numpy(dtype=int)
+    translated=statuses.apply(lambda col: col.map(lambda x: tr(x,lang)))
+    customdata=translated.to_numpy()
+    discrete=['#E7EDF2',ORANGE,CYAN,NAVY]
+    scale=[]
+    for index,color in enumerate(discrete):
+        scale.extend([[index/4,color],[(index+1)/4,color]])
+    fig=go.Figure(go.Heatmap(
+        z=z,x=columns,y=countries,zmin=-0.5,zmax=3.5,
+        colorscale=scale,showscale=False,xgap=7,ygap=5,
+        customdata=customdata,
+        hovertemplate='<b>%{y} · %{x}</b><br>%{customdata}<extra></extra>'
+    ))
+    glyphs={0:'—',1:'×',2:'◐',3:'✓'}
+    for row,country in enumerate(countries):
+        for col,network in enumerate(columns):
+            status=int(z[row,col])
+            fig.add_annotation(
+                x=network,y=country,text=glyphs[status],showarrow=False,
+                font=dict(family='Arial,sans-serif',size=15,
+                          color=('#526A7B' if status==0 else '#FFFFFF'))
+            )
+    fig.update_yaxes(autorange='reversed',automargin=True,title=None,
+                     showgrid=False,tickfont=dict(size=12,color=TEXT))
+    fig.update_xaxes(side='top',automargin=True,title=None,showgrid=False,
+                     tickfont=dict(size=12,color=NAVY))
+    fig=style(fig,max(480,len(countries)*32+80),
+              dict(l=8,r=18,t=48,b=24))
+    fig.update_layout(paper_bgcolor='#FFFFFF',plot_bgcolor='#FFFFFF')
+    return fig
 
 
 @lru_cache(maxsize=1)
