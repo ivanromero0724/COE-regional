@@ -542,8 +542,8 @@ def regional_overview(country,active):
         times=['Under 2 hours','2–6 hours','Over 6 hours','Not defined','Not reported']
         # Single bordered HTML card: no nested Streamlit frame/white overlay.
         st.markdown('<div class="card-panel eoc-pair-overview eoc-operations-card">'+
-                    distribution_html(active.operating_mode,'Operating mode',modes,BLUE)+
-                    distribution_html(active.activation,'Activation after formal decision',times,CYAN)+
+                    distribution_html(active.operating_mode,'Operating mode',modes,BLUE,active,'operating_mode')+
+                    distribution_html(active.activation,'Activation after formal decision',times,CYAN,active,'activation')+
                     '</div>',unsafe_allow_html=True)
     st.divider()
     left,right=st.columns(2,gap='large')
@@ -553,7 +553,7 @@ def regional_overview(country,active):
         ranked=capacity_table(active)
         ranked=ranked[ranked.component.isin(CAPACITIES)]
         ranked=ranked[ranked.denominator>0].sort_values(['in_place','capacity'],ascending=[False,True]).head(7)
-        st.markdown(capacity_rows_html(ranked,pair='capacities'),unsafe_allow_html=True)
+        st.markdown(capacity_rows_html(ranked,pair='capacities',country=active),unsafe_allow_html=True)
     with right:
         section('Priority capacity gaps','Countries with the following capacities fully in place.',eyebrow='04 / COOPERATION PRIORITIES',paired=True)
         priorities=[('Sustainable financing',36,('d','e')),
@@ -565,8 +565,9 @@ def regional_overview(country,active):
         for label,col,positive in priorities:
             vals=[country_capacity(row,col,positive) for _,row in active.iterrows()]
             figures.append({'capacity':label,'in_place':sum(v is True for v in vals),
-                            'denominator':sum(v is not None for v in vals)})
-        st.markdown(capacity_rows_html(pd.DataFrame(figures),pair='capacities',variant='priority'),unsafe_allow_html=True)
+                            'denominator':sum(v is not None for v in vals),
+                             'col':col,'positive':positive})
+        st.markdown(capacity_rows_html(pd.DataFrame(figures),pair='capacities',variant='priority',country=active),unsafe_allow_html=True)
  
 
 
@@ -586,7 +587,7 @@ def capacity_and_gaps(active):
     section('Information systems and surge workforce','Key capacities for technical cooperation.')
     focus=caps[caps.capacity.isin(['Integrated/interoperable platform','Formal SITREP process',
                        'Updated surge roster','Formal surge procedure','Redundant internet connection','Backup power generator'])]
-    st.markdown(capacity_rows_html(focus),unsafe_allow_html=True)
+    st.markdown(capacity_rows_html(focus,country=active),unsafe_allow_html=True)
 
 def operations_section(active):
     section('Hazards coordinated during the past two years',
@@ -599,18 +600,12 @@ def operations_section(active):
     cards=[]
     for label in RESOURCE_LABELS.values():
         valid=active[label].dropna()
-        cards.append({'capacity':label,'in_place':sum(bool(v) for v in valid),'denominator':len(valid)})
-    st.markdown(capacity_rows_html(pd.DataFrame(cards)),unsafe_allow_html=True)
+        cards.append({'capacity':label,'in_place':sum(bool(v) for v in valid),
+                      'denominator':len(valid),'status_col':label})
+    st.markdown(capacity_rows_html(pd.DataFrame(cards),country=active),unsafe_allow_html=True)
     st.divider()
     section('Training completed and prioritized','Each country counted once per course.',eyebrow='03 / WORKFORCE DEVELOPMENT')
-    training=[]
-    for course in TRAINING_LABELS:
-        done=active['Completed: '+course].dropna()
-        priority=active['Priority: '+course].dropna()
-        training.append({'area':course, 'done_n':sum(bool(v) for v in done), 'done_d':len(done),
-                         'priority_n':sum(bool(v) for v in priority), 'priority_d':len(priority)})
-    st.plotly_chart(viz.training_comparison(pd.DataFrame(training),lang=chosen_language()),
-                    use_container_width=True,config={'displayModeBar':False})
+    st.markdown(training_drilldown_html(active),unsafe_allow_html=True)
 
 
 
@@ -656,18 +651,20 @@ def cooperation_section(active):
         entries=[]
         for name in COOPERATION_SKILLS.values():
             answered=active['Skill: '+name].dropna()
-            entries.append({'capacity':name,'in_place':sum(bool(x) for x in answered),'denominator':len(answered)})
+            entries.append({'capacity':name,'in_place':sum(bool(x) for x in answered),
+                            'denominator':len(answered),'status_col':'Skill: '+name})
         ranked=pd.DataFrame(entries).sort_values('in_place',ascending=False).head(9)
-        st.markdown(capacity_rows_html(ranked,pair='cooperation'),unsafe_allow_html=True)
+        st.markdown(capacity_rows_html(ranked,pair='cooperation',country=active),unsafe_allow_html=True)
     with b:
         section('How countries can cooperate','Reported modalities of technical collaboration.',
                 eyebrow='03 / MODALITIES',paired=True)
         entries=[]
         for name in COOPERATION_MODES.values():
             answered=active['Mode: '+name].dropna()
-            entries.append({'capacity':name,'in_place':sum(bool(x) for x in answered),'denominator':len(answered)})
+            entries.append({'capacity':name,'in_place':sum(bool(x) for x in answered),
+                            'denominator':len(answered),'status_col':'Mode: '+name})
         ranked=pd.DataFrame(entries).sort_values('in_place',ascending=False)
-        st.markdown(capacity_rows_html(ranked,pair='cooperation'),unsafe_allow_html=True)
+        st.markdown(capacity_rows_html(ranked,pair='cooperation',country=active),unsafe_allow_html=True)
     st.markdown('<div class="eoc-note">'+esc(T('The cooperation and network questions were completed by fewer countries. Each indicator uses the number of valid responses to that specific question.'))+'</div>',unsafe_allow_html=True)
 
 
