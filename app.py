@@ -86,7 +86,7 @@ def ui_style():
     .card-panel.eoc-pair-overview{min-height:500px;display:flex;flex-direction:column;justify-content:space-evenly;box-sizing:border-box;}
     .card-panel.eoc-pair-capacities{min-height:435px;display:flex;flex-direction:column;justify-content:space-evenly;box-sizing:border-box;}
     .card-panel.eoc-pair-cooperation{min-height:645px;display:flex;flex-direction:column;justify-content:space-evenly;box-sizing:border-box;}
-    .status-tile-grid.eoc-pair-infrastructure{min-height:390px;grid-template-rows:repeat(4,minmax(0,1fr));box-sizing:border-box;}
+    .status-tile-grid.eoc-pair-infrastructure{min-height:390px;margin:0;grid-template-rows:repeat(4,minmax(0,1fr));box-sizing:border-box;}
     .card-title{font-size:.85rem;font-weight:800;color:#005A8B;margin:0 0 12px;}
     .measure-row{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(65px,1fr) 116px;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #EDF2F6;min-height:38px;}
     .measure-row:last-child{border-bottom:0;}
