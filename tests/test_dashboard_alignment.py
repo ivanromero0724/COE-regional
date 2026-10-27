@@ -75,16 +75,17 @@ def test_operations_no_double_border_or_white_overlay():
     assert "overflow-x:hidden;" in APP
 
 
-def test_overview_capacities_and_gaps_are_full_width_stacked():
+def test_overview_has_two_aligned_regional_treemaps():
     overview=APP.split('def regional_overview(country,active):',1)[1].split('def capacity_and_gaps(active):',1)[0]
     after_map=overview.split("    st.divider()",1)[1]
-    assert "st.columns(" not in after_map
-    assert after_map.index("section('Most widely reported capacities'") < after_map.index("section('Priority capacity gaps'")
-    assert "capacity_rows_html(ranked,variant='full',country=active)" in after_map
-    assert "capacity_rows_html(pd.DataFrame(figures),variant='full',country=active)" in after_map
-    assert "pair='capacities'" not in after_map
-    assert ".card-panel.eoc-pair-capacities{min-height:305px" not in APP
+    assert "left,right=st.columns(2,gap='large')" in after_map
+    assert "section('Most widely reported capacities'" in after_map
+    assert "section('Priority capacity gaps'" in after_map
+    assert "overview_treemap_html(strengths,'available',lang=chosen_language())" in after_map
+    assert "overview_treemap_html(pd.DataFrame(gap_rows),'gap',lang=chosen_language())" in after_map
+    assert "capacity_rows_html(" not in after_map
+    assert "eoc-country-capacity-item" not in after_map
+    assert ".eoc-overview-treemap-plot{position:relative;width:100%;height:354px;}" in APP
+    assert ".eoc-overview-treemap-card{" in APP
     assert ".card-panel.eoc-pair-capacities.eoc-priority-card" not in APP
-    assert ".eoc-capacity-full .eoc-capacity-summary{" in APP
-    assert "In development or informal is not considered fully in place." not in APP
     assert "PRELIMINARY · Self-reported capacities" not in APP
