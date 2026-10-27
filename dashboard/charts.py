@@ -215,4 +215,4 @@ def country_hazards(institution,lang='en'):
     fig.update_xaxes(range=[0,4.8],tickvals=[0,1,2,3],ticktext=['0','1–2','3–5','>5'],
                      showgrid=True,gridcolor='#EAF0F4',title=None,zeroline=False)
     fig.update_yaxes(autorange='reversed',automargin=True,showgrid=False,title=None)
-    return style(fig,310,dict(l=8,r=15,t=20,b=35))
+    return style(fig,390,dict(l=8,r=15,t=20,b=35))
