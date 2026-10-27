@@ -135,3 +135,34 @@ def test_regional_gap_description_is_clear_in_both_languages():
         'Países donde cada capacidad aún no está plenamente establecida.'
     )
     assert '.eoc-overview-treemap-caption{' not in app
+
+
+def test_cooperation_treemaps_rank_actual_country_offers_bilingually():
+    from dashboard.data import COOPERATION_SKILLS, COOPERATION_MODES
+    from dashboard.treemap import cooperation_treemap_html
+    responses,_=load_data()
+    countries=country_aggregate(responses)
+    for kind,items,prefix,limit in [
+        ('expertise',COOPERATION_SKILLS,'Skill: ',9),
+        ('modalities',COOPERATION_MODES,'Mode: ',7),
+    ]:
+        data=[]
+        for name in items.values():
+            valid=countries[prefix+name].dropna()
+            data.append({'capacity':name,'in_place':int((valid==True).sum()),
+                         'denominator':len(valid)})
+        frame=(pd.DataFrame(data).sort_values(['in_place','capacity'],
+                  ascending=[False,True]).head(limit))
+        assert frame.in_place.le(frame.denominator).all()
+        for lang in ('en','es'):
+            html=cooperation_treemap_html(frame,lang=lang,kind=kind)
+            assert html.count('class="eoc-overview-treemap-tile eoc-cooperation-tile"')==limit
+            assert '<details' not in html
+            assert 'eoc-country-capacity-item' not in html
+            for _,row in frame.iterrows():
+                n,d=int(row.in_place),int(row.denominator)
+                assert escape(tr(row.capacity,lang)) in html
+                assert f'{100*n/d:.0f}%' in html if d else '0%' in html
+                assert f'({n}/{d})' in html
+    with pytest.raises(ValueError):
+        cooperation_treemap_html(frame,kind='unrecognized')
