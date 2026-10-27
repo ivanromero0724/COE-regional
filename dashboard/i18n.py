@@ -15,7 +15,7 @@ ES = {
     'EOC-S · Americas':'COE-S · Américas','PAHO/WHO survey 2026':'Encuesta OPS/OMS 2026',
     'Explore':'Explorar', 'Regional overview':'Panorama regional', 'Country profiles':'Perfiles por país',
     'Regional section':'Sección regional','Overview':'Panorama general',
-    'Capacities & gaps':'Capacidades y brechas','Operations & hazards':'Operación y amenazas',
+    'Capacities & gaps':'Capacidades y brechas','Hazards & training':'Amenazas y capacitación',
     'Networks & cooperation':'Redes y cooperación',
     'Geographic area':'Área geográfica','All regions':'Todas las subregiones',
     'Countries (optional)':'Países (opcional)',
@@ -100,6 +100,8 @@ ES = {
     'Formally participates in GHEC':'Participa formalmente en GHEC',
     'Updated deployable workforce mapping':'Mapeo actualizado de personal movilizable',
     # Operations
+    'Hazards reported in the past two years':'Amenazas reportadas en los últimos dos años',
+    'Hazard frequency by country':'Frecuencia de amenazas por país',
     'Hazards coordinated during the past two years':'Amenazas coordinadas durante los últimos dos años',
     'Categories reflect ordinal frequency bands, not exact event counts.':
         'Categorías de frecuencia ordinal, no números exactos de eventos.',
