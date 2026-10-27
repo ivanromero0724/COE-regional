@@ -256,6 +256,11 @@ def ui_style():
     .eoc-operations-group .mini-title{margin:4px 0 8px;flex-shrink:0;}
     .eoc-operations-rows{display:flex;flex-direction:column;justify-content:space-around;flex:1;min-height:0;}
     .eoc-operations-rows>.eoc-capacity-disclosure{flex-shrink:0;}
+    /* An opened drilldown needs natural height: scroll inside the unchanged
+       602px frame instead of overlapping the next group. */
+    .eoc-operations-card:has(.eoc-capacity-disclosure[open]){display:block;}
+    .eoc-operations-card:has(.eoc-capacity-disclosure[open]) .eoc-operations-group{margin-bottom:14px;}
+    .eoc-operations-card:has(.eoc-capacity-disclosure[open]) .eoc-operations-rows{gap:4px;}
     .eoc-operations-card .dist-row{min-height:46px;padding:8px 0;}
     /* The map is framed only once by its outer Streamlit container. */
     .st-key-eoc_coverage_map_panel [data-testid="stPlotlyChart"]{
