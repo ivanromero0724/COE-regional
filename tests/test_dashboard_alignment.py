@@ -21,9 +21,9 @@ def test_comparisons_do_not_stretch_bar_cards():
 
 
 def test_headings_are_compact_and_translate_flexibly():
-    assert ".eoc-pair-heading{min-height:92px" in APP
+    assert ".eoc-pair-heading{min-height:0;margin:0 0 2px" in APP
     assert ".section-desc{font-size:.81rem;line-height:1.46;color:#657A8A;margin-bottom:8px;" in APP
-    assert "@media(max-width:900px){.eoc-pair-heading{min-height:0;}}" in APP
+    assert "@media(max-width:900px){.eoc-pair-heading{margin-bottom:0;}}" in APP
 
 
 def test_map_height_is_proportionate_to_operations_card():
@@ -39,3 +39,17 @@ def test_hazard_chart_and_infrastructure_do_not_force_whitespace():
     fig = charts.country_hazards(records.iloc[0])
     assert fig.layout.height == 340
     assert ".status-tile-grid.eoc-pair-infrastructure{min-height:0" in APP
+
+
+def test_cards_are_compact_and_have_relevant_accessible_icons():
+    assert "justify-content:space-between" not in APP
+    assert 'grid-template-areas:"label icon" "value icon"' in APP
+    assert 'KPI_ICON_PATHS={' in APP
+    assert 'aria-hidden="true"' in APP
+    assert "min-height:117px" in APP
+
+
+def test_map_has_matching_border_and_no_header_spacer():
+    assert "with st.container(border=True, key='eoc_coverage_map_panel')" in APP
+    assert "width='stretch'" in APP
+    assert ".eoc-pair-heading{min-height:0" in APP
