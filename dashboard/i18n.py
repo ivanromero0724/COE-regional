@@ -133,7 +133,7 @@ ES = {
       'Las preguntas de cooperación y redes tienen menos respuestas. Cada indicador utiliza el número de respuestas válidas.',
     # country profile
     'Select a country':'Seleccionar país','Reporting institution':'Institución que responde',
-    'Excel row':'Fila Excel','EOC status':'Estado del COE-S',
+    'Response':'Respuesta','EOC status':'Estado del COE-S',
     'Activation time':'Tiempo de activación','24/7 duty staff':'Personal de turno 24/7',
     'Reported institutional capacities':'Capacidades institucionales reportadas',
     'Answers from this institution grouped by PHEOC core component.':
@@ -154,17 +154,13 @@ ES = {
       'Actividades realizadas el último año y prioridades del siguiente período.',
     '04 / PEOPLE AND TRAINING':'04 / PERSONAS Y CAPACITACIÓN',
     'Reported experience':'Experiencia reportada',
-    'Original-language responses, without machine translation.':
-      'Respuestas en su idioma original, sin traducción automática.',
     '05 / INSTITUTIONAL NOTES':'05 / NOTAS INSTITUCIONALES',
     'Reported strengths':'Fortalezas reportadas','Areas for improvement':'Áreas de mejora',
     'No narrative response provided.':'No se proporcionó respuesta narrativa.',
-    'Recent events / activations · original response':'Eventos recientes / activaciones · respuesta original',
+    'Recent events / activations':'Eventos recientes / activaciones',
     'Technical capabilities and contributions this institution can offer':
       'Capacidades técnicas y contribuciones que puede ofrecer la institución',
     'Expertise:':'Capacidades técnicas:', 'Modalities:':'Modalidades:',
-    'Each institution has its own response. Colombia’s two institutions remain separate.':
-      'Cada institución conserva su respuesta. Las dos instituciones de Colombia permanecen separadas.',
     # common status / modes
     'In place':'Disponible','Partial / absent':'Parcial / ausente','Not reported':'Sin información',
     'Established':'Establecido','Not established':'No establecido',
