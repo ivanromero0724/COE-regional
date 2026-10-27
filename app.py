@@ -132,7 +132,7 @@ def ui_style():
         line-height:1.05;letter-spacing:-.035em;overflow-wrap:anywhere;word-break:normal;
     }
     .kpi .kpi-value.long{font-size:clamp(.95rem,1.15vw,1.16rem);line-height:1.22;letter-spacing:0;}
-    .kpi .kpi-count{font-size:.88rem;font-weight:650;letter-spacing:0;color:#637D90;white-space:nowrap;}
+    .kpi .kpi-count{display:inline-block;margin-left:12px;font-size:.82rem;font-weight:650;letter-spacing:0;color:#637D90;white-space:nowrap;vertical-align:baseline;}
     .kpi-icon{
         grid-area:icon;display:flex;justify-content:center;align-items:center;
         width:34px;height:34px;border-radius:10px;background:#EAF4FA;color:#005A8B;
