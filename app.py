@@ -512,18 +512,28 @@ def capacity_rows_html(frame,title=None,pair=None,variant=None,country=None):
 
 
 def capacity_response_distribution(active, indicator):
-    """One country per answer; preserve original choice wording."""
-    field=f"ANSWER_{int(indicator['col'])}"
+    """Distribute each country's weight across its actual institutional answers.
+
+    For a country with two different replies, each category receives 0.5;
+    two matching replies contribute 1.0 to that category. No invented
+    "Different responses" category, and no double-counted countries.
+    """
+    column=int(indicator['col'])
+    field=f'ANSWER_CHOICES_{column}'
     if field not in active.columns:
-        return pd.Series(dtype=int)
+        return pd.Series(dtype=float)
     counts={}
-    for response in active[field].dropna():
-        label=str(response).strip()  # Retain Excel option code for exact question-specific translation
-        if not label:
+    for answers in active[field]:
+        if not isinstance(answers,(list,tuple)) or not answers:
             continue
-        # Preserve exact response text rather than collapsing intermediate states.
-        counts[label]=counts.get(label,0)+1
-    return pd.Series(counts,dtype=int).sort_values(ascending=False)
+        valid=[str(answer).strip() for answer in answers
+               if answer is not None and str(answer).strip()]
+        if not valid:
+            continue
+        weight=1.0/len(valid)
+        for label in valid:
+            counts[label]=counts.get(label,0.0)+weight
+    return pd.Series(counts,dtype=float).sort_values(ascending=False)
 
 
 def capacity_chart(indicator, counts, chart_kind):
@@ -533,7 +543,7 @@ def capacity_chart(indicator, counts, chart_kind):
     colors=['#005A8B','#009BDA','#F36B32','#75B8D6','#53A567','#8DA9B9','#8C6BB1']
     total=int(counts.sum())
     labels=list(counts.index)
-    values=[int(v) for v in counts.values]
+    values=[float(v) for v in counts.values]
     pct=[100*v/total for v in values]
     def short_label(label,limit=36):
         return textwrap.shorten(' '.join(str(label).split()),width=limit,placeholder='…')
@@ -546,7 +556,7 @@ def capacity_chart(indicator, counts, chart_kind):
                         line=dict(color='white',width=2)),
             textinfo='percent',textposition='inside',
             textfont=dict(size=12,color='white'),
-            hovertemplate='<b>%{customdata}</b><br>%{percent} (%{value}/'+str(total)+')<extra></extra>'))
+            hovertemplate='<b>%{customdata}</b><br>%{percent} (%{value:.1f}/'+str(total)+' country equivalents)<extra></extra>'))
         fig.add_annotation(x=.5,y=.5,
             text='<b>'+str(total)+'</b><br><span style="font-size:11px">'+
                  ('respuestas' if chosen_language()=='es' else 'responses')+'</span>',
@@ -563,7 +573,7 @@ def capacity_chart(indicator, counts, chart_kind):
                         line=dict(color='white',width=2)),
             texttemplate='<b>%{label}</b><br>%{percentRoot:.0%}',
             textposition='top left',textfont=dict(size=12),
-            hovertemplate='<b>%{customdata}</b><br>%{percentRoot:.0%} (%{value}/'+str(total)+')<extra></extra>',
+            hovertemplate='<b>%{customdata}</b><br>%{percentRoot:.0%} (%{value:.1f}/'+str(total)+' country equivalents)<extra></extra>',
             pathbar=dict(visible=False),tiling=dict(pad=4)))
         fig.update_layout(showlegend=False,height=430,
             margin=dict(l=10,r=10,t=14,b=14),
@@ -578,7 +588,7 @@ def capacity_chart(indicator, counts, chart_kind):
             customdata=[[labels[i],values[i]] for i in order],
             text=[f'{pct[i]:.0f}%' for i in order],textposition='outside',
             cliponaxis=False,
-            hovertemplate='<b>%{customdata[0]}</b><br>%{x:.0f}% (%{customdata[1]}/'+str(total)+')<extra></extra>'))
+            hovertemplate='<b>%{customdata[0]}</b><br>%{x:.0f}% (%{customdata[1]:.1f}/'+str(total)+' country equivalents)<extra></extra>'))
         fig.update_xaxes(range=[0,110],tickmode='array',
             tickvals=[0,25,50,75,100],
             ticktext=['0%','25%','50%','75%','100%'],
