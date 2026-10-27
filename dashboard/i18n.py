@@ -53,6 +53,8 @@ ES = {
     '01 / CAPACITY PROFILES':'01 / PERFILES DE CAPACIDADES',
     'Explore a component':'Explorar componente','Capacity availability':'Disponibilidad de capacidades',
     'Countries reporting each capacity':'Países que reportan cada capacidad',
+    'Countries in this category':'Países en esta categoría',
+    'Reported status by country':'Estado reportado por país',
     'Choose capacity':'Elegir capacidad','Country':'País','Reported capacity':'Capacidad reportada',
     'Colombia is counted once at regional level when at least one institution reports an in-place capacity.':
       'Colombia se cuenta una vez en el análisis regional cuando al menos una institución reporta la capacidad disponible.',
