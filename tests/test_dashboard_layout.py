@@ -117,7 +117,7 @@ def test_capacity_bars_expand_countries_in_place():
     app = (ROOT / 'app.py').read_text(encoding='utf-8')
     section = app.split('def capacity_and_gaps(active):', 1)[1].split('def operations_section(active):', 1)[0]
     assert 'st.columns(' not in section
-    assert "capacity_drilldown_html(sliced,active,component)" in section
+    assert "capacity_visual_dashboard(sliced,active)" in section
     assert "key='capacity_country_view'" not in app
     assert "compact_table(['Country','Reported capacity'],rows" not in section
     assert 'def capacity_drilldown_html(frame, active, component):' in app
@@ -188,7 +188,7 @@ def test_regional_capacity_component_is_the_only_regional_capacity_explorer():
     operations=source.split('def operations_section(active):',1)[1].split('NETWORK_STATUS_SYMBOLS=',1)[0]
     assert "key='capacity_component'" in capacities
     assert "list(CAPACITIES.keys())" in capacities
-    assert "capacity_drilldown_html(sliced,active,component)" in capacities
+    assert "capacity_visual_dashboard(sliced,active)" in capacities
     assert "Information systems and surge workforce" not in capacities
     assert "capacity_rows_html(focus,country=active)" not in capacities
     assert "section('Physical infrastructure'" not in operations
