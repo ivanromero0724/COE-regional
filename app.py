@@ -527,6 +527,7 @@ def main():
         st.divider()
         st.caption(f'2026 · {len(country)} {T("countries")} · {len(records)} {T("institutional responses")}')
         st.caption(T('Source: local Excel in `data/` · Updated with GitHub redeploy'))
+        st.caption('UI build · 2026-10-27.2')
     header()
     if view=='Regional overview':
         active=available[available.country.isin(selected)] if selected else available
