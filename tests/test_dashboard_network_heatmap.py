@@ -58,11 +58,11 @@ def test_network_cards_are_static_and_country_status_is_separate_heatmap():
     assert '<div class="network-card">' in network
     assert '<details class="network-card">' not in network
     assert '<summary>' not in network
-    assert "viz.network_participation_heatmap(active,lang=chosen_language())" in network
-    assert network.index("'<div class=\"network-grid\">'") < network.index(
-        "viz.network_participation_heatmap(active,lang=chosen_language())"
+    assert "st.markdown(network_heatmap_html(active),unsafe_allow_html=True)" in network
+    assert "st.plotly_chart(viz.network_participation_heatmap" not in network
+    assert network.index("'<div class=\\\"network-grid\\\">'") < network.index(
+        "network_heatmap_html(active)"
     )
-    assert "width='stretch'" in network
     assert 'eoc-network-legend' in network
     for status in NETWORK_STATUS_CODES:
         assert status in network
@@ -76,3 +76,41 @@ def test_heatmap_legend_statuses_are_translated():
     assert tr('Interested','es') == 'Interesado'
     assert tr('Not participating','es') == 'No participa'
     assert tr('Not reported','es') == 'Sin información'
+
+
+def test_streamlit_network_matrix_renders_all_countries_and_statuses_without_plotly():
+    """Exercise the actual dashboard render path (not just the unused Plotly fig)."""
+    from html.parser import HTMLParser
+
+    class Extract(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.statuses=[]
+            self.headers=[]
+        def handle_starttag(self, tag, attrs):
+            info=dict(attrs)
+            if tag=='span' and 'eoc-network-heat-cell' in info.get('class',''):
+                self.statuses.append(info)
+            if tag=='th':
+                self.headers.append(info)
+
+    countries=survey_countries()
+    for lang in ('en','es'):
+        from dashboard.i18n import set_language
+        set_language(lang)
+        html=ui.network_heatmap_html(countries)
+        parsed=Extract()
+        parsed.feed(html)
+        assert html.count('<tr>')==len(countries)+1
+        assert html.count('class="eoc-network-country"')==len(countries)
+        assert len(parsed.statuses)==len(countries)*len(NETWORK_NAMES)
+        assert len(parsed.headers)==len(countries)+len(NETWORK_NAMES)+1
+        assert 'eoc-network-matrix' in html
+        for country_no,(_,country) in enumerate(countries.iterrows()):
+            for network_no,network in enumerate(NETWORK_NAMES.values()):
+                status=country[network]
+                expected=status if status in NETWORK_STATUS_CODES else 'Not reported'
+                cell=parsed.statuses[country_no*len(NETWORK_NAMES)+network_no]
+                assert cell['data-status']==expected
+                assert tr(expected,lang) in cell['title']
+                assert tr(country.country,lang) in cell['aria-label']
