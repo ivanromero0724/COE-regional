@@ -53,7 +53,8 @@ def test_cards_are_compact_and_have_relevant_accessible_icons():
     # Space-between is allowed on the country-status tiles, not on bar rows.
     assert ".eoc-country-capacity-item{" in APP
     assert ".eoc-country-capacity-item" in APP
-    assert ".card-panel.eoc-pair-capacities.eoc-priority-card{" in APP
+    assert ".eoc-capacity-full .eoc-capacity-summary{" in APP
+    assert ".card-panel.eoc-pair-capacities.eoc-priority-card{" not in APP
     assert 'grid-template-areas:"label icon" "value icon"' in APP
     assert 'KPI_ICON_PATHS={' in APP
     assert 'aria-hidden="true"' in APP
