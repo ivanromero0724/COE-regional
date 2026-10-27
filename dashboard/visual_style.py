@@ -25,3 +25,25 @@ CAPACITY_COLORS=(NAVY,CYAN,ORANGE,LIGHT_BLUE,GREEN,SLATE,PURPLE)
 # PAHO frequency scale: no events (neutral), 1–2 (cyan), 3–5 (navy), >5 (orange).
 # Use the same four colors for the donut cards and the country heatmap.
 HAZARD_COLORS=(SLATE,CYAN,NAVY,ORANGE)
+
+
+# A complete categorical palette for EVERY treemap (Overview, Capacities,
+# cooperation). Area and percentages carry the quantitative meaning; hue is
+# decorative and does not imply that one category performs better than another.
+TREEMAP_COLORS=CAPACITY_COLORS
+TREEMAP_DARK_TEXT='#0E2739'
+
+
+def treemap_text_color(background):
+    """Prefer the higher-contrast of light and dark labels on each PAHO tile."""
+    def luminance(color):
+        raw=color.lstrip('#')
+        channels=[int(raw[i:i+2],16)/255 for i in (0,2,4)]
+        channels=[v/12.92 if v<=0.04045 else ((v+0.055)/1.055)**2.4
+                  for v in channels]
+        return sum(v*weight for v,weight in zip(channels,(0.2126,0.7152,0.0722)))
+    bg=luminance(background)
+    dark=luminance(TREEMAP_DARK_TEXT)
+    white_contrast=1.05/(bg+0.05)
+    dark_contrast=(max(bg,dark)+0.05)/(min(bg,dark)+0.05)
+    return '#FFFFFF' if white_contrast>=dark_contrast else TREEMAP_DARK_TEXT
