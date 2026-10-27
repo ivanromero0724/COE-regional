@@ -36,3 +36,11 @@ def test_streamlit_header_is_opaque_and_fixed():
     assert 'opacity:1!important;' in header_css
     assert 'backdrop-filter:none!important;' in header_css
     assert 'background:rgba(247,250,252,.93)' not in app
+
+
+def test_banner_clears_fixed_streamlit_toolbar():
+    app = (ROOT / 'app.py').read_text(encoding='utf-8')
+    assert 'position:fixed!important;' in app
+    assert 'padding:3.25rem 1.35rem 2.6rem;' in app
+    assert 'padding-top:2.75rem;' in app
+    assert 'background:#F7FAFC!important;' in app
