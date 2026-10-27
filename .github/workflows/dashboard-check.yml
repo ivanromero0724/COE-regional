@@ -74,8 +74,17 @@ jobs:
           )
           section.set_value('Capacities & gaps').run(timeout=90)
           assert not app.exception, [e.message for e in app.exception]
-          assert any('Capacidades y brechas por indicador' in x.value for x in app.markdown), (
-              'The indicator-level capacity chart gallery was not rendered'
+          assert any('class="section-title">Capacidades y brechas</div>' in x.value
+                     for x in app.markdown), (
+              'The capacity section should have one clear heading'
+          )
+          assert not any('Capacidades y brechas por indicador' in x.value
+                         or 'Country counts reflect only recognized answers' in x.value
+                         for x in app.markdown), (
+              'Redundant capacity headings and explanatory subtitle must not appear'
+          )
+          assert len(app.get(key='capacity_component').options)>0, (
+              'The component selector should remain usable'
           )
           assert not any('Capacity availability' in x.value or 'Disponibilidad de capacidades' in x.value
                          for x in app.markdown), (
