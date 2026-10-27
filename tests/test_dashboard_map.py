@@ -49,11 +49,12 @@ def test_map_uses_tight_stable_extent_and_vertical_overlay_legend():
     fig=countries_map(countries,selection={countries.iloc[0]['country']},lang='es')
     assert tuple(fig.layout.xaxis.range)==expected_x
     assert tuple(fig.layout.yaxis.range)==expected_y
-    assert fig.layout.xaxis.constrain=='domain'
-    assert fig.layout.yaxis.constrain=='domain'
-    assert fig.layout.yaxis.scaleanchor=='x'
+    # No aspect-ratio letterboxing: both axes occupy the whole plot area.
+    assert tuple(fig.layout.xaxis.domain)==(0,1)
+    assert tuple(fig.layout.yaxis.domain)==(0,1)
+    assert fig.layout.yaxis.scaleanchor is None
     assert fig.layout.height==480
-    assert fig.layout.margin.t<=6 and fig.layout.margin.b<=6
+    assert fig.layout.margin.t==0 and fig.layout.margin.b==0
     assert fig.layout.legend.orientation=='v'
     assert fig.layout.legend.xanchor=='left'
     assert fig.layout.legend.yanchor=='bottom'
@@ -96,7 +97,7 @@ def test_mexico_is_entirely_inside_the_regional_map_viewport():
     # It must not require selecting Mexico or counting it as a survey respondent.
     assert 'MEX' not in set(countries.iso3)
     fig=countries_map(countries)
-    assert fig.layout.margin.t<=6 and fig.layout.margin.b<=6
+    assert fig.layout.margin.t==0 and fig.layout.margin.b==0
     assert fig.layout.legend.orientation=='v'
 
 
@@ -116,3 +117,14 @@ def test_five_overview_kpis_share_one_navy_treatment():
     assert '.kpi-grid:not(.four) .kpi-icon{color:#F36B32;}' in source
     assert 'border-radius:10px;background:#EAF4FA;color:#005A8B;' in source
     assert '.kpi{\n' in source
+
+
+def test_coverage_map_card_has_no_white_frame_padding():
+    source=(Path(__file__).resolve().parents[1]/'app.py').read_text(encoding='utf-8')
+    css=source.split('.st-key-eoc_coverage_map_panel{',1)[1].split('}',1)[0]
+    assert 'padding:0!important;' in css
+    assert 'border:1px solid #DFE9F1!important;' in css
+    assert '[data-testid="stPlotlyChart"]{' in source
+    fig=countries_map(country_aggregate(load_data()[0]))
+    assert fig.layout.margin.l==fig.layout.margin.r==0
+    assert fig.layout.margin.t==fig.layout.margin.b==0
