@@ -132,8 +132,25 @@ def norm_network(v):
 
 
 
+def question_15_column(raw:pd.DataFrame)->int:
+    """Find Q15 from its *question text*, never assume a positional Excel column."""
+    matches=[]
+    for i, header in enumerate(raw.columns):
+        h=norm(clean(header))
+        if ('documento formal' in h and
+            ('coe-s' in h or 'mecanismo equivalente' in h or 'activacion' in h)):
+            matches.append(i)
+    if len(matches)!=1:
+        raise ValueError(
+            f'Expected one question 15 column about a formal EOC-S document, found {matches}. '
+            'Review survey Excel column headers before publishing this indicator.'
+        )
+    return matches[0]
+
+
 def create_records(raw:pd.DataFrame)->tuple[pd.DataFrame,pd.DataFrame]:
     if raw.shape[1]<157:raise ValueError('Survey schema has fewer than 157 expected columns.')
+    q15_index=question_15_column(raw)
     profiles=[]; survey_rows=[]
     for ix in range(len(raw)):
         r=raw.iloc[ix]
@@ -148,7 +165,7 @@ def create_records(raw:pd.DataFrame)->tuple[pd.DataFrame,pd.DataFrame]:
          'eoc_status':eo,'operating_mode':category_or_na(r,27,OPERATING),
          'activation':category_or_na(r,39,ACTIVATION),
          # Survey question 15: formal document describing the EOC-S mandate and procedures.
-         'formal_document': formal_document_answer(r.iloc[28]),
+         'formal_document': formal_document_answer(r.iloc[q15_index]),
          'established':clean(r.iloc[17]) or 'Not reported',
          'staff_24_7':pd.to_numeric(r.iloc[67],errors='coerce'),
          'mapped_workforce': (('actualiza periodicamente' in norm(clean(r.iloc[123]))) if clean(r.iloc[123]) else None),
