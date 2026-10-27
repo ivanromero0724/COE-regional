@@ -75,6 +75,27 @@ def binary(value):
     return None
 
 
+def formal_document_answer(value):
+    """Read question 15 yes/no, supporting both lettered and plain-text Excel choices."""
+    v=norm(clean(value)).strip()
+    if not v:
+        return None
+    choice=letter(value)
+    if choice in ('a','b'):
+        # Question 15 has yes/no alternatives; distinguish via explicit wording.
+        rest=re.sub(r'^[a-z]\\.\\s*','',v).strip()
+        if rest.startswith(('no ', 'no,', 'no.', 'no cuenta', 'no dispone')):
+            return False
+        if rest.startswith(('si ', 'si,', 'si.', 'si cuenta', 'si dispone')):
+            return True
+        return choice=='a'
+    if v in ('si','s','yes','true','1','1.0') or v.startswith(('si,','si.','si ','yes,','yes ')):
+        return True
+    if v in ('no','false','0','0.0') or v.startswith(('no,','no.','no ','not ')):
+        return False
+    return None
+
+
 def public_narrative(value):
     txt=clean(value)[:1400]
     txt=re.sub(r'(?i)\b[\w.+-]+@[\w.-]+\.[a-z]{2,}\b','[email redacted]',txt)
@@ -127,7 +148,7 @@ def create_records(raw:pd.DataFrame)->tuple[pd.DataFrame,pd.DataFrame]:
          'eoc_status':eo,'operating_mode':category_or_na(r,27,OPERATING),
          'activation':category_or_na(r,39,ACTIVATION),
          # Survey question 15: formal document describing the EOC-S mandate and procedures.
-         'formal_document': (True if code(r,28)=='a' else False if code(r,28)=='b' else None),
+         'formal_document': formal_document_answer(r.iloc[28]),
          'established':clean(r.iloc[17]) or 'Not reported',
          'staff_24_7':pd.to_numeric(r.iloc[67],errors='coerce'),
          'mapped_workforce': (('actualiza periodicamente' in norm(clean(r.iloc[123]))) if clean(r.iloc[123]) else None),
