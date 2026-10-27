@@ -10,19 +10,29 @@ import plotly.express as px
 from dashboard.data import HAZARD_LABELS,TRAINING_LABELS,NETWORK_NAMES,GPKG
 from dashboard.i18n import tr
 
-NAVY='#005A8B'; BLUE='#236192'; CYAN='#009BDA'; ORANGE='#F36B32'
-TEXT='#17324D'; MUTED='#597083'; PALE='#EAF3F9'; GRAY='#E5EDF3'
-GREEN='#1D947C'; RED='#D75E52'; GOLD='#E9A33B'
-COLORS=[NAVY,CYAN,'#86BDD9',ORANGE,GOLD]
+from dashboard.visual_style import (
+    FONT_FAMILY, NAVY, CYAN, ORANGE, LIGHT_BLUE, GREEN, SLATE, PURPLE,
+    TEXT, MUTED, BORDER, GRID, AXIS, WHITE, CAPACITY_COLORS, HAZARD_COLORS,
+)
+BLUE=NAVY
+PALE='#EAF3F9'
+GRAY=SLATE
+RED=ORANGE
+GOLD=ORANGE
+COLORS=list(CAPACITY_COLORS)
 
 
 def style(fig,height=340,margin=None):
-    fig.update_layout(height=height,plot_bgcolor='white',paper_bgcolor='rgba(0,0,0,0)',
-         font=dict(family='Arial, sans-serif',size=12,color=TEXT),
-         margin=margin or dict(l=12,r=12,b=28,t=26),
-         hoverlabel=dict(bgcolor='white',font_size=12),
-         legend=dict(orientation='h',yanchor='bottom',y=1.04,x=0,xanchor='left',font_size=11),
-         hovermode='closest')
+    """Plotly base treatment from Capacities: white, PAHO palette and compact type."""
+    fig.update_layout(
+        height=height,plot_bgcolor=WHITE,paper_bgcolor=WHITE,
+        font=dict(family=FONT_FAMILY,size=11,color=TEXT),
+        margin=margin or dict(l=12,r=12,b=36,t=26),
+        hoverlabel=dict(bgcolor=WHITE,font_color=TEXT,font_size=11),
+        legend=dict(orientation='h',yanchor='top',y=-.08,x=0,xanchor='left',
+                    font=dict(size=10,color=TEXT),itemsizing='constant'),
+        hovermode='closest',dragmode=False,
+    )
     return fig
 
 
@@ -43,7 +53,7 @@ def horizontal_bars(data,x='in_place',y='capacity',height=350,divide=False,selec
 
 def operating_chart(frame):
     order=['24/7 continuous','Response + monitoring','Response only','Not formally defined','Not reported']
-    colors=[NAVY,CYAN,'#80BDD8',ORANGE,'#CED7DE']
+    colors=[NAVY,CYAN,LIGHT_BLUE,ORANGE,SLATE]
     vals=[int((frame.operating_mode==s).sum()) for s in order]
     fig=go.Figure(go.Pie(labels=order,values=vals,hole=.68,sort=False,
              marker=dict(colors=colors,line=dict(color='white',width=2)),
@@ -56,7 +66,7 @@ def operating_chart(frame):
 
 def activation_chart(frame):
     order=['Under 2 hours','2–6 hours','Over 6 hours','Not defined','Not reported']
-    colors=[GREEN,CYAN,ORANGE,'#A4B6C4','#CBD5DF']
+    colors=[GREEN,CYAN,ORANGE,SLATE,LIGHT_BLUE]
     vs=[int((frame.activation==x).sum()) for x in order]
     fig=go.Figure()
     for s,v,color in zip(order,vs,colors):
@@ -79,17 +89,21 @@ def hazard_heatmap(frame,lang='en'):
     text=[[tr('Not reported',lang) if pd.isna(v) else ['0','1–2','3–5','>5'][int(v)] for v in row]
           for row in vals]
     z=np.where(np.isnan(vals),0,vals+1)
-    cmap=[[0,'#F0F4F7'],[.249,'#F0F4F7'],[.25,'#E8F4FA'],[.499,'#E8F4FA'],
-          [.5,'#91CAE8'],[.749,'#91CAE8'],[.75,CYAN],[.999,CYAN],[1,NAVY]]
-    fig=go.Figure(go.Heatmap(z=z,x=short,y=countries,zmin=0,zmax=4,
-                  colorscale=cmap,showscale=False,customdata=text,
+    # Discrete colors, exactly matching the four hazard donuts.
+    # z=0 means missing, while 1..4 are the real 0/1-2/3-5/>5 bands.
+    swatches=('#F0F4F7',)+HAZARD_COLORS
+    cmap=[]
+    for index,color in enumerate(swatches):
+        cmap.extend([[index/5,color],[(index+1)/5,color]])
+    fig=go.Figure(go.Heatmap(z=z,x=short,y=countries,
+                  colorscale=cmap,showscale=False,customdata=text,zmin=0,zmax=5,
                   hovertemplate='<b>%{y} · %{x}</b><br>'+('Frecuencia: ' if lang=='es' else 'Frequency: ')+'%{customdata}<extra></extra>',
                   xgap=4,ygap=4))
     for i,name in enumerate(countries):
         for j,label in enumerate(text[i]):
-            color='white' if z[i,j]>=3 else TEXT
+            color='white' if z[i,j]>=4 else TEXT
             fig.add_annotation(x=short[j],y=name,text=label,showarrow=False,
-                               font=dict(family='Arial,sans-serif',size=10,color=color))
+                               font=dict(family=FONT_FAMILY,size=10,color=color))
     fig.update_yaxes(autorange='reversed',title=None,automargin=True,
                      tickfont=dict(size=11,color=TEXT),showgrid=False)
     fig.update_xaxes(title=None,side='top',automargin=True,tickangle=0,
@@ -144,7 +158,7 @@ def network_participation_heatmap(frame,lang='en'):
             status=int(z[row,col])
             fig.add_annotation(
                 x=network,y=country,text=glyphs[status],showarrow=False,
-                font=dict(family='Arial,sans-serif',size=15,
+                font=dict(family=FONT_FAMILY,size=15,
                           color=('#526A7B' if status==0 else '#FFFFFF'))
             )
     fig.update_yaxes(autorange='reversed',automargin=True,title=None,
@@ -347,7 +361,7 @@ def country_training(institution,lang='en'):
         z.append(row);text.append(caption);custom.append(hover)
     cols=[tr('Completed',lang),tr('Prioritized',lang)]
     fig=go.Figure(go.Heatmap(z=z,x=cols,y=labels,zmin=0,zmax=2,showscale=False,
-       colorscale=[[0,'#EEF2F5'],[.249,'#EEF2F5'],[.25,'#FDEBDD'],[.749,'#FDEBDD'],[.75,'#CDEFE7'],[1,'#CDEFE7']],
+       colorscale=[[0,'#F0F4F7'],[.249,'#F0F4F7'],[.25,'#FFF1E9'],[.749,'#FFF1E9'],[.75,'#E8F4FA'],[1,'#E8F4FA']],
        customdata=custom,hovertemplate='%{y} · %{x}<br>%{customdata}<extra></extra>',
        xgap=4,ygap=4))
     for i,label in enumerate(labels):
@@ -370,6 +384,6 @@ def country_hazards(institution,lang='en'):
                          text=notes,textposition='outside',cliponaxis=False,
                          hovertemplate='%{y}: %{text}<extra></extra>'))
     fig.update_xaxes(range=[0,4.8],tickvals=[0,1,2,3],ticktext=['0','1–2','3–5','>5'],
-                     showgrid=True,gridcolor='#EAF0F4',title=None,zeroline=False)
-    fig.update_yaxes(autorange='reversed',automargin=True,showgrid=False,title=None)
+                     showgrid=False,showline=True,linecolor=AXIS,title=None,zeroline=False)
+    fig.update_yaxes(autorange='reversed',automargin=True,showgrid=True,gridcolor=GRID,showline=True,linecolor=AXIS,title=None)
     return style(fig,340,dict(l=8,r=15,t=14,b=30))
