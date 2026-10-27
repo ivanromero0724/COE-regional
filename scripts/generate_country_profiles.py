@@ -422,51 +422,72 @@ def heading(c,s,x,top,width):
     rule(c,x,x+width,top+15)
 
 def logo_header(c):
-    """Strong editorial hierarchy on the left; both institutional logos on the right."""
-    # Refers to tracked original repo paths at runtime (no external requests).
+    """Three aligned zones: editorial title, EOC-NET and PAHO original logos.
+
+    Each logo uses an identical 140 pt-wide, non-overlapping zone, with the
+    original proportions preserved. No graphic element can cover another.
+    """
     rect(c, 0, 0, PAGE_W, 7, BLUE)
     rect(c, 455, 0, PAGE_W-455, 7, ORANGE)
-    p1 = HERE/'logos'/'logo_EOC.png'
-    p2 = HERE/'logos'/'PAHO_eng.png'
-    if not (p1.exists() and p2.exists()):
+    eoc = HERE/'logos'/'logo_EOC.png'
+    paho = HERE/'logos'/'PAHO_eng.png'
+    if not (eoc.exists() and paho.exists()):
         raise FileNotFoundError('Both tracked logos must exist in logos/')
 
-    # Two large, readable headings, left-aligned on the same baseline grid.
-    text(c, 'EOC-NET  /  THE AMERICAS', 40, 24, 17.3, BLUE, True)
-    text(c, 'COUNTRY FACT SHEETS  ·  2026', 40, 51, 10.6, ORANGE, True)
+    # Left: keep a strong title, but within its own 227 pt wide column.
+    text(c, 'EOC-NET / THE AMERICAS', 40, 24, 14.3, BLUE, True)
+    text(c, 'COUNTRY FACT SHEETS  ·  2026', 40, 51, 9.4, ORANGE, True)
 
-    # Both original logos form a distinct right-aligned vertical lock-up. Their
-    # image aspect ratios are maintained (no horizontal stretching or cropping).
-    c.drawImage(ImageReader(str(p1)), 408, PAGE_H-12-53,
-                width=160, height=53, mask='auto', preserveAspectRatio=True)
-    c.drawImage(ImageReader(str(p2)), 398, PAGE_H-61-24,
-                width=171, height=24, mask='auto', preserveAspectRatio=True)
+    # Centre/right: equal-width original logo artwork, side by side.
+    # Explicit image geometry avoids ReportLab anchor/preserveAspectRatio shifts.
+    from PIL import Image
+    from reportlab.lib.utils import ImageReader
+    def logo_fit(img_path, left, top, width, height):
+        with Image.open(img_path) as im:
+            iw, ih = im.size
+        scale = min(width / iw, height / ih)
+        dw, dh = iw * scale, ih * scale
+        x = left + (width - dw)/2
+        y = PAGE_H - top - (height - dh)/2 - dh
+        c.drawImage(ImageReader(str(img_path)), x, y, width=dw, height=dh,
+                    mask='auto')
+
+    logo_fit(eoc, 281, 16, 138, 57)
+    logo_fit(paho, 436, 16, 138, 57)
     rule(c, 40, PAGE_W-40, 90, BLUE, 1.05)
 
 
 def header(c, country, row, page_idx, total, response_number, responses_in_country):
     logo_header(c)
-    # Country identity is the next strongest element: larger name and flag.
-    rect(c, 40, 98, 56, 41, PALE2, r=6, stroke=LINE)
-    c.drawImage(flag(country), 42, PAGE_H-104-31, width=52, height=31, mask='auto')
-    text(c, country, 108, 95, 25.0, BLUE, True)
+    # Draw the emoji national flag directly, with NO surrounding grey frame.
+    c.drawImage(flag(country), 40, PAGE_H-104-33, width=55, height=33,
+                mask='auto')
+    text(c, country, 107, 95, 24.5, BLUE, True)
     if responses_in_country > 1:
         sub = f'INSTITUTIONAL RESPONSE {response_number} OF {responses_in_country}  ·  INDEPENDENT RECORD'
     else:
         sub = 'INSTITUTIONAL SURVEY RECORD'
-    text(c, sub, 109, 124, 7.1, MUTED, True)
+    text(c, sub, 108, 124, 6.9, MUTED, True)
     if country == 'Brazil':
-        text(c, 'PILOT RESPONSE · MAR 2026', 109, 135, 5.8, ORANGE, True)
+        text(c, 'PILOT RESPONSE · MAR 2026', 108, 135, 5.8, ORANGE, True)
     right(c, f'{page_idx:02d} / {total:02d}', 572, 100, 8.5, BLUE, True)
     right(c, 'REGIONAL SURVEY 2026', 572, 119, 6.8, MUTED)
     rect(c, 40, 145, 532, 2, ORANGE)
 
-def metric(c,x,top,w,primary,label):
-    rect(c,x,top,w,45,PALE2,r=5)
-    rect(c,x,top,3,45,BRIGHT,r=1)
-    # Avoid overflow of long multi-line labels
-    paragraph(c,primary,x+9,top+7,w-16,size=9.2 if len(primary)<22 else 7.1,bold=True,maxheight=21)
-    paragraph(c,label,x+9,top+29,w-13,size=5.55,color=MUTED,leading=7,maxheight=13)
+
+def metric(c, x, top, w, primary, label):
+    """Compact, consistently spaced KPI tiles with a gentle pill-like style."""
+    rect(c, x, top, w, 49, '#F7FBFD', r=8, stroke='#CFDFE8', lw=.7)
+    rect(c, x+9, top+10, 5, 5, BRIGHT, r=2.5)
+    text(c, label.upper(), x+20, top+8, 5.35, MUTED, True)
+    if len(primary) <= 5:
+        font_size=11.0
+    elif len(primary) <= 15:
+        font_size=8.8
+    else:
+        font_size=7.15
+    paragraph(c, primary, x+9, top+23, w-17, size=font_size,
+              color=BLUE, bold=True, maxheight=23)
 
 def badge(c,s,x,top,width,active):
     rect(c,x,top,width,17,PALE if active else '#F3F5F6',r=7)
