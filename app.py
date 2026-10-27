@@ -131,7 +131,7 @@ def ui_style():
         column-gap:8px;row-gap:9px;
         box-shadow:0 3px 12px rgba(0,75,120,.035);
     }
-    .kpi.accent{border-top-color:#F36B32;}
+    .kpi.accent{border-top-color:#005A8B;}
     .kpi .kpi-label{
         grid-area:label;min-height:2.7em;color:#526F84;font-size:.70rem;
         font-weight:800;text-transform:uppercase;letter-spacing:.035em;line-height:1.35;
@@ -145,13 +145,12 @@ def ui_style():
     .kpi .kpi-count{display:inline-block;margin-left:12px;font-size:.82rem;font-weight:650;letter-spacing:0;color:#637D90;white-space:nowrap;vertical-align:baseline;}
     .kpi-icon{
         grid-area:icon;display:flex;justify-content:center;align-items:center;
-        width:34px;height:34px;border-radius:10px;background:#EAF4FA;color:#005A8B;
+        width:34px;height:34px;border-radius:10px;background:#FFF1E9;color:#F36B32;
     }
     .kpi-icon svg{width:19px;height:19px;flex-shrink:0;}
-    .kpi.accent .kpi-icon{background:#FFF1E9;color:#D95A28;}
-    /* Overview: orange line icons, but the icon background and all five
-       card borders/values remain in the shared PAHO blue treatment. */
-    .kpi-grid:not(.four) .kpi-icon{color:#F36B32;}
+    .kpi.accent .kpi-icon{background:#FFF1E9;color:#F36B32;}
+    /* Uniform navy top borders and subtle pale-orange icon tiles
+       for both regional overview and country-profile KPI cards. */
     .country-identity{display:flex;gap:17px;align-items:center;padding:12px 0 14px;min-width:0;}
     .country-flag{font-size:3rem;line-height:1;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
     .country-identity .institution{font-size:.85rem;color:#647D8D;margin-top:5px;line-height:1.4;overflow-wrap:anywhere;}
@@ -181,7 +180,7 @@ def ui_style():
         padding:12px 13px 13px;margin:1px 0 8px;box-sizing:border-box;
         min-width:0;
     }
-    .eoc-overview-treemap-plot{position:relative;width:100%;height:354px;}
+    .eoc-overview-treemap-plot{position:relative;width:100%;height:450px;}
     .eoc-overview-treemap-tile{position:absolute;padding:4px;box-sizing:border-box;min-width:0;}
     .eoc-overview-treemap-face{
         display:flex;flex-direction:column;justify-content:space-between;
@@ -212,7 +211,7 @@ def ui_style():
         .eoc-cooperation-tile-face .eoc-overview-treemap-metric{font-size:1rem;}
     }
     @media(max-width:950px){
-        .eoc-overview-treemap-plot{height:325px;}
+        .eoc-overview-treemap-plot{height:410px;}
         .eoc-overview-treemap-face{padding:8px;}
         .eoc-overview-treemap-label{font-size:.72rem;}
         .eoc-overview-treemap-metric{font-size:1.12rem;}
@@ -1050,7 +1049,14 @@ def flag_from_iso(iso):
 def country_profile(records,countries):
     region=st.selectbox(T('Select a country'),sorted(records.country.unique()),format_func=lambda value, _lang=chosen_language(): tr(value, _lang),key='selected_country')
     options=records[records.country==region].sort_values('institution')
-    rows={f'{T(x.institution)} · {T("Excel row")} {x.source_excel_row}':int(i) for i,x in options.iterrows()}
+    # Keep duplicate reporting institutions distinguishable, but never
+    # expose worksheet row numbers as user-facing labels.
+    rows={}
+    for i,x in options.iterrows():
+        title=T(x.institution)
+        if title in rows:
+            title=f'{title} · {T("Response")} {sum(key.startswith(title) for key in rows)+1}'
+        rows[title]=int(i)
     selected=st.selectbox(T('Reporting institution'),list(rows.keys()),key='selected_institution')
     r=records.loc[rows[selected]]
     st.markdown(f'<div class="country-identity"><div class="country-flag">{flag_from_iso(r.iso3)}</div>'
@@ -1096,7 +1102,6 @@ def country_profile(records,countries):
         with st.expander(T('Technical capabilities and contributions this institution can offer')):
             st.markdown('**'+T('Expertise:')+'** '+(', '.join(map(T,skills)) if skills else T('Not reported')))
             st.markdown('**'+T('Modalities:')+'** '+(', '.join(map(T,modes)) if modes else T('Not reported')))
-    note('Each institution has its own response. Colombia’s two institutions remain separate.')
 
 
 
