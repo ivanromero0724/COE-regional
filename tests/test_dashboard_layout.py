@@ -198,6 +198,9 @@ def test_regional_capacity_component_is_the_only_regional_capacity_explorer():
     source=(ROOT/'app.py').read_text(encoding='utf-8')
     capacities=source.split('def capacity_and_gaps(active):',1)[1].split('def operations_section(active):',1)[0]
     operations=source.split('def operations_section(active):',1)[1].split('NETWORK_STATUS_SYMBOLS=',1)[0]
+    assert "section('Capacities & gaps',eyebrow='01 / CAPACITY PROFILES')" in capacities
+    from dashboard.i18n import tr
+    assert tr('01 / CAPACITY PROFILES','es')=='01 / PERFILES DE CAPACIDADES'
     assert "key='capacity_component'" in capacities
     assert "list(CAPACITIES.keys())" in capacities
     assert "capacity_visual_dashboard(sliced,active)" in capacities
