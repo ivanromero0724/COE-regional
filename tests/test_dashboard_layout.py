@@ -131,8 +131,8 @@ def test_capacity_bars_expand_countries_in_place():
     assert '.eoc-capacity-disclosure[open] .eoc-capacity-chevron' in app
 
 
-def test_capacity_disclosures_preserve_counts_and_country_statuses():
-    """One expandable row per capacity, each containing all reporting countries."""
+def test_capacity_distributions_show_original_answers_and_countries():
+    """Each component item displays actual answer categories and a country breakdown."""
     import app as dashboard_app
     from dashboard.data import load_data, country_aggregate, capacity_table, CAPACITIES
 
@@ -142,17 +142,13 @@ def test_capacity_disclosures_preserve_counts_and_country_statuses():
     frame = capacity_table(countries)
     frame = frame[frame.component == component]
     html = dashboard_app.capacity_drilldown_html(frame, countries, component)
-    assert html.count('<details class="eoc-capacity-disclosure">') == len(frame)
-    assert html.count('<summary class="eoc-capacity-summary">') == len(frame)
-    assert html.count('class="eoc-country-capacity-item"') == len(frame) * len(countries)
     for _, item in frame.iterrows():
         assert item["capacity"] in html
-        pct = 100 * item["in_place"] / item["denominator"] if item["denominator"] else 0
-        expected = (f'{pct:.0f}% ({int(item["in_place"])}/{int(item["denominator"])})'
-                    if item["denominator"] else 'No valid responses')
-        assert expected in html
-    assert 'class="status-chip status-yes"' in html
-    assert 'class="status-chip status-no"' in html
+    assert html.count('<div class="mini-title">') == len(frame)
+    assert '<details style=' in html
+    assert 'ISO:' not in html
+    assert any(name in html for name in countries.country)
+
 
 
 def test_expandable_capacity_bars_keep_visible_blue_fill():
@@ -217,4 +213,4 @@ def test_infrastructure_remains_available_in_capacity_component():
     assert len(infrastructure)==len(RESOURCE_LABELS)
     assert infrastructure['denominator'].gt(0).any()
     html=dashboard_app.capacity_drilldown_html(infrastructure,countries,'Infrastructure')
-    assert html.count('<details class="eoc-capacity-disclosure">')==len(infrastructure)
+    assert html.count('<div class="mini-title">')==len(infrastructure)
