@@ -9,8 +9,9 @@ import pytest
 from dashboard.data import CAPACITIES, capacity_table, country_aggregate, country_capacity, load_data
 from dashboard.i18n import tr
 from dashboard.treemap import (
-    BLUE_SHADES, ORANGE_SHADES, layout_treemap, overview_treemap_html,
+    layout_treemap, overview_treemap_html, cooperation_treemap_html,
 )
+from dashboard.visual_style import TREEMAP_COLORS, treemap_text_color
 
 
 def _data():
@@ -109,14 +110,58 @@ def test_layout_tiles_cover_complete_chart_without_overlap_or_extra_space():
                 assert overlap<1e-5
 
 
-def test_colors_are_paho_blue_for_strengths_or_orange_for_gaps():
+def test_full_shared_paho_palette_on_overview_and_cooperation_treemaps():
     strengths,gaps=_data()
     strengths_html=overview_treemap_html(strengths,'available')
     gaps_html=overview_treemap_html(gaps,'gap')
-    assert any(color in strengths_html for color in BLUE_SHADES)
-    assert any(color in gaps_html for color in ORANGE_SHADES)
-    assert not any(color in gaps_html for color in BLUE_SHADES)
-    assert not any(color in strengths_html for color in ORANGE_SHADES)
+    assert len(TREEMAP_COLORS)==7
+    assert len(set(TREEMAP_COLORS))==7
+    # All seven distinctive colors occur when there are seven or more tiles.
+    assert all('background:'+color in strengths_html for color in TREEMAP_COLORS)
+    assert all('background:'+color in gaps_html for color in TREEMAP_COLORS[:5])
+    assert 'color:'+treemap_text_color(TREEMAP_COLORS[0]) in strengths_html
+    assert 'color:'+treemap_text_color(TREEMAP_COLORS[2]) in strengths_html
+    from dashboard.data import COOPERATION_SKILLS, COOPERATION_MODES
+    responses,_=load_data()
+    countries=country_aggregate(responses)
+    for kind,items,prefix in [
+        ('expertise',COOPERATION_SKILLS,'Skill: '),
+        ('modalities',COOPERATION_MODES,'Mode: '),
+    ]:
+        frame=pd.DataFrame([
+            {'capacity':name,
+             'in_place':int((countries[prefix+name].dropna()==True).sum()),
+             'denominator':len(countries[prefix+name].dropna())}
+            for name in items.values()
+        ])
+        html=cooperation_treemap_html(frame,kind=kind)
+        for color in TREEMAP_COLORS[:min(len(frame),len(TREEMAP_COLORS))]:
+            assert 'background:'+color in html
+
+
+def test_capacity_plotly_treemap_uses_same_palette_and_contrasting_text():
+    from dashboard.data import country_aggregate, load_data, capacity_table
+    from app import capacity_response_distribution, capacity_chart
+    data,_=load_data()
+    countries=country_aggregate(data)
+    for _,item in capacity_table(countries).iterrows():
+        counts=capacity_response_distribution(countries,item)
+        if counts.empty:
+            continue
+        fig=capacity_chart(item,counts,'treemap')
+        colors=list(fig.data[0].marker.colors)
+        assert colors==list(TREEMAP_COLORS[:len(colors)])
+        assert list(fig.data[0].textfont.color)==[
+            treemap_text_color(color) for color in colors
+        ]
+
+
+def test_cooperation_title_is_a_natural_question_in_both_languages():
+    from pathlib import Path
+    app=(Path(__file__).resolve().parents[1]/'app.py').read_text(encoding='utf-8')
+    assert "section('How can countries cooperate?'," in app
+    assert tr('How can countries cooperate?','es') == '¿Cómo pueden cooperar los países?'
+    assert 'Modalidades de cooperación entre países' not in tr('How can countries cooperate?','es')
 
 
 def test_invalid_counts_are_rejected_instead_of_misrepresented():
