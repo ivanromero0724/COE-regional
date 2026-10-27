@@ -211,12 +211,11 @@ def responding_country_map_center(geo, country_codes):
 
 
 def responding_country_map_bounds(geo, country_codes):
-    """Extent covering survey respondents AND complete surrounding Mexico.
+    """Extent covering respondents, whole Mexico and whole Chile.
 
-    A respondents-only extent truncates Mexico west of Guatemala, because
-    Mexico has no survey response. Include its geographic outline in the
-    framing (but not in respondent counts or status colors). The extent is
-    stable across filters and retains geographic proportions.
+    Context countries are included in the geographic framing, not in the
+    respondent counts or status colors. Leave extra space below Patagonia
+    so Chile and Argentina do not touch the frame's lower edge.
     """
     points=[]
     def visit(coords):
@@ -229,9 +228,8 @@ def responding_country_map_bounds(geo, country_codes):
         else:
             for part in coords:
                 visit(part)
-    # Nonresponding countries still matter to the composition of the map.
-    # Mexico is fully visible instead of getting cut at the respondent edge.
-    included_codes=set(country_codes)|{'MEX'}
+    # Whole contextual outlines count for framing, not survey results.
+    included_codes=set(country_codes)|{'MEX','CHL'}
     for feature in geo['features']:
         if feature.get('properties',{}).get('ISO_CC') in included_codes:
             visit(feature.get('geometry',{}).get('coordinates',[]))
@@ -243,8 +241,9 @@ def responding_country_map_bounds(geo, country_codes):
     # Mexico and every reporting country remain entirely inside the view.
     xpad=max(0.45,(max(lons)-min(lons))*.008)
     ypad=max(0.45,(max(lats)-min(lats))*.008)
+    southern_clearance=3.0  # degrees of room beneath Chile and Argentina
     return ((min(lons)-xpad,max(lons)+xpad),
-            (min(lats)-ypad,max(lats)+ypad))
+            (min(lats)-ypad-southern_clearance,max(lats)+ypad))
 
 
 def countries_map(countries, selection=None, lang='en'):
@@ -274,8 +273,7 @@ def countries_map(countries, selection=None, lang='en'):
             return coords
         return []
 
-    # Include the whole Mexican outline as well as all surveyed countries:
-    # a respondent-only viewport would crop Mexico's northwest.
+    # Keep Mexico visible while adding breathing room below Patagonia.
     (xmin,xmax),(ymin,ymax)=responding_country_map_bounds(
         geo,set(stats.index)
     )
