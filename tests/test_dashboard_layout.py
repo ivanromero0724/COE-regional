@@ -120,7 +120,7 @@ def test_capacity_bars_expand_countries_in_place():
     assert "capacity_visual_dashboard(sliced,active)" in section
     assert "key='capacity_country_view'" not in app
     assert "compact_table(['Country','Reported capacity'],rows" not in section
-    assert 'def capacity_drilldown_html(frame, active, component):' in app
+    assert 'def capacity_visual_dashboard(frame, active):' in app
     assert '<details class="eoc-capacity-disclosure">' in app
     assert '<summary class="eoc-capacity-summary">' in app
     assert "countries_capacity_grid(rows)" in app
