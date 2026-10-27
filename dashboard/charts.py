@@ -172,6 +172,29 @@ def load_geojson():
     return json.loads(geodf[['ISO_CC','COUNTRY','geometry']].to_json())
 
 
+def responding_country_map_center(geo, country_codes):
+    """Center the locked map on the geographic extent of survey respondents."""
+    points=[]
+    def visit(coords):
+        if not isinstance(coords, (list,tuple)):
+            return
+        if len(coords)>=2 and all(isinstance(v,(int,float)) for v in coords[:2]):
+            lon,lat=coords[:2]
+            if -180<=lon<=180 and -90<=lat<=90:
+                points.append((lon,lat))
+        else:
+            for child in coords:
+                visit(child)
+    for feature in geo['features']:
+        if feature['properties'].get('ISO_CC') in country_codes:
+            visit(feature.get('geometry',{}).get('coordinates',[]))
+    if not points:
+        return {'lat':-11,'lon':-79}
+    lons=[p[0] for p in points]
+    lats=[p[1] for p in points]
+    return {'lat':(min(lats)+max(lats))/2, 'lon':(min(lons)+max(lons))/2}
+
+
 def countries_map(countries, selection=None, lang='en'):
     """Render the bundled GeoPackage without Plotly Geo's external topojson fetch.
 
@@ -182,6 +205,7 @@ def countries_map(countries, selection=None, lang='en'):
     if geo is None:return None
     geo_codes={ft['properties']['ISO_CC'] for ft in geo['features']}
     stats=countries.set_index('iso3')
+    center=responding_country_map_center(geo,set(stats.index))
     listrows=[]
     for code in sorted(geo_codes):
         if code in stats.index:
@@ -200,7 +224,7 @@ def countries_map(countries, selection=None, lang='en'):
         category_orders={'status':[tr(x,lang) for x in status_order]},
         color_discrete_map={tr(s,lang):c for s,c in zip(status_order,palette)},
         map_style='white-bg',
-        center={'lat':-11,'lon':-79},zoom=1.55,opacity=0.94,
+        center=center,zoom=1.55,opacity=0.94,
     )
     fig.update_traces(
         marker_line_color='white',marker_line_width=0.65,
@@ -209,7 +233,7 @@ def countries_map(countries, selection=None, lang='en'):
                       ': %{fullData.name}<extra></extra>'
     )
     fig.update_layout(
-        map=dict(style='white-bg',center=dict(lat=-11,lon=-79),zoom=1.55),
+        map=dict(style='white-bg',center=center,zoom=1.55),
         legend=dict(title=None,orientation='h',y=-.08,x=0,font_size=10),
         dragmode=False,
     )
