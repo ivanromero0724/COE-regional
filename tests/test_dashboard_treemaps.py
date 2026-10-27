@@ -248,9 +248,14 @@ def test_treemaps_use_narrow_white_gutters_across_all_sections():
     )
     # Plotly treemaps in Capacities & gaps use a smaller intertile pad and stroke.
     from dashboard.data import load_data,country_aggregate,capacity_table
+    from app import capacity_response_distribution
     records,_=load_data()
-    table=capacity_table(country_aggregate(records))
-    chart=capacity_chart(table.iloc[0],pd.Series({'a':2,'b':3}),'treemap')
+    countries=country_aggregate(records)
+    table=capacity_table(countries)
+    item=next(row for _,row in table.iterrows()
+              if not capacity_response_distribution(countries,row).empty)
+    counts=capacity_response_distribution(countries,item)
+    chart=capacity_chart(item,counts,'treemap')
     trace=chart.data[0]
     assert trace.tiling.pad==2
     assert trace.marker.line.width==1
