@@ -77,3 +77,31 @@ def test_capacity_abbreviations_across_all_components_and_languages():
         'Yes','No','Partial / developing']
     assert labels_for_question(108,['a. Crítico','b. Alto','c. Moderado','d. Bajo'],'en')==[
         'Critical','High','Moderate','Low']
+
+
+def test_disagreement_between_institutions_uses_real_categories():
+    """Colombia's two institutional responses cannot become a third category."""
+    from app import capacity_response_distribution
+    from dashboard.capacity_labels import labels_for_question
+    records,_=load_data()
+    countries=country_aggregate(records)
+    colombia=countries.loc[countries.country=='Colombia'].iloc[0]
+    assert colombia.institutions==2
+    for col in (29,32,36,37,55,66,78,107,123):
+        choices=colombia[f'ANSWER_CHOICES_{col}']
+        assert len(choices)==2
+        assert '__MIXED__' not in choices
+        indicator=pd.Series({'col':col})
+        distribution=capacity_response_distribution(countries,indicator)
+        assert '__MIXED__' not in distribution.index
+        assert abs(distribution.sum()-sum(bool(x) for x in countries[f'ANSWER_CHOICES_{col}']))<1e-8
+        assert all('Different responses' not in x for x in
+                   labels_for_question(col,distribution.index,'en'))
+    # The mutually conflicting Colombian answers each count as half a country.
+    col32=capacity_response_distribution(countries,pd.Series({'col':32}))
+    code_a=next(x for x in colombia['ANSWER_CHOICES_32'] if x.startswith('a.'))
+    code_e=next(x for x in colombia['ANSWER_CHOICES_32'] if x.startswith('e.'))
+    other=countries.loc[countries.country!='Colombia']
+    other_dist=capacity_response_distribution(other,pd.Series({'col':32}))
+    assert abs(col32[code_a]-other_dist.get(code_a,0)-0.5)<1e-8
+    assert abs(col32[code_e]-other_dist.get(code_e,0)-0.5)<1e-8
