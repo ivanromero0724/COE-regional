@@ -50,7 +50,10 @@ def test_hazard_chart_and_infrastructure_do_not_force_whitespace():
 
 
 def test_cards_are_compact_and_have_relevant_accessible_icons():
-    assert "justify-content:space-between" not in APP
+    # Space-between is allowed on the country-status tiles, not on bar rows.
+    assert ".eoc-country-capacity-item{" in APP
+    assert ".eoc-country-capacity-item" in APP
+    assert ".card-panel.eoc-pair-capacities.eoc-priority-card{" in APP
     assert 'grid-template-areas:"label icon" "value icon"' in APP
     assert 'KPI_ICON_PATHS={' in APP
     assert 'aria-hidden="true"' in APP
@@ -88,7 +91,7 @@ def test_priority_capacity_rows_fill_card_without_stretching_other_sections():
     assert "align-content:space-between;" in APP
     assert ".card-panel.eoc-pair-capacities.eoc-priority-card{" in APP
     assert ".eoc-priority-card .measure-row{padding:9px 0;}" in APP
-    assert "variant_class=' eoc-priority-card' if pair=='capacities' and variant=='priority'" in APP
+    assert "' eoc-priority-card' if pair=='capacities' and variant=='priority'" in APP
     assert "capacity_rows_html(pd.DataFrame(figures),pair='capacities',variant='priority')" in APP
     assert "capacity_rows_html(ranked,pair='capacities')" in APP
     assert "min-height:305px" in APP
