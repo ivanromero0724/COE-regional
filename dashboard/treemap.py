@@ -10,11 +10,7 @@ import math
 
 from dashboard.i18n import tr
 
-from dashboard.visual_style import NAVY, CYAN, LIGHT_BLUE, SLATE, ORANGE, TEXT
-
-# Reuse Capacities & gaps tones. Orange remains reserved for gaps.
-BLUE_SHADES=(NAVY,CYAN,LIGHT_BLUE,SLATE)
-ORANGE_SHADES=(ORANGE,'#DA6134','#C2522C','#A8492A')
+from dashboard.visual_style import TREEMAP_COLORS, treemap_text_color
 
 
 def _split_tiles(items,x=0.0,y=0.0,w=100.0,h=100.0):
@@ -59,12 +55,9 @@ def layout_treemap(records):
     return [{**item,'rect':rect} for item,rect in tiles]
 
 
-def _tile_color(pct,mode):
-    if mode=='available':
-        return (BLUE_SHADES[0] if pct>=95 else BLUE_SHADES[1] if pct>=90
-                else BLUE_SHADES[2] if pct>=85 else BLUE_SHADES[3])
-    return (ORANGE_SHADES[0] if pct>=85 else ORANGE_SHADES[1] if pct>=75
-            else ORANGE_SHADES[2] if pct>=65 else ORANGE_SHADES[3])
+def _tile_color(index):
+    """Use the complete dashboard palette; tile area conveys magnitude."""
+    return TREEMAP_COLORS[index % len(TREEMAP_COLORS)]
 
 
 def overview_treemap_html(frame,mode='available',lang='en'):
@@ -80,16 +73,15 @@ def overview_treemap_html(frame,mode='available',lang='en'):
     tiles=layout_treemap(records)
     kind=tr('Available among valid responses',lang) if mode=='available' else tr('Not fully in place among valid responses',lang)
     elements=[]
-    for tile in tiles:
+    for index,tile in enumerate(tiles):
         x,y,w,h=tile['rect']
         label=tr(tile['label'],lang)
         n,d=tile['numerator'],tile['denominator']
         pct=f"{tile['pct']:.0f}%"
         rate=f"{n}/{d}"
         tooltip=escape(f'{label} · {kind}: {pct} ({rate})',quote=True)
-        color=_tile_color(tile['pct'],mode)
-        # Keep labels legible on the lighter blues, just like the chart gallery.
-        foreground=TEXT if color in (LIGHT_BLUE,SLATE) else '#FFFFFF'
+        color=_tile_color(index)
+        foreground=treemap_text_color(color)
         elements.append(
             '<div class="eoc-overview-treemap-tile" style="'
             f'left:{x:.5f}%;top:{y:.5f}%;width:{w:.5f}%;height:{h:.5f}%">'
@@ -131,8 +123,8 @@ def cooperation_treemap_html(frame,lang='en',kind='expertise'):
         label=tr(tile['label'],lang)
         n=tile['numerator'];d=tile['denominator']
         pct=100*n/d if d else 0
-        color=BLUE_SHADES[index%len(BLUE_SHADES)]
-        foreground=TEXT if color in (CYAN,LIGHT_BLUE,SLATE) else '#FFFFFF'
+        color=_tile_color(index)
+        foreground=treemap_text_color(color)
         title=escape(f"{label} · {pct:.0f}% ({n}/{d})",quote=True)
         # The full text remains on hover and in the accessible name.
         elements.append(
