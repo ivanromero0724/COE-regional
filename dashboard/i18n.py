@@ -87,7 +87,7 @@ ES = {
     'Formal SITREP process':'Procedimiento formal para SITREP',
     'Structured exchange':'Intercambio estructurado de información',
     'Integrated/interoperable platform':'Plataforma integrada o interoperable',
-    'Information gaps infrequent':'Brechas de información poco frecuentes',
+    'Information gaps affecting decisions':'Brechas de información que afectan las decisiones',
     'Dedicated operations room':'Sala de operaciones exclusiva',
     'Virtual coordination space':'Espacio de coordinación virtual',
     'Backup power generator':'Planta eléctrica de respaldo',
