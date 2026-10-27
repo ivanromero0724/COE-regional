@@ -197,7 +197,7 @@ def ui_style():
         min-width:0;
     }
     .eoc-overview-treemap-plot{position:relative;width:100%;height:450px;}
-    .eoc-overview-treemap-tile{position:absolute;padding:4px;box-sizing:border-box;min-width:0;}
+    .eoc-overview-treemap-tile{position:absolute;padding:2.5px;box-sizing:border-box;min-width:0;}
     .eoc-overview-treemap-face{
         display:flex;flex-direction:column;justify-content:space-between;
         gap:10px;width:100%;height:100%;padding:13px;
@@ -658,12 +658,12 @@ def capacity_chart(indicator, counts, chart_kind):
             labels=shorter,parents=['']*len(values),values=values,
             customdata=labels,
             marker=dict(colors=tile_colors,
-                        line=dict(color='white',width=2)),
+                        line=dict(color='white',width=1)),
             texttemplate='<b>%{label}</b><br>%{percentRoot:.0%}',
             textposition='top left',
             textfont=dict(size=11,color=[treemap_text_color(c) for c in tile_colors]),
             hovertemplate='<b>%{customdata}</b><br>%{percentRoot:.0%} (%{value:.1f}/'+str(total)+' '+unit+')<extra></extra>',
-            pathbar=dict(visible=False),tiling=dict(pad=4)))
+            pathbar=dict(visible=False),tiling=dict(pad=2)))
         fig.update_layout(showlegend=False,height=430,
             margin=dict(l=10,r=10,t=14,b=14),
             uniformtext=dict(minsize=9,mode='hide'))
