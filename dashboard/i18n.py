@@ -12,7 +12,7 @@ ES = {
     'Regional survey dashboard · Institutional preparedness, operational capacities and cooperation':
         'Tablero regional de la encuesta · Preparación institucional, capacidades operativas y cooperación',
     'REGIONAL MONITORING':'MONITOREO REGIONAL', 'REGIONAL SURVEY':'ENCUESTA REGIONAL',
-    'EOC-S · Americas':'COE-S · Américas','PAHO/WHO survey 2026':'Encuesta OPS/OMS 2026',
+    'H-EOC · Americas':'COE-S · Américas','PAHO/WHO survey 2026':'Encuesta OPS/OMS 2026',
     'Explore':'Explorar', 'Regional overview':'Panorama regional', 'Country profiles':'Perfiles por país',
     'Regional section':'Sección regional','Overview':'Panorama general',
     'Capacities & gaps':'Capacidades y brechas','Hazards & training':'Amenazas y capacitación',
@@ -25,13 +25,13 @@ ES = {
     'Source: local Excel in `data/` · Updated with GitHub redeploy':'Fuente: Excel en `data/` · Actualizado mediante despliegue de GitHub',
     'Select at least one country to display regional indicators.':'Seleccione al menos un país para mostrar los indicadores regionales.',
     # Main overview
-    'Countries responding':'Países que respondieron','Established EOC-S':'COE-S establecidos',
+    'Countries responding':'Países que respondieron','Established H-EOCs':'COE-S establecidos',
     'In implementation':'En implementación', '24/7 operation':'Operación 24/7',
     'Documented formal mandate':'Mandato formal documentado',
-    'Which countries have EOC-S?':'¿Qué países tienen COE-S?',
+    'Which countries have H-EOCs?':'¿Qué países tienen COE-S?',
     'Established or in implementation; countries without survey responses remain gray.':'Establecidos o en implementación; los países sin respuesta se muestran en gris.',
-    '01 / EOC-S STATUS':'01 / ESTADO DE LOS COE-S',
-    'How the EOC-S operate':'¿Cómo operan los COE-S?',
+    '01 / H-EOC STATUS':'01 / ESTADO DE LOS COE-S',
+    'How H-EOCs operate':'¿Cómo operan los COE-S?',
     'One observation per responding country.':'Una observación por país que respondió.',
     '02 / OPERATIONS':'02 / OPERACIÓN','Operating mode':'Modalidad de operación',
     'Activation after formal decision':'Tiempo de activación tras la decisión formal',
@@ -133,7 +133,7 @@ ES = {
       'Las preguntas de cooperación y redes tienen menos respuestas. Cada indicador utiliza el número de respuestas válidas.',
     # country profile
     'Select a country':'Seleccionar país','Reporting institution':'Institución que responde',
-    'Response':'Respuesta','EOC status':'Estado del COE-S',
+    'Response':'Respuesta','H-EOC status':'Estado del COE-S',
     'Activation time':'Tiempo de activación','24/7 duty staff':'Personal de turno 24/7',
     'Reported institutional capacities':'Capacidades institucionales reportadas',
     'Answers from this institution grouped by PHEOC core component.':
