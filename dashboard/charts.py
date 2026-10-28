@@ -357,6 +357,7 @@ def countries_map(countries, selection=None, lang='en'):
     # overwrites the map-specific vertical overlay legend.
     fig.update_layout(
         paper_bgcolor='#FFFFFF',plot_bgcolor='#FFFFFF',
+        hoverlabel=dict(align='left'),
         legend=dict(
             title=None,orientation='v',x=.018,y=.025,
             xanchor='left',yanchor='bottom',
