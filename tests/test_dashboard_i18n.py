@@ -23,7 +23,7 @@ def test_regional_sections_and_explanations_translate_consistently():
     assert tr('02 / COOPERATION PRIORITIES','es')=='02 / PRIORIDADES DE COOPERACIÓN'
     assert tr('03 / CAPACITY PROFILES','es')=='03 / PERFILES DE CAPACIDADES'
     assert tr('04 / WORKFORCE DEVELOPMENT','es')=='04 / DESARROLLO DEL PERSONAL'
-    training='For each training area, compare the share of countries reporting training completed in the past year with the share prioritizing it for the next period. Each percentage uses the valid responses for its own question.'
+    training='For each training area, compare the share of countries reporting training completed in the past year with the share prioritizing it for the next period.'
     hazard='Responses indicate frequency categories (0, 1–2, 3–5, more than 5), not exact event totals.'
     assert tr(training,'es').startswith('Para cada tema')
     assert tr(hazard,'es').startswith('Las respuestas indican rangos de frecuencia')
