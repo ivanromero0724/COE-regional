@@ -44,7 +44,7 @@ ES = {
     '01 / REPORTED CAPACITIES':'01 / CAPACIDADES REPORTADAS',
     'Priority capacity gaps':'Brechas prioritarias de capacidad',
     'Countries with the following capacities fully in place.':'Países que cuentan plenamente con estas capacidades.',
-    '02 / COOPERATION PRIORITIES':'02 / PRIORIDADES DE COOPERACIÓN',
+    '02 / CAPACITY GAPS':'02 / BRECHAS DE CAPACIDAD',
     'Sustainable financing':'Financiamiento sostenible','Formal surge staffing':'Procedimiento formal de refuerzo de personal',
     'Updated surge roster':'Lista actualizada de personal de refuerzo',
     'Integrated information tools':'Herramientas de información integradas',
@@ -56,8 +56,8 @@ ES = {
       'Los conteos se basan en respuestas válidas a cada pregunta.',
     '03 / CAPACITY PROFILES':'03 / PERFILES DE CAPACIDADES',
     'Explore capacities in detail':'Explorar capacidades en detalle',
-    'Select a core component to compare the reported response categories across countries. Only valid responses are included.':
-      'Seleccione un componente esencial para comparar las categorías de respuesta reportadas por los países. Solo se incluyen respuestas válidas.',
+    'Select a core component to compare the reported response categories across countries.':
+      'Seleccione un componente esencial para comparar las categorías de respuesta reportadas por los países.',
     'Responses indicate frequency categories (0, 1–2, 3–5, more than 5), not exact event totals.':
       'Las respuestas indican rangos de frecuencia (0, 1–2, 3–5 y más de 5), no cantidades exactas de eventos.',
     'For each training area, compare the share of countries reporting training completed in the past year with the share prioritizing it for the next period.':
