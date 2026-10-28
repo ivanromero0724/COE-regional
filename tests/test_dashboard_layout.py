@@ -201,13 +201,15 @@ def test_regional_capacity_component_and_training_sections():
     capacity=source.split('def capacity_and_gaps(active):',1)[1].split('def hazard_summary_cards(active):',1)[0]
     from dashboard.i18n import tr
     assert "eyebrow='01 / REPORTED CAPACITIES'" in capacity
-    assert "eyebrow='02 / COOPERATION PRIORITIES'" in capacity
+    assert "eyebrow='02 / CAPACITY GAPS'" in capacity
     assert "eyebrow='03 / CAPACITY PROFILES'" in capacity
     assert tr('03 / CAPACITY PROFILES','es')=='03 / PERFILES DE CAPACIDADES'
     assert "key='capacity_component'" in capacity
     assert "list(CAPACITIES.keys())" in capacity
     assert "capacity_visual_dashboard(sliced,active)" in capacity
     assert "section('Explore capacities in detail'" in capacity
+    assert "Select a core component to compare the reported response categories across countries." in capacity
+    assert "Only valid responses are included." not in capacity
     assert "section('Training completed and prioritized'" in capacity
     assert "eyebrow='04 / WORKFORCE DEVELOPMENT'" in capacity
     assert 'viz.training_comparison(training_summary_data(active)' in capacity
