@@ -96,7 +96,7 @@ def test_regional_section_navigation_is_top_horizontal_segmented_control():
     assert "default='Overview'" in main
     assert "key='regional_section'" in main
     assert "format_func=lambda value, _lang=chosen_language(): tr(value, _lang)" in main
-    for section in ('Overview', 'Capacities & gaps', 'Hazards & training', 'Networks & cooperation'):
+    for section in ('Overview', 'Capacities & gaps', 'Hazards & training', 'GHEC'):
         assert section in main
 
 
