@@ -56,7 +56,7 @@ def test_paho_and_eoc_logos_are_enlarged_and_responsive():
 
 def test_map_heading_and_chart_borders_consistent():
     app = (ROOT / "app.py").read_text(encoding="utf-8")
-    assert "Which countries have H-EOCs?" in app
+    assert "Which countries have an H-EOC?" in app
     assert "Where have countries responded?" not in app
     assert "border-color:#DFE9F1!important;" in app
     assert "with st.container(border=False, key='eoc_coverage_map_panel')" in app
