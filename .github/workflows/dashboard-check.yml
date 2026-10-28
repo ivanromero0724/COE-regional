@@ -115,7 +115,7 @@ jobs:
           )
           section = next(x for x in app.segmented_control if x.key == 'regional_section')
           assert section.value == 'Hazards & training'
-          section.set_value('Networks & cooperation').run(timeout=90)
+          section.set_value('GHEC').run(timeout=90)
           assert not app.exception, [e.message for e in app.exception]
           assert any('<div class="network-card">' in x.value for x in app.markdown), (
               'Static network summary cards are missing'
