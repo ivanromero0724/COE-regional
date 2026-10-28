@@ -96,7 +96,7 @@ def test_regional_section_navigation_is_top_horizontal_segmented_control():
     assert "default='Overview'" in main
     assert "key='regional_section'" in main
     assert "format_func=lambda value, _lang=chosen_language(): tr(value, _lang)" in main
-    for section in ('Overview', 'Capacities & gaps', 'Hazards & training', 'GHEC'):
+    for section in ('Overview', 'Capacities, gaps & training', 'GHEC'):
         assert section in main
 
 
@@ -115,8 +115,8 @@ def test_sidebar_contains_no_technical_metadata_or_regional_filters():
 def test_capacity_bars_expand_countries_in_place():
     """The whole horizontal bar is a disclosure, so no second selector/table."""
     app = (ROOT / 'app.py').read_text(encoding='utf-8')
-    section = app.split('def capacity_and_gaps(active):', 1)[1].split('def operations_section(active):', 1)[0]
-    assert 'st.columns(' not in section
+    section = app.split('def capacity_and_gaps(active):', 1)[1].split('def hazard_summary_cards(active):', 1)[0]
+    assert 'st.columns(' in section  # Regional summary treemaps appear before the drilldown.
     assert "capacity_visual_dashboard(sliced,active)" in section
     assert "key='capacity_country_view'" not in app
     assert "compact_table(['Country','Reported capacity'],rows" not in section
@@ -170,8 +170,8 @@ def test_expandable_capacity_bars_keep_visible_blue_fill():
     assert '<span class="measure-bar"><span class="measure-fill" style="width:' in app
 
 
-def test_overview_uses_regional_treemaps_without_country_drilldowns():
-    """Section 03 and 04 show region-only aggregate proportions side by side."""
+def test_capacity_summary_treemaps_precede_detailed_component_explorer():
+    """Top regional capacity and gap treemaps remain non-drilldown summaries."""
     from dashboard.data import load_data,country_aggregate,capacity_table,CAPACITIES
     from dashboard.treemap import overview_treemap_html
     records,_=load_data()
@@ -183,37 +183,40 @@ def test_overview_uses_regional_treemaps_without_country_drilldowns():
     html=overview_treemap_html(strengths,'available')
     assert html.count('class="eoc-overview-treemap-tile"')==7
     assert '<details' not in html
-    assert 'eoc-country-capacity-item' not in html
     source=(ROOT/'app.py').read_text(encoding='utf-8')
     overview=source.split('def regional_overview(country,active):',1)[1].split('def capacity_and_gaps(active):',1)[0]
-    after_map=overview.split('    st.divider()',1)[1]
-    assert "left,right=st.columns(2,gap='large')" in after_map
-    assert "overview_treemap_html(strengths,'available',lang=chosen_language())" in after_map
-    assert "overview_treemap_html(pd.DataFrame(gap_rows),'gap',lang=chosen_language())" in after_map
-    assert 'capacity_rows_html(' not in after_map
+    assert 'overview_treemap_html(' not in overview
+    assert 'hazard_summary_cards(active)' in overview
+    assert 'viz.hazard_heatmap(' in overview
+    capacity=source.split('def capacity_and_gaps(active):',1)[1].split('def hazard_summary_cards(active):',1)[0]
+    assert "overview_treemap_html(strengths,'available',lang=chosen_language())" in capacity
+    assert "overview_treemap_html(pd.DataFrame(gap_rows),'gap',lang=chosen_language())" in capacity
+    assert capacity.index("section('Most widely reported capacities'") < capacity.index("section('Priority capacity gaps'") < capacity.index("section('Explore capacities in detail'") < capacity.index("section('Training completed and prioritized'")
+    assert 'capacity_rows_html(' not in capacity
 
 
-def test_regional_capacity_component_is_the_only_regional_capacity_explorer():
-    """Consolidated regional capacity and infrastructure indicators remain in the component selector."""
+def test_regional_capacity_component_and_training_sections():
+    """Capacity summaries, drilldowns and workforce comparison share one tab."""
     source=(ROOT/'app.py').read_text(encoding='utf-8')
-    capacities=source.split('def capacity_and_gaps(active):',1)[1].split('def operations_section(active):',1)[0]
-    operations=source.split('def operations_section(active):',1)[1].split('NETWORK_STATUS_SYMBOLS=',1)[0]
-    assert "section('Capacities & gaps',eyebrow='01 / CAPACITY PROFILES')" in capacities
+    capacity=source.split('def capacity_and_gaps(active):',1)[1].split('def hazard_summary_cards(active):',1)[0]
     from dashboard.i18n import tr
-    assert tr('01 / CAPACITY PROFILES','es')=='01 / PERFILES DE CAPACIDADES'
-    assert "key='capacity_component'" in capacities
-    assert "list(CAPACITIES.keys())" in capacities
-    assert "capacity_visual_dashboard(sliced,active)" in capacities
-    assert "Information systems and surge workforce" not in capacities
-    assert "capacity_rows_html(focus,country=active)" not in capacities
-    assert "section('Physical infrastructure'" not in operations
-    assert "RESOURCE_LABELS.values()" not in operations
-    assert "capacity_rows_html(pd.DataFrame(cards)" not in operations
-    assert "section('Hazards reported in the past two years'" in operations
-    assert "section('Training completed and prioritized'" in operations
-    assert "eyebrow='02 / WORKFORCE DEVELOPMENT'" in operations
-    # The national institution detail is not removed by this regional simplification.
-    national=source.split('def country_profile(',1)[1] if 'def country_profile(' in source else source
+    assert "eyebrow='01 / REPORTED CAPACITIES'" in capacity
+    assert "eyebrow='02 / COOPERATION PRIORITIES'" in capacity
+    assert "eyebrow='03 / CAPACITY PROFILES'" in capacity
+    assert tr('03 / CAPACITY PROFILES','es')=='03 / PERFILES DE CAPACIDADES'
+    assert "key='capacity_component'" in capacity
+    assert "list(CAPACITIES.keys())" in capacity
+    assert "capacity_visual_dashboard(sliced,active)" in capacity
+    assert "section('Explore capacities in detail'" in capacity
+    assert "section('Training completed and prioritized'" in capacity
+    assert "eyebrow='04 / WORKFORCE DEVELOPMENT'" in capacity
+    assert 'viz.training_comparison(training_summary_data(active)' in capacity
+    assert "Each percentage uses the valid responses for its own question." in capacity
+    assert 'Information systems and surge workforce' not in capacity
+    assert "capacity_rows_html(focus,country=active)" not in capacity
+    assert "section('Physical infrastructure'" not in capacity
+    # Country profiles continue to show institutional infrastructure separately.
+    national=source.split('def country_profile(',1)[1]
     assert "section('Physical infrastructure','Resources the institution reports as available.'" in national
 
 
@@ -266,13 +269,17 @@ def test_regional_hazards_are_four_donuts_above_country_heatmap():
     assert set(trace.name for trace in fig.data)=={'Completed','Prioritized'}
 
 
-def test_hazard_and_training_nav_has_one_non_expandable_comparison():
-    app=(ROOT/'app.py').read_text(encoding='utf-8')
-    main=app.split('def main():',1)[1]
-    assert "'Hazards & training'" in main
-    assert "'Operations & hazards'" not in main
-    operations=app.split('def operations_section(active):',1)[1].split('NETWORK_STATUS_SYMBOLS=',1)[0]
-    assert operations.index('hazard_summary_cards(active)')<operations.index('viz.hazard_heatmap(')
-    assert operations.index('viz.hazard_heatmap(')<operations.index('viz.training_comparison(')
-    assert 'training_drilldown_html(active)' not in operations
-    assert operations.count('st.plotly_chart(')==2
+def test_three_regional_tabs_preserve_hazards_and_training():
+    source=(ROOT/'app.py').read_text(encoding='utf-8')
+    main=source.split('def main():',1)[1]
+    assert "['Overview','Capacities, gaps & training','GHEC']" in main
+    assert "'Hazards & training'" not in main
+    assert 'def operations_section(active):' not in source
+    overview=source.split('def regional_overview(country,active):',1)[1].split('def capacity_and_gaps(active):',1)[0]
+    capacity=source.split('def capacity_and_gaps(active):',1)[1].split('def hazard_summary_cards(active):',1)[0]
+    assert overview.index('hazard_summary_cards(active)')<overview.index('viz.hazard_heatmap(')
+    assert 'viz.training_comparison(' not in overview
+    assert 'hazard_summary_cards(active)' not in capacity
+    assert 'viz.training_comparison(' in capacity
+    assert 'training_drilldown_html(active)' not in capacity
+
