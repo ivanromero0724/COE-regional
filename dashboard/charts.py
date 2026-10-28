@@ -313,6 +313,16 @@ def countries_map(countries, selection=None, lang='en'):
                 xs.append(None);ys.append(None)
         if not xs:
             continue
+        # Put the styled markup directly in hovertemplate. Plotly handles
+        # this as the actual SVG tooltip instead of interpolating %{text},
+        # which can render formatting inconsistently across deployments.
+        hover_content=(
+            '<b>'+name+'</b><br>'
+            '<b>ISO:</b> '+str(iso)+'<br>'
+            '<b>'+tr('Status',lang)+':</b> '+tr(status,lang)+'<br>'
+            '<b>'+tr('Operating mode',lang)+':</b> '+tr(operating_mode,lang)+'<br>'
+            '<b>'+tr('Activation after formal decision',lang)+':</b> '+tr(activation,lang)
+        )
         fig.add_trace(go.Scatter(
             x=xs,y=ys,mode='lines',fill='toself',
             fillcolor=colors[status],
@@ -322,13 +332,9 @@ def countries_map(countries, selection=None, lang='en'):
             legendrank=statuses.index(status),
             hoveron='fills',
             hoverinfo='text',
-            # Bold only each field label and its colon; keep response
-            # values normal-weight for clear, bilingual country hover cards.
-            text=('<b>'+name+'</b><br><b>ISO:</b> '+str(iso)+'<br>'+
-                  '<b>'+tr('Status',lang)+':</b> '+tr(status,lang)+'<br>'+
-                  '<b>'+tr('Operating mode',lang)+':</b> '+tr(operating_mode,lang)+'<br>'+
-                  '<b>'+tr('Activation after formal decision',lang)+':</b> '+tr(activation,lang)),
-            hovertemplate='%{text}<extra></extra>',
+            # Bold field names and colons; leave values at normal weight.
+            text=hover_content,
+            hovertemplate=hover_content+'<extra></extra>',
         ))
         shown.add(status)
 
