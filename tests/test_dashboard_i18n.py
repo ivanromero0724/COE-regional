@@ -15,6 +15,20 @@ def test_english_default_and_spanish_labels():
     assert tr('Information management', 'es') == 'Gestión de información'
 
 
+def test_regional_sections_and_explanations_translate_consistently():
+    assert tr('Capacities, gaps & training','en')=='Capacities, gaps & training'
+    assert tr('Capacities, gaps & training','es')=='Capacidades, brechas y capacitación'
+    assert tr('Explore capacities in detail','es')=='Explorar capacidades en detalle'
+    assert tr('01 / REPORTED CAPACITIES','es')=='01 / CAPACIDADES REPORTADAS'
+    assert tr('02 / COOPERATION PRIORITIES','es')=='02 / PRIORIDADES DE COOPERACIÓN'
+    assert tr('03 / CAPACITY PROFILES','es')=='03 / PERFILES DE CAPACIDADES'
+    assert tr('04 / WORKFORCE DEVELOPMENT','es')=='04 / DESARROLLO DEL PERSONAL'
+    training='For each training area, compare the share of countries reporting training completed in the past year with the share prioritizing it for the next period. Each percentage uses the valid responses for its own question.'
+    hazard='Responses indicate frequency categories (0, 1–2, 3–5, more than 5), not exact event totals.'
+    assert tr(training,'es').startswith('Para cada tema')
+    assert tr(hazard,'es').startswith('Las respuestas indican rangos de frecuencia')
+
+
 def test_chart_percent_denominators_are_valid():
     raw, _ = load_data()
     countries = country_aggregate(raw)
