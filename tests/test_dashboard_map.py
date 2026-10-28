@@ -137,7 +137,7 @@ def test_mexico_is_entirely_inside_the_regional_map_viewport():
 def test_five_overview_kpis_share_one_navy_treatment():
     from unittest.mock import patch
     from app import kpi_grid
-    cards=[('Countries responding',15),('Established H-EOCs','67% (10/15)'),
+    cards=[('Countries responding',15),('Established H-EOC','67% (10/15)'),
            ('In implementation','33% (5/15)'),('24/7 operation','40% (6/15)'),
            ('Documented formal mandate','50% (7/14)')]
     with patch('app.st.markdown') as markdown:
