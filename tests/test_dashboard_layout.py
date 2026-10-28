@@ -211,7 +211,7 @@ def test_regional_capacity_component_and_training_sections():
     assert "section('Training completed and prioritized'" in capacity
     assert "eyebrow='04 / WORKFORCE DEVELOPMENT'" in capacity
     assert 'viz.training_comparison(training_summary_data(active)' in capacity
-    assert "Each percentage uses the valid responses for its own question." in capacity
+    assert "Each percentage uses the valid responses for its own question." not in capacity
     assert 'Information systems and surge workforce' not in capacity
     assert "capacity_rows_html(focus,country=active)" not in capacity
     assert "section('Physical infrastructure'" not in capacity
