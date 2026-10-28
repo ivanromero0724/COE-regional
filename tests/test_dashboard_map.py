@@ -23,6 +23,42 @@ def test_americas_map_contains_country_polygons_and_tooltips():
         assert all(t["fill"] == "toself" for t in traces)
 
 
+def test_country_hover_shows_operating_mode_and_activation_bilingually():
+    """Map hover reuses country-level aggregates; no invented survey responses."""
+    from dashboard.i18n import tr
+    records, _ = load_data()
+    countries = country_aggregate(records)
+    # Colombia has two institutional respondents; use its regional aggregate.
+    assert countries.loc[countries.iso3=='COL','institutions'].iloc[0]==2
+    for lang in ('en', 'es'):
+        fig = countries_map(countries, lang=lang)
+        traces = fig.to_plotly_json()['data']
+        for _, record in countries.iterrows():
+            tooltip = next(t['text'] for t in traces
+                           if 'ISO: '+record.iso3+'<br>' in t['text'])
+            assert tr(record.country,lang) in tooltip
+            assert tr('Status',lang)+': '+tr(record.eoc_status,lang) in tooltip
+            assert (tr('Operating mode',lang)+': '+
+                    tr(record.operating_mode,lang)) in tooltip
+            assert (tr('Activation after formal decision',lang)+': '+
+                    tr(record.activation,lang)) in tooltip
+        # Mexico is map context, not a respondent; do not imply operation data.
+        mexico = next(t['text'] for t in traces if 'ISO: MEX<br>' in t['text'])
+        missing=tr('No survey response',lang)
+        assert tr('Operating mode',lang)+': '+missing in mexico
+        assert tr('Activation after formal decision',lang)+': '+missing in mexico
+
+    # Filtering changes a country's display status but not its real answers.
+    selected = {countries.iloc[0].country}
+    filtered = countries_map(countries, selection=selected, lang='es')
+    other = countries.loc[~countries.country.isin(selected)].iloc[0]
+    tooltip = next(t['text'] for t in filtered.to_plotly_json()['data']
+                   if 'ISO: '+other.iso3+'<br>' in t['text'])
+    assert tr('Outside filter','es') in tooltip
+    assert tr(other.operating_mode,'es') in tooltip
+    assert tr(other.activation,'es') in tooltip
+
+
 def test_regional_map_viewport_cannot_pan_or_zoom():
     records, _ = load_data()
     fig = countries_map(country_aggregate(records))
