@@ -322,10 +322,12 @@ def countries_map(countries, selection=None, lang='en'):
             legendrank=statuses.index(status),
             hoveron='fills',
             hoverinfo='text',
-            text=('<b>'+name+'</b><br>ISO: '+str(iso)+'<br>'+
-                  tr('Status',lang)+': '+tr(status,lang)+'<br>'+
-                  tr('Operating mode',lang)+': '+tr(operating_mode,lang)+'<br>'+
-                  tr('Activation after formal decision',lang)+': '+tr(activation,lang)),
+            # Bold only each field label and its colon; keep response
+            # values normal-weight for clear, bilingual country hover cards.
+            text=('<b>'+name+'</b><br><b>ISO:</b> '+str(iso)+'<br>'+
+                  '<b>'+tr('Status',lang)+':</b> '+tr(status,lang)+'<br>'+
+                  '<b>'+tr('Operating mode',lang)+':</b> '+tr(operating_mode,lang)+'<br>'+
+                  '<b>'+tr('Activation after formal decision',lang)+':</b> '+tr(activation,lang)),
             hovertemplate='%{text}<extra></extra>',
         ))
         shown.add(status)
