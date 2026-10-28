@@ -1,6 +1,6 @@
 # EOC-NET Americas · PAHO/WHO 2026 survey dashboard
 
-Interactive **Streamlit** dashboard for the PAHO/WHO regional survey of Health Emergency Operations Centres (COE-S). The project summarizes **self-reported, concrete EOC capacities**; it deliberately **does not calculate composite maturity scores, five-pillar indices, or 0–100 ratings**.
+Interactive **Streamlit** dashboard for the PAHO/WHO regional survey of Health Emergency Operations Centres (H-EOCs; COE-S in Spanish). The project summarizes **self-reported, concrete EOC capacities**; it deliberately **does not calculate composite maturity scores, five-pillar indices, or 0–100 ratings**.
 
 ## Application and data
 
