@@ -37,6 +37,11 @@ def test_country_hover_shows_operating_mode_and_activation_bilingually():
             tooltip = next(t['text'] for t in traces
                            if '<b>ISO:</b> '+record.iso3+'<br>' in t['text'])
             assert tooltip.startswith('<b>'+tr(record.country,lang)+'</b><br>')
+            trace=next(t for t in traces if t['text']==tooltip)
+            # Check the rendered hovertemplate, not just the trace text.
+            # Plotly must parse <b> labels directly rather than %{text}.
+            assert trace['hovertemplate']==tooltip+'<extra></extra>'
+            assert '%{text}' not in trace['hovertemplate']
             assert '<b>ISO:</b> '+record.iso3+'<br>' in tooltip
             # The value is outside the bold span for each bilingual field.
             assert '</b> <b>' not in tooltip
@@ -47,7 +52,9 @@ def test_country_hover_shows_operating_mode_and_activation_bilingually():
             assert ('<b>'+tr('Activation after formal decision',lang)+':</b> '+
                     tr(record.activation,lang)) in tooltip
         # Mexico is map context, not a respondent; do not imply operation data.
-        mexico = next(t['text'] for t in traces if '<b>ISO:</b> MEX<br>' in t['text'])
+        mexico_trace = next(t for t in traces if '<b>ISO:</b> MEX<br>' in t['text'])
+        mexico = mexico_trace['text']
+        assert mexico_trace['hovertemplate']==mexico+'<extra></extra>'
         missing=tr('No survey response',lang)
         assert '<b>'+tr('Operating mode',lang)+':</b> '+missing in mexico
         assert '<b>'+tr('Activation after formal decision',lang)+':</b> '+missing in mexico
