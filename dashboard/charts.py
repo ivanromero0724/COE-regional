@@ -292,11 +292,17 @@ def countries_map(countries, selection=None, lang='en'):
             record=stats.loc[iso]
             name=tr(record['country'],lang)
             status=record['eoc_status']
+            # Use the same one-observation-per-country values as the
+            # operational distributions displayed next to the map.
+            operating_mode=record['operating_mode']
+            activation=record['activation']
             if selection is not None and record['country'] not in selection:
                 status='Outside filter'
         else:
             name=tr('No survey response',lang)
             status='No survey response'
+            operating_mode='No survey response'
+            activation='No survey response'
         xs,ys=[],[]
         for polygon in rings(feature.get('geometry',{})):
             # Exterior only; holes are rare and have negligible visual effect
@@ -317,7 +323,9 @@ def countries_map(countries, selection=None, lang='en'):
             hoveron='fills',
             hoverinfo='text',
             text=('<b>'+name+'</b><br>ISO: '+str(iso)+'<br>'+
-                  ('Estado' if lang=='es' else 'Status')+': '+tr(status,lang)),
+                  tr('Status',lang)+': '+tr(status,lang)+'<br>'+
+                  tr('Operating mode',lang)+': '+tr(operating_mode,lang)+'<br>'+
+                  tr('Activation after formal decision',lang)+': '+tr(activation,lang)),
             hovertemplate='%{text}<extra></extra>',
         ))
         shown.add(status)
