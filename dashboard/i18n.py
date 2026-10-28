@@ -16,7 +16,7 @@ ES = {
     'Explore':'Explorar', 'Regional overview':'Panorama regional', 'Country profiles':'Perfiles por país',
     'Regional section':'Sección regional','Overview':'Panorama general',
     'Capacities & gaps':'Capacidades y brechas','Hazards & training':'Amenazas y capacitación',
-    'Networks & cooperation':'Redes y cooperación',
+    'GHEC':'GHEC',
     'Geographic area':'Área geográfica','All regions':'Todas las subregiones',
     'Countries (optional)':'Países (opcional)',
     'Leave empty to include all countries in the selected area.':'Deje vacío para incluir todos los países del área seleccionada.',
