@@ -57,7 +57,7 @@ jobs:
           assert any('eoc-country-category-item' in x.value for x in app.markdown), (
               'Operating and activation bars should open matching countries'
           )
-          assert any('eoc-hazard-grid' in x.value for x in app.markdown), (
+          assert any('class="eoc-hazard-grid"' in x.value for x in app.markdown), (
               'Overview must show the four recent-hazard donut cards'
           )
           assert any('Frecuencia de amenazas por país' in x.value for x in app.markdown), (
@@ -89,7 +89,7 @@ jobs:
           assert not any('eoc-training-bars' in x.value for x in app.markdown), (
               'Training must remain a single comparison chart'
           )
-          assert not any('eoc-hazard-grid' in x.value for x in app.markdown), (
+          assert not any('class="eoc-hazard-grid"' in x.value for x in app.markdown), (
               'Hazards should only appear in Overview'
           )
           assert not any('Capacity availability' in x.value or 'Disponibilidad de capacidades' in x.value
