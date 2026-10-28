@@ -33,6 +33,7 @@ def test_country_hover_shows_operating_mode_and_activation_bilingually():
     for lang in ('en', 'es'):
         fig = countries_map(countries, lang=lang)
         traces = fig.to_plotly_json()['data']
+        assert fig.layout.hoverlabel.align=='left'
         for _, record in countries.iterrows():
             tooltip = next(t['text'] for t in traces
                            if '<b>ISO:</b> '+record.iso3+'<br>' in t['text'])
