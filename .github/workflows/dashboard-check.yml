@@ -57,64 +57,49 @@ jobs:
           assert any('eoc-country-category-item' in x.value for x in app.markdown), (
               'Operating and activation bars should open matching countries'
           )
-          treemaps=[x.value for x in app.markdown if 'class="eoc-overview-treemap-card"' in x.value]
-          assert len(treemaps)==2, 'Overview should show the two regional treemaps'
-          assert sum(x.count('class="eoc-overview-treemap-tile"') for x in treemaps)==12, (
-              'Overview should include seven reported capacities and five priority gaps'
+          assert any('eoc-hazard-grid' in x.value for x in app.markdown), (
+              'Overview must show the four recent-hazard donut cards'
           )
-          assert all('eoc-country-capacity-item' not in x for x in treemaps), (
-              'Overview must summarize regional percentages without country drilldowns'
+          assert any('Frecuencia de amenazas por país' in x.value for x in app.markdown), (
+              'Overview must show the per-country hazard heatmap'
           )
-          assert all('eoc-overview-treemap-caption' not in x for x in treemaps), (
-              'The two treemap captions must be removed'
+          assert any('rangos de frecuencia' in x.value for x in app.markdown), (
+              'Ordinal hazard frequency bands must be explained'
           )
-          assert any('Países donde cada capacidad aún no está plenamente establecida.' in x.value
-                     for x in app.markdown), (
-              'The Spanish overview gaps description should be easy to understand'
-          )
-          section.set_value('Capacities & gaps').run(timeout=90)
+          assert not any('class="eoc-overview-treemap-card"' in x.value
+                         for x in app.markdown), 'Capacity treemaps belong to the Capacities tab'
+          section.set_value('Capacities, gaps & training').run(timeout=90)
           assert not app.exception, [e.message for e in app.exception]
-          assert any('class="section-title">Capacidades y brechas</div>' in x.value
-                     for x in app.markdown), (
-              'The capacity section should have one clear heading'
+          treemaps=[x.value for x in app.markdown if 'class="eoc-overview-treemap-card"' in x.value]
+          assert len(treemaps)==2, 'Capacity page should start with two regional treemaps'
+          assert sum(x.count('class="eoc-overview-treemap-tile"') for x in treemaps)==12, (
+              'Seven regional capacities and five priority gaps must be preserved'
           )
-          assert not any('Capacidades y brechas por indicador' in x.value
-                         or 'Country counts reflect only recognized answers' in x.value
-                         for x in app.markdown), (
-              'Redundant capacity headings and explanatory subtitle must not appear'
+          assert all('eoc-country-capacity-item' not in x for x in treemaps)
+          assert any('Países donde cada capacidad aún no está plenamente establecida.' in x.value
+                     for x in app.markdown)
+          titles=[x.value for x in app.markdown if 'class="section-title"' in x.value]
+          assert any('Capacidades más reportadas' in x for x in titles)
+          assert any('Brechas prioritarias de capacidad' in x for x in titles)
+          assert any('Explorar capacidades en detalle' in x for x in titles)
+          assert any('Capacitación realizada y priorizada' in x for x in titles)
+          assert any('Para cada tema, se compara el porcentaje de países' in x.value
+                     for x in app.markdown), 'Training denominator interpretation is required'
+          assert any(x.key == 'capacity_component' for x in app.selectbox)
+          assert not any('eoc-training-bars' in x.value for x in app.markdown), (
+              'Training must remain a single comparison chart'
           )
-          assert any(x.key == 'capacity_component' for x in app.selectbox), (
-              'The component selector should remain usable'
+          assert not any('eoc-hazard-grid' in x.value for x in app.markdown), (
+              'Hazards should only appear in Overview'
           )
           assert not any('Capacity availability' in x.value or 'Disponibilidad de capacidades' in x.value
-                         for x in app.markdown), (
-              'The redundant regional capacity availability section must not be shown'
-          )
+                         for x in app.markdown), 'Redundant capacity headings must not be shown'
           assert not any('Information systems and surge workforce' in x.value
                          or 'Sistemas de información y personal de refuerzo' in x.value
                          for x in app.markdown), 'Duplicated capacities must not appear'
-          assert not any(x.key == 'capacity_country_view' for x in app.selectbox), (
-              'The old country capacity selector must be removed'
-          )
+          assert not any(x.key == 'capacity_country_view' for x in app.selectbox)
           section = next(x for x in app.segmented_control if x.key == 'regional_section')
-          section.set_value('Hazards & training').run(timeout=90)
-          assert not app.exception, [e.message for e in app.exception]
-          assert any('eoc-hazard-grid' in x.value for x in app.markdown), (
-              'Four hazard donut cards should precede the country heatmap'
-          )
-          assert not any('eoc-training-bars' in x.value for x in app.markdown), (
-              'Training must render as a single chart, not expandable country rows'
-          )
-          assert not any('Physical infrastructure' in x.value
-                         or 'Infraestructura física' in x.value for x in app.markdown), (
-              'Physical infrastructure must only be explored under Capacities & gaps'
-          )
-          assert any('02 / DESARROLLO DEL PERSONAL' in x.value
-                     for x in app.markdown), (
-              'Training should be the second regional operations section'
-          )
-          section = next(x for x in app.segmented_control if x.key == 'regional_section')
-          assert section.value == 'Hazards & training'
+          assert section.value == 'Capacities, gaps & training'
           section.set_value('GHEC').run(timeout=90)
           assert not app.exception, [e.message for e in app.exception]
           assert any('<div class="network-card">' in x.value for x in app.markdown), (
