@@ -60,8 +60,8 @@ ES = {
       'Seleccione un componente esencial para comparar las categorías de respuesta reportadas por los países. Solo se incluyen respuestas válidas.',
     'Responses indicate frequency categories (0, 1–2, 3–5, more than 5), not exact event totals.':
       'Las respuestas indican rangos de frecuencia (0, 1–2, 3–5 y más de 5), no cantidades exactas de eventos.',
-    'For each training area, compare the share of countries reporting training completed in the past year with the share prioritizing it for the next period. Each percentage uses the valid responses for its own question.':
-      'Para cada tema, se compara el porcentaje de países que reportaron capacitación realizada durante el último año con el porcentaje que la prioriza para el próximo período. Cada porcentaje utiliza las respuestas válidas de su respectiva pregunta.',
+    'For each training area, compare the share of countries reporting training completed in the past year with the share prioritizing it for the next period.':
+      'Para cada tema, se compara el porcentaje de países que reportaron capacitación realizada durante el último año con el porcentaje que la prioriza para el próximo período.',
     'Explore a component':'Explorar componente','Capacity availability':'Disponibilidad de capacidades',
     'Countries reporting each capacity':'Países que reportan cada capacidad',
     'Countries in this category':'Países en esta categoría',
