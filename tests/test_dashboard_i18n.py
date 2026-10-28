@@ -52,8 +52,8 @@ def test_training_chart_shows_percent_and_fraction_in_both_languages():
     assert charts.country_hazards(rows.iloc[0], lang='es').data[0].x is not None
 
 def test_map_presence_title_translates_in_both_languages():
-    assert tr('Which countries have H-EOCs?', 'en') == 'Which countries have H-EOCs?'
-    assert tr('Which countries have H-EOCs?', 'es') == '¿Qué países tienen COE-S?'
+    assert tr('Which countries have an H-EOC?', 'en') == 'Which countries have an H-EOC?'
+    assert tr('Which countries have an H-EOC?', 'es') == '¿Qué países tienen COE-S?'
     assert tr('01 / H-EOC STATUS', 'es') == '01 / ESTADO DE LOS COE-S'
     assert 'sin respuesta' in tr(
         'Established or in implementation; countries without survey responses remain gray.', 'es'
@@ -64,10 +64,10 @@ def test_health_eoc_acronym_matches_selected_language():
     """English uses H-EOC; the Spanish interface consistently uses COE-S."""
     translations={
         'H-EOC · Americas':'COE-S · Américas',
-        'Established H-EOCs':'COE-S establecidos',
-        'Which countries have H-EOCs?':'¿Qué países tienen COE-S?',
+        'Established H-EOC':'COE-S establecidos',
+        'Which countries have an H-EOC?':'¿Qué países tienen COE-S?',
         '01 / H-EOC STATUS':'01 / ESTADO DE LOS COE-S',
-        'How H-EOCs operate':'¿Cómo operan los COE-S?',
+        'How the H-EOC operates':'¿Cómo operan los COE-S?',
         'H-EOC status':'Estado del COE-S',
     }
     for english,spanish in translations.items():
