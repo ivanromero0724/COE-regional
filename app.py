@@ -920,7 +920,7 @@ def capacity_and_gaps(active):
         capacity_visual_dashboard(sliced,active)
     st.divider()
     section('Training completed and prioritized',
-            'For each training area, compare the share of countries reporting training completed in the past year with the share prioritizing it for the next period. Each percentage uses the valid responses for its own question.',
+            'For each training area, compare the share of countries reporting training completed in the past year with the share prioritizing it for the next period.',
             eyebrow='04 / WORKFORCE DEVELOPMENT')
     st.plotly_chart(viz.training_comparison(training_summary_data(active),lang=chosen_language()),
                     width='stretch',config={'displayModeBar':False})
