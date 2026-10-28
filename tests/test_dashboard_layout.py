@@ -285,3 +285,15 @@ def test_three_regional_tabs_preserve_hazards_and_training():
     assert 'viz.training_comparison(' in capacity
     assert 'training_drilldown_html(active)' not in capacity
 
+
+
+def test_capacity_chart_titles_use_same_blue_as_hazard_frequency_title():
+    """Capacity explorer titles follow the shared PAHO blue heading treatment."""
+    source=(ROOT/'app.py').read_text(encoding='utf-8')
+    capacity_css=source.split('.eoc-capacity-chart-title{',1)[1].split('}',1)[0]
+    hazard_css=source.split('.mini-title{',1)[1].split('}',1)[0]
+    assert 'color:#005A8B' in capacity_css
+    assert 'color:#005A8B' in hazard_css
+    assert 'color:#17324D' not in capacity_css
+    assert 'class="eoc-capacity-chart-title"' in source
+    assert 'class="mini-title"' in source
