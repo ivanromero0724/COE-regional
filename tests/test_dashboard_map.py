@@ -35,25 +35,29 @@ def test_country_hover_shows_operating_mode_and_activation_bilingually():
         traces = fig.to_plotly_json()['data']
         for _, record in countries.iterrows():
             tooltip = next(t['text'] for t in traces
-                           if 'ISO: '+record.iso3+'<br>' in t['text'])
+                           if '<b>ISO:</b> '+record.iso3+'<br>' in t['text'])
+            assert tooltip.startswith('<b>'+tr(record.country,lang)+'</b><br>')
+            assert '<b>ISO:</b> '+record.iso3+'<br>' in tooltip
+            # The value is outside the bold span for each bilingual field.
+            assert '</b> <b>' not in tooltip
             assert tr(record.country,lang) in tooltip
-            assert tr('Status',lang)+': '+tr(record.eoc_status,lang) in tooltip
-            assert (tr('Operating mode',lang)+': '+
+            assert '<b>'+tr('Status',lang)+':</b> '+tr(record.eoc_status,lang) in tooltip
+            assert ('<b>'+tr('Operating mode',lang)+':</b> '+
                     tr(record.operating_mode,lang)) in tooltip
-            assert (tr('Activation after formal decision',lang)+': '+
+            assert ('<b>'+tr('Activation after formal decision',lang)+':</b> '+
                     tr(record.activation,lang)) in tooltip
         # Mexico is map context, not a respondent; do not imply operation data.
-        mexico = next(t['text'] for t in traces if 'ISO: MEX<br>' in t['text'])
+        mexico = next(t['text'] for t in traces if '<b>ISO:</b> MEX<br>' in t['text'])
         missing=tr('No survey response',lang)
-        assert tr('Operating mode',lang)+': '+missing in mexico
-        assert tr('Activation after formal decision',lang)+': '+missing in mexico
+        assert '<b>'+tr('Operating mode',lang)+':</b> '+missing in mexico
+        assert '<b>'+tr('Activation after formal decision',lang)+':</b> '+missing in mexico
 
     # Filtering changes a country's display status but not its real answers.
     selected = {countries.iloc[0].country}
     filtered = countries_map(countries, selection=selected, lang='es')
     other = countries.loc[~countries.country.isin(selected)].iloc[0]
     tooltip = next(t['text'] for t in filtered.to_plotly_json()['data']
-                   if 'ISO: '+other.iso3+'<br>' in t['text'])
+                   if '<b>ISO:</b> '+other.iso3+'<br>' in t['text'])
     assert tr('Outside filter','es') in tooltip
     assert tr(other.operating_mode,'es') in tooltip
     assert tr(other.activation,'es') in tooltip
