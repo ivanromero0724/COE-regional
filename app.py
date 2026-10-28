@@ -863,8 +863,19 @@ def regional_overview(country,active):
                     distribution_html(active.activation,'Activation after formal decision',times,CYAN,active,'activation')+
                     '</div>',unsafe_allow_html=True)
     st.divider()
-    # Two compact, region-level treemaps. No country drilldowns in Overview;
-    # all detailed capacity/status exploration remains in Capacities & gaps.
+    # Overview focuses on geographic coverage, operations and recent hazards.
+    section('Hazards reported in the past two years',
+            'Responses indicate frequency categories (0, 1–2, 3–5, more than 5), not exact event totals.',
+            eyebrow='03 / TYPES OF EMERGENCIES')
+    st.markdown(hazard_summary_cards(active),unsafe_allow_html=True)
+    st.markdown('<div class="mini-title">'+esc(T('Hazard frequency by country'))+'</div>',
+                unsafe_allow_html=True)
+    st.plotly_chart(viz.hazard_heatmap(active.sort_values('country'),lang=chosen_language()),
+                    width='stretch',config={'displayModeBar':False})
+
+
+def capacity_and_gaps(active):
+    # A quick, region-level capacity and gap snapshot, before drilldowns.
     strengths=capacity_table(active)
     strengths=strengths[strengths.component.isin(CAPACITIES)]
     strengths=(strengths[strengths.denominator>0]
@@ -886,28 +897,34 @@ def regional_overview(country,active):
     with left:
         section('Most widely reported capacities',
                 'Countries reporting an established or functional capacity.',
-                eyebrow='03 / REPORTED CAPACITIES',paired=True)
+                eyebrow='01 / REPORTED CAPACITIES',paired=True)
         st.markdown(overview_treemap_html(strengths,'available',lang=chosen_language()),
                     unsafe_allow_html=True)
     with right:
         section('Priority capacity gaps',
                 'Countries where each capacity is not yet fully established.',
-                eyebrow='04 / COOPERATION PRIORITIES',paired=True)
+                eyebrow='02 / COOPERATION PRIORITIES',paired=True)
         st.markdown(overview_treemap_html(pd.DataFrame(gap_rows),'gap',lang=chosen_language()),
                     unsafe_allow_html=True)
 
-
-def capacity_and_gaps(active):
-    # One section heading; indicator names identify the plots below.
-    section('Capacities & gaps',eyebrow='01 / CAPACITY PROFILES')
+    st.divider()
+    section('Explore capacities in detail',
+            'Select a core component to compare the reported response categories across countries. Only valid responses are included.',
+            eyebrow='03 / CAPACITY PROFILES')
     caps=capacity_table(active)
     component=st.selectbox(T('Explore a component'),list(CAPACITIES.keys()),
                            format_func=lambda value, _lang=chosen_language(): tr(value, _lang),
                            key='capacity_component')
     sliced=caps[caps.component==component]
-    # Full categorical distributions; click each answer category to see countries.
     with st.container(border=False,key="capacity_visual_gallery"):
         capacity_visual_dashboard(sliced,active)
+    st.divider()
+    section('Training completed and prioritized',
+            'For each training area, compare the share of countries reporting training completed in the past year with the share prioritizing it for the next period. Each percentage uses the valid responses for its own question.',
+            eyebrow='04 / WORKFORCE DEVELOPMENT')
+    st.plotly_chart(viz.training_comparison(training_summary_data(active),lang=chosen_language()),
+                    width='stretch',config={'displayModeBar':False})
+
 
 def hazard_summary_cards(active):
     """Regional distribution of four observed event-frequency bands per hazard.
@@ -974,22 +991,6 @@ def training_summary_data(active):
             'priority_d':len(prioritized),
         })
     return pd.DataFrame(rows)
-
-
-def operations_section(active):
-    section('Hazards reported in the past two years',
-            eyebrow='01 / TYPES OF EMERGENCIES')
-    st.markdown(hazard_summary_cards(active),unsafe_allow_html=True)
-    st.markdown('<div class="mini-title">'+esc(T('Hazard frequency by country'))+'</div>',
-                unsafe_allow_html=True)
-    st.plotly_chart(viz.hazard_heatmap(active.sort_values('country'),lang=chosen_language()),
-                    width='stretch',config={'displayModeBar':False})
-    st.divider()
-    section('Training completed and prioritized',
-            eyebrow='02 / WORKFORCE DEVELOPMENT')
-    st.plotly_chart(viz.training_comparison(training_summary_data(active),lang=chosen_language()),
-                    width='stretch',config={'displayModeBar':False})
-
 
 
 NETWORK_STATUS_SYMBOLS={
@@ -1213,7 +1214,7 @@ def main():
         # Keep stable English values in session state while showing labels in the selected language.
         tabscope=st.segmented_control(
             T('Regional section'),
-            ['Overview','Capacities & gaps','Hazards & training','GHEC'],
+            ['Overview','Capacities, gaps & training','GHEC'],
             default='Overview',
             selection_mode='single',
             format_func=lambda value, _lang=chosen_language(): tr(value, _lang),
@@ -1222,8 +1223,7 @@ def main():
         # Regional indicators always summarize all responding countries.
         active=country
         if tabscope=='Overview':regional_overview(country,active)
-        elif tabscope=='Capacities & gaps':capacity_and_gaps(active)
-        elif tabscope=='Hazards & training':operations_section(active)
+        elif tabscope=='Capacities, gaps & training':capacity_and_gaps(active)
         else:cooperation_section(active)
     elif view=='Country profiles':country_profile(records,country)
     st.markdown('<div class="paho-footer">'+esc(T('PAHO / WHO · EOC-NET Americas · 2026  |  Self-reported information  |  Analytical dashboard for technical coordination'))+'</div>',unsafe_allow_html=True)
