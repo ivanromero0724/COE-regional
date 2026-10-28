@@ -1,4 +1,4 @@
-"""Schema-aware transformations for the 2026 PAHO COE-S survey.
+"""Schema-aware transformations for the 2026 PAHO H-EOC / COE-S survey.
 
 Never exports personal identifiers, contacts or submission metadata. Original
 xlsx remains the sole source for survey-derived numbers; narrative PDFs provide
@@ -142,7 +142,7 @@ def question_15_column(raw:pd.DataFrame)->int:
             matches.append(i)
     if len(matches)!=1:
         raise ValueError(
-            f'Expected one question 15 column about a formal EOC-S document, found {matches}. '
+            f'Expected one question 15 column about a formal H-EOC (COE-S) document, found {matches}. '
             'Review survey Excel column headers before publishing this indicator.'
         )
     return matches[0]
@@ -165,7 +165,7 @@ def create_records(raw:pd.DataFrame)->tuple[pd.DataFrame,pd.DataFrame]:
          'country':country,'iso3':iso,'subregion':subregion,'institution':inst,
          'eoc_status':eo,'operating_mode':category_or_na(r,27,OPERATING),
          'activation':category_or_na(r,39,ACTIVATION),
-         # Survey question 15: formal document describing the EOC-S mandate and procedures.
+         # Survey question 15: formal document describing the H-EOC (COE-S) mandate and procedures.
          'formal_document': formal_document_answer(r.iloc[q15_index]),
          'established':clean(r.iloc[17]) or 'Not reported',
          'staff_24_7':pd.to_numeric(r.iloc[67],errors='coerce'),
