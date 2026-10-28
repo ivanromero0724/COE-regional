@@ -1213,7 +1213,7 @@ def main():
         # Keep stable English values in session state while showing labels in the selected language.
         tabscope=st.segmented_control(
             T('Regional section'),
-            ['Overview','Capacities & gaps','Hazards & training','Networks & cooperation'],
+            ['Overview','Capacities & gaps','Hazards & training','GHEC'],
             default='Overview',
             selection_mode='single',
             format_func=lambda value, _lang=chosen_language(): tr(value, _lang),
