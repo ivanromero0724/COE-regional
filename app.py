@@ -903,13 +903,13 @@ def capacity_and_gaps(active):
     with right:
         section('Priority capacity gaps',
                 'Countries where each capacity is not yet fully established.',
-                eyebrow='02 / COOPERATION PRIORITIES',paired=True)
+                eyebrow='02 / CAPACITY GAPS',paired=True)
         st.markdown(overview_treemap_html(pd.DataFrame(gap_rows),'gap',lang=chosen_language()),
                     unsafe_allow_html=True)
 
     st.divider()
     section('Explore capacities in detail',
-            'Select a core component to compare the reported response categories across countries. Only valid responses are included.',
+            'Select a core component to compare the reported response categories across countries.',
             eyebrow='03 / CAPACITY PROFILES')
     caps=capacity_table(active)
     component=st.selectbox(T('Explore a component'),list(CAPACITIES.keys()),
