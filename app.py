@@ -478,11 +478,11 @@ def note(msg):st.markdown(f'<div class="small-note">{esc(T(msg))}</div>',unsafe_
 
 KPI_ICON_PATHS={
     'Countries responding':'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a16 16 0 0 1 0 18M12 3a16 16 0 0 0 0 18"/>',
-    'Established EOC-S':'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/>',
+    'Established H-EOC':'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/>',
     'In implementation':'<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12h8M12 8v8"/>',
     '24/7 operation':'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
     'Documented formal mandate':'<path d="M8 3h8l4 4v14H4V3h4z"/><path d="M16 3v5h4M8 13h8M8 17h8"/>',
-    'EOC status':'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/>',
+    'H-EOC status':'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/>',
     'Operating mode':'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
     'Activation time':'<path d="M12 7v5l-4 2"/><circle cx="12" cy="12" r="9"/>',
     '24/7 duty staff':'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
@@ -816,7 +816,7 @@ def count_kpis(country):
     documented_yes=int((documented==True).sum())
     kpi_grid([
         ('Countries responding',total),
-        ('Established EOC-S',share(int((country.eoc_status=='Established').sum()))),
+        ('Established H-EOC',share(int((country.eoc_status=='Established').sum()))),
         ('In implementation',share(int((country.eoc_status=='In implementation').sum()))),
         ('24/7 operation',share(int((country.operating_mode=='24/7 continuous').sum()))),
         ('Documented formal mandate',share(documented_yes,len(documented)))])
@@ -849,12 +849,12 @@ def regional_overview(country,active):
     count_kpis(active)
     left,right=st.columns([1.20,1],gap='large')
     with left:
-        section('Which countries have EOC-S?',
+        section('Which countries have H-EOCs?',
                 'Established or in implementation; countries without survey responses remain gray.',
-                eyebrow='01 / EOC-S STATUS',paired=True)
+                eyebrow='01 / H-EOC STATUS',paired=True)
         coverage_map(country,set(active.country))
     with right:
-        section('How the EOC-S operate','One observation per responding country.',eyebrow='02 / OPERATIONS',paired=True)
+        section('How the H-EOCs operate','One observation per responding country.',eyebrow='02 / OPERATIONS',paired=True)
         modes=['24/7 continuous','Response + monitoring','Response only','Not formally defined','Not reported']
         times=['Under 2 hours','2–6 hours','Over 6 hours','Not defined','Not reported']
         # Single bordered HTML card: no nested Streamlit frame/white overlay.
@@ -1129,7 +1129,7 @@ def country_profile(records,countries):
                 f'<div><div class="bigcountry">{esc(T(r.country))}</div>'
                 f'<div class="institution">{esc(T(r.institution))}</div></div></div>',unsafe_allow_html=True)
     staff=f'{int(r.staff_24_7)}' if pd.notna(r.staff_24_7) else 'Not reported'
-    kpi_grid([('EOC status',r.eoc_status),('Operating mode',r.operating_mode),
+    kpi_grid([('H-EOC status',r.eoc_status),('Operating mode',r.operating_mode),
               ('Activation time',r.activation),('24/7 duty staff',staff)],columns=4)
     section('Reported institutional capacities','Answers from this institution grouped by PHEOC core component.',
             eyebrow='01 / REPORTED CAPACITIES')
@@ -1202,7 +1202,7 @@ def main():
         st.radio('Language / Idioma',['en','es'],format_func=lambda v: 'English' if v=='en' else 'Español',
                  horizontal=True,key='coe_language')
         st.markdown(f'<div class="section-eyebrow">{esc(T("REGIONAL MONITORING"))}</div>',unsafe_allow_html=True)
-        st.markdown('### '+T('EOC-S · Americas'))
+        st.markdown('### '+T('H-EOC · Americas'))
         st.caption(T('PAHO/WHO survey 2026'))
         view=st.radio(T('Explore'), ['Regional overview','Country profiles'],format_func=lambda value, _lang=chosen_language(): tr(value, _lang),label_visibility='collapsed',key='main_view')
         st.divider()
