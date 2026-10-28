@@ -1,4 +1,4 @@
-"""Clean Plotly charts for PAHO/WHO EOC-S regional monitoring."""
+"""Clean Plotly charts for PAHO/WHO H-EOC regional monitoring."""
 from __future__ import annotations
 from pathlib import Path
 from functools import lru_cache
