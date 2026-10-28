@@ -172,7 +172,7 @@ def ui_style():
     .country-identity .institution{font-size:.85rem;color:#647D8D;margin-top:5px;line-height:1.4;overflow-wrap:anywhere;}
     .card-panel{background:#FFF;border:1px solid #DFE9F1;border-radius:12px;padding:17px 18px;margin:1px 0 12px;min-width:0;}
     .eoc-capacity-section-title{font-size:.92rem;font-weight:800;color:#17324D;margin:17px 0 9px;}
-    .eoc-capacity-chart-title{min-height:2.2em;max-height:2.8em;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-height:1.35;font-size:.83rem;font-weight:800;color:#17324D;margin:1px 0 3px;}
+    .eoc-capacity-chart-title{min-height:2.2em;max-height:2.8em;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-height:1.35;font-size:.83rem;font-weight:800;color:#005A8B;margin:1px 0 3px;}
     .eoc-capacity-chart-meta{font-size:.73rem;color:#607B8A;margin:-8px 0 3px;}
     /* The outer Streamlit chart card is the only frame in Capacities & gaps.
        Remove the generic Plotly frame nested inside each card. */
