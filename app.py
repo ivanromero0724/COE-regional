@@ -478,7 +478,7 @@ def note(msg):st.markdown(f'<div class="small-note">{esc(T(msg))}</div>',unsafe_
 
 KPI_ICON_PATHS={
     'Countries responding':'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a16 16 0 0 1 0 18M12 3a16 16 0 0 0 0 18"/>',
-    'Established H-EOC':'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/>',
+    'Established H-EOCs':'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/>',
     'In implementation':'<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12h8M12 8v8"/>',
     '24/7 operation':'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
     'Documented formal mandate':'<path d="M8 3h8l4 4v14H4V3h4z"/><path d="M16 3v5h4M8 13h8M8 17h8"/>',
@@ -816,7 +816,7 @@ def count_kpis(country):
     documented_yes=int((documented==True).sum())
     kpi_grid([
         ('Countries responding',total),
-        ('Established H-EOC',share(int((country.eoc_status=='Established').sum()))),
+        ('Established H-EOCs',share(int((country.eoc_status=='Established').sum()))),
         ('In implementation',share(int((country.eoc_status=='In implementation').sum()))),
         ('24/7 operation',share(int((country.operating_mode=='24/7 continuous').sum()))),
         ('Documented formal mandate',share(documented_yes,len(documented)))])
@@ -854,7 +854,7 @@ def regional_overview(country,active):
                 eyebrow='01 / H-EOC STATUS',paired=True)
         coverage_map(country,set(active.country))
     with right:
-        section('How the H-EOCs operate','One observation per responding country.',eyebrow='02 / OPERATIONS',paired=True)
+        section('How H-EOCs operate','One observation per responding country.',eyebrow='02 / OPERATIONS',paired=True)
         modes=['24/7 continuous','Response + monitoring','Response only','Not formally defined','Not reported']
         times=['Under 2 hours','2–6 hours','Over 6 hours','Not defined','Not reported']
         # Single bordered HTML card: no nested Streamlit frame/white overlay.
